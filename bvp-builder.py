@@ -4,6 +4,7 @@ import base64
 from datetime import datetime
 from html import escape
 from pathlib import Path
+import time
 
 import pandas as pd
 import streamlit as st
@@ -19,6 +20,7 @@ from bili_pipeline.discover import (
 )
 from bili_pipeline.discover.export_csv import discover_entries_to_rows, export_discover_result_csv
 from bili_pipeline.discover.real_demo import build_real_result
+from bili_pipeline.models import DiscoverResult
 from bili_pipeline.utils.file_merge import (
     build_deduplicated_output_path,
     deduplicate_dataframe,
@@ -42,6 +44,12 @@ from bili_pipeline.utils.streamlit_night_sky import render_night_sky_background
 APP_DIR = Path(__file__).resolve().parent
 LOGO_PATH = APP_DIR / "assets" / "logos" / "bvp-builder.png"
 VALID_TAGS_PATH = APP_DIR / "all_valid_tags.csv"
+CUSTOM_EXPORT_REQUEST_INTERVAL_SECONDS = 1.2
+CUSTOM_EXPORT_REQUEST_JITTER_SECONDS = 0.8
+CUSTOM_EXPORT_MAX_RETRIES = 4
+CUSTOM_EXPORT_RETRY_BACKOFF_SECONDS = 5.0
+CUSTOM_EXPORT_BATCH_SIZE = 20
+CUSTOM_EXPORT_BATCH_PAUSE_SECONDS = 8.0
 
 
 def _build_logo_data_uri(logo_path: Path) -> str | None:
@@ -136,14 +144,84 @@ def _extract_bvids(df: pd.DataFrame, column_name: str) -> list[str]:
     return list(dict.fromkeys(bvids))
 
 
-def _build_result_from_owner_mids(owner_mids: list[int], lookback_days: int):
+def _chunk_list(values: list[int], chunk_size: int) -> list[list[int]]:
+    if chunk_size <= 0:
+        return [values]
+    return [values[start : start + chunk_size] for start in range(0, len(values), chunk_size)]
+
+
+def _summarize_exception(exc: Exception, limit: int = 160) -> str:
+    summary = " ".join(str(exc).split())
+    if not summary:
+        return exc.__class__.__name__
+    if len(summary) <= limit:
+        return summary
+    return f"{summary[: limit - 3]}..."
+
+
+def _build_result_from_owner_mids_with_guardrails(
+    owner_mids: list[int],
+    lookback_days: int,
+    logger=None,
+) -> tuple[DiscoverResult, list[int]]:
+    normalized_owner_mids = sorted({int(owner_mid) for owner_mid in owner_mids})
+    if not normalized_owner_mids:
+        return DiscoverResult(entries=[], owner_mids=[]), []
+
     builder = VideoPoolBuilder(
         config=DiscoverConfig(lookback_days=lookback_days),
         hot_sources=[],
         partition_sources=[],
-        author_source=BilibiliUserRecentVideoSource(page_size=30, max_pages=20),
+        author_source=BilibiliUserRecentVideoSource(
+            page_size=30,
+            max_pages=20,
+            request_interval_seconds=CUSTOM_EXPORT_REQUEST_INTERVAL_SECONDS,
+            request_jitter_seconds=CUSTOM_EXPORT_REQUEST_JITTER_SECONDS,
+            max_retries=CUSTOM_EXPORT_MAX_RETRIES,
+            retry_backoff_seconds=CUSTOM_EXPORT_RETRY_BACKOFF_SECONDS,
+        ),
     )
-    return builder.build_from_owner_mids(owner_mids)
+    batches = _chunk_list(normalized_owner_mids, CUSTOM_EXPORT_BATCH_SIZE)
+    merged_entries = {}
+    failed_owner_mids: list[int] = []
+
+    for batch_index, batch_owner_mids in enumerate(batches, start=1):
+        batch_failed_owner_mids: list[int] = []
+        if logger is not None:
+            logger(
+                f"[INFO]: 开始处理第 {batch_index}/{len(batches)} 批作者，共 {len(batch_owner_mids)} 个。"
+            )
+
+        def _on_batch_error(owner_mid: int, _index: int, _total: int, exc: Exception) -> None:
+            batch_failed_owner_mids.append(owner_mid)
+            if logger is not None:
+                logger(f"[WARN]: 作者 {owner_mid} 抓取失败，已跳过。原因：{_summarize_exception(exc)}")
+
+        batch_result = builder.build_from_owner_mids(
+            batch_owner_mids,
+            error_callback=_on_batch_error,
+        )
+        before_count = len(merged_entries)
+        for entry in batch_result.entries:
+            merged_entries.setdefault(entry.bvid, entry)
+
+        failed_owner_mids.extend(batch_failed_owner_mids)
+        if logger is not None:
+            logger(
+                f"[INFO]: 第 {batch_index}/{len(batches)} 批完成，新增 {len(merged_entries) - before_count} 条视频，累计 {len(merged_entries)} 条。"
+            )
+            if batch_failed_owner_mids:
+                logger(f"[WARN]: 本批有 {len(batch_failed_owner_mids)} 个作者抓取失败。")
+            if batch_index < len(batches):
+                logger(f"[INFO]: 批次间暂停 {int(CUSTOM_EXPORT_BATCH_PAUSE_SECONDS)} 秒，降低请求频率。")
+        if batch_index < len(batches):
+            time.sleep(CUSTOM_EXPORT_BATCH_PAUSE_SECONDS)
+
+    result = DiscoverResult(
+        entries=sorted(merged_entries.values(), key=lambda item: item.discovered_at),
+        owner_mids=normalized_owner_mids,
+    )
+    return result, list(dict.fromkeys(failed_owner_mids))
 
 
 def _append_log(logs: list[str], placeholder, message: str) -> None:
@@ -279,7 +357,10 @@ with tab_tid:
 
 with tab_custom_export:
     st.subheader("自定义导出视频列表")
-    st.caption("支持按作者 ID 列表，或按 BVID 列表反查作者后，批量导出这些作者在 lookback_days 内上传的全部视频。")
+    st.caption(
+        "支持按作者 ID 列表，或按 BVID 列表反查作者后，批量导出这些作者在 lookback_days 内上传的全部视频。"
+        " 当前已内置保守限速、指数退避重试与分批冷却，以降低长批量导出时的风控触发概率。"
+    )
 
     tab_custom_owner, tab_custom_bvid = st.tabs(["按作者ID导出", "按BVID反查作者导出"])
 
@@ -309,8 +390,14 @@ with tab_custom_export:
             value=str(Path("outputs") / default_owner_name),
             key="custom_owner_out_path",
         )
+        owner_log_placeholder = st.empty()
 
         if st.button("开始按作者 ID 抓取并导出", key="custom_owner_submit"):
+            owner_logs: list[str] = []
+
+            def _owner_log(message: str) -> None:
+                _append_log(owner_logs, owner_log_placeholder, message)
+
             if not owner_files:
                 st.warning("请先上传至少一个 CSV/XLSX 文件。")
             else:
@@ -332,10 +419,22 @@ with tab_custom_export:
                     if not owner_mids:
                         st.warning("未从上传文件中解析出有效的作者 ID。")
                     else:
+                        _owner_log(f"[INFO]: 去重后共有 {len(owner_mids)} 个作者待抓取。")
                         with st.spinner("正在根据作者 ID 抓取视频并导出..."):
-                            result = _build_result_from_owner_mids(owner_mids, int(owner_lookback_days))
+                            result, failed_owner_mids = _build_result_from_owner_mids_with_guardrails(
+                                owner_mids,
+                                int(owner_lookback_days),
+                                logger=_owner_log,
+                            )
                             saved = export_discover_result_csv(result, owner_out_path)
 
+                        if failed_owner_mids:
+                            preview_failed_owner_mids = ", ".join(str(owner_mid) for owner_mid in failed_owner_mids[:10])
+                            if len(failed_owner_mids) > 10:
+                                preview_failed_owner_mids += " ..."
+                            st.warning(
+                                f"有 {len(failed_owner_mids)} 个作者抓取失败并被跳过：{preview_failed_owner_mids}"
+                            )
                         st.success(f"已导出：{saved}")
                         st.caption(
                             f"输入作者数 {len(owner_mids)}，导出视频数 {len(result.entries)}（展示前 200 条预览）"
@@ -368,8 +467,14 @@ with tab_custom_export:
             value=str(Path("outputs") / default_bvid_name),
             key="custom_bvid_out_path",
         )
+        bvid_log_placeholder = st.empty()
 
         if st.button("开始按 BVID 反查作者并导出", key="custom_bvid_submit"):
+            bvid_logs: list[str] = []
+
+            def _bvid_log(message: str) -> None:
+                _append_log(bvid_logs, bvid_log_placeholder, message)
+
             if not bvid_files:
                 st.warning("请先上传至少一个 CSV/XLSX 文件。")
             else:
@@ -388,21 +493,53 @@ with tab_custom_export:
                     if not bvids:
                         st.warning("未从上传文件中解析出有效的 BVID。")
                     else:
+                        _bvid_log(f"[INFO]: 去重后共有 {len(bvids)} 个 BVID 待反查作者。")
+
+                        def _on_bvid_progress(_bvid: str, index: int, total: int, _owner_mid: int | None) -> None:
+                            if index == 1 or index == total or index % 20 == 0:
+                                _bvid_log(f"[INFO]: BVID 反查进度 {index}/{total}。")
+
+                        def _on_bvid_error(bvid: str, index: int, total: int, exc: Exception) -> None:
+                            _bvid_log(
+                                f"[WARN]: BVID 反查失败 {index}/{total}：{bvid}。原因：{_summarize_exception(exc)}"
+                            )
+
                         with st.spinner("正在根据 BVID 反查作者并导出..."):
-                            owner_mids, failed_bvids = resolve_owner_mids_from_bvids(bvids)
+                            owner_mids, failed_bvids = resolve_owner_mids_from_bvids(
+                                bvids,
+                                request_interval_seconds=CUSTOM_EXPORT_REQUEST_INTERVAL_SECONDS,
+                                request_jitter_seconds=CUSTOM_EXPORT_REQUEST_JITTER_SECONDS,
+                                max_retries=CUSTOM_EXPORT_MAX_RETRIES,
+                                retry_backoff_seconds=CUSTOM_EXPORT_RETRY_BACKOFF_SECONDS,
+                                progress_callback=_on_bvid_progress,
+                                error_callback=_on_bvid_error,
+                            )
 
                             if owner_mids:
-                                result = _build_result_from_owner_mids(owner_mids, int(bvid_lookback_days))
+                                _bvid_log(f"[INFO]: 已解析出 {len(owner_mids)} 个唯一作者，开始抓取作者近期视频。")
+                                result, failed_owner_mids = _build_result_from_owner_mids_with_guardrails(
+                                    owner_mids,
+                                    int(bvid_lookback_days),
+                                    logger=_bvid_log,
+                                )
                                 saved = export_discover_result_csv(result, bvid_out_path)
                             else:
                                 result = None
                                 saved = None
+                                failed_owner_mids = []
 
                         if failed_bvids:
                             preview_failed = ", ".join(failed_bvids[:10])
                             if len(failed_bvids) > 10:
                                 preview_failed += " ..."
                             st.warning(f"有 {len(failed_bvids)} 个 BVID 未能解析出作者：{preview_failed}")
+                        if failed_owner_mids:
+                            preview_failed_owner_mids = ", ".join(str(owner_mid) for owner_mid in failed_owner_mids[:10])
+                            if len(failed_owner_mids) > 10:
+                                preview_failed_owner_mids += " ..."
+                            st.warning(
+                                f"有 {len(failed_owner_mids)} 个作者近期视频抓取失败并被跳过：{preview_failed_owner_mids}"
+                            )
 
                         if not owner_mids or result is None or saved is None:
                             st.warning("未能根据上传的 BVID 解析出有效作者，因此没有导出结果。")

@@ -197,6 +197,26 @@ class BilibiliSourceAdaptersTest(unittest.TestCase):
         self.assertEqual([123, 456], owner_mids)
         self.assertEqual(["BV1xx411c7mF", "BV1xx411c7mG"], failed_bvids)
 
+    @patch("bili_pipeline.discover.bilibili_sources.Video.get_info", new_callable=AsyncMock)
+    def test_resolve_owner_mids_from_bvids_retries_412_once(
+        self,
+        mock_get_info: AsyncMock,
+    ) -> None:
+        mock_get_info.side_effect = [
+            RuntimeError("网络错误，状态码：412"),
+            {"owner": {"mid": 123}},
+        ]
+
+        owner_mids, failed_bvids = resolve_owner_mids_from_bvids(
+            ["BV1xx411c7mD"],
+            max_retries=1,
+            retry_backoff_seconds=0,
+        )
+
+        self.assertEqual([123], owner_mids)
+        self.assertEqual([], failed_bvids)
+        self.assertEqual(2, mock_get_info.await_count)
+
 
 if __name__ == "__main__":
     unittest.main()

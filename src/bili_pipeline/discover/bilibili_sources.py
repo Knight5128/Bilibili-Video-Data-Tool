@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import asyncio
+import random
+import time
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Callable
 
 from bilibili_api import hot, video_zone
 from bilibili_api.user import User, VideoOrder
@@ -105,22 +108,99 @@ def _parse_length_to_seconds(length: str | None) -> int | None:
     return total
 
 
-def fetch_owner_mid_by_bvid(bvid: str) -> int | None:
-    info = run_async(Video(bvid=bvid).get_info())
+def _sleep_with_jitter(base_seconds: float, jitter_seconds: float) -> None:
+    delay = max(0.0, base_seconds) + (random.uniform(0.0, max(0.0, jitter_seconds)) if jitter_seconds > 0 else 0.0)
+    if delay > 0:
+        time.sleep(delay)
+
+
+def _is_retryable_request_error(exc: Exception) -> bool:
+    message = " ".join(str(exc).split())
+    lowered = message.lower()
+    retry_markers = (
+        "412",
+        "429",
+        "network error",
+        "timeout",
+        "timed out",
+        "temporarily",
+        "connection reset",
+        "server disconnected",
+        "service unavailable",
+        "too many requests",
+    )
+    return any(marker in lowered for marker in retry_markers)
+
+
+def _run_async_with_retry(
+    awaitable_factory: Callable[[], object],
+    *,
+    request_interval_seconds: float = 0.0,
+    request_jitter_seconds: float = 0.0,
+    max_retries: int = 0,
+    retry_backoff_seconds: float = 3.0,
+) -> object:
+    attempt = 0
+    while True:
+        _sleep_with_jitter(request_interval_seconds, request_jitter_seconds)
+        try:
+            return run_async(awaitable_factory())
+        except Exception as exc:  # noqa: BLE001
+            if attempt >= max_retries or not _is_retryable_request_error(exc):
+                raise
+            backoff_seconds = max(0.0, retry_backoff_seconds) * (2**attempt)
+            _sleep_with_jitter(backoff_seconds, request_jitter_seconds)
+            attempt += 1
+
+
+def fetch_owner_mid_by_bvid(
+    bvid: str,
+    *,
+    request_interval_seconds: float = 0.0,
+    request_jitter_seconds: float = 0.0,
+    max_retries: int = 0,
+    retry_backoff_seconds: float = 3.0,
+) -> int | None:
+    info = _run_async_with_retry(
+        lambda: Video(bvid=bvid).get_info(),
+        request_interval_seconds=request_interval_seconds,
+        request_jitter_seconds=request_jitter_seconds,
+        max_retries=max_retries,
+        retry_backoff_seconds=retry_backoff_seconds,
+    )
     owner = info.get("owner", {})
     owner_mid = owner.get("mid")
     return int(owner_mid) if owner_mid is not None else None
 
 
-def resolve_owner_mids_from_bvids(bvids: list[str]) -> tuple[list[int], list[str]]:
+def resolve_owner_mids_from_bvids(
+    bvids: list[str],
+    *,
+    request_interval_seconds: float = 0.0,
+    request_jitter_seconds: float = 0.0,
+    max_retries: int = 0,
+    retry_backoff_seconds: float = 3.0,
+    progress_callback: Callable[[str, int, int, int | None], None] | None = None,
+    error_callback: Callable[[str, int, int, Exception], None] | None = None,
+) -> tuple[list[int], list[str]]:
     owner_mids: list[int] = []
     failed_bvids: list[str] = []
+    unique_bvids = list(dict.fromkeys(bvids))
+    total = len(unique_bvids)
 
-    for bvid in dict.fromkeys(bvids):
+    for index, bvid in enumerate(unique_bvids, start=1):
         try:
-            owner_mid = fetch_owner_mid_by_bvid(bvid)
-        except Exception:  # noqa: BLE001
+            owner_mid = fetch_owner_mid_by_bvid(
+                bvid,
+                request_interval_seconds=request_interval_seconds,
+                request_jitter_seconds=request_jitter_seconds,
+                max_retries=max_retries,
+                retry_backoff_seconds=retry_backoff_seconds,
+            )
+        except Exception as exc:  # noqa: BLE001
             failed_bvids.append(bvid)
+            if error_callback is not None:
+                error_callback(bvid, index, total, exc)
             continue
 
         if owner_mid is None:
@@ -129,6 +209,8 @@ def resolve_owner_mids_from_bvids(bvids: list[str]) -> tuple[list[int], list[str
 
         if owner_mid not in owner_mids:
             owner_mids.append(owner_mid)
+        if progress_callback is not None:
+            progress_callback(bvid, index, total, owner_mid)
 
     return owner_mids, failed_bvids
 
@@ -235,6 +317,10 @@ class BilibiliZoneRecentVideosSource(SeedSource):
 class BilibiliUserRecentVideoSource(AuthorVideoSource):
     page_size: int = 30
     max_pages: int = 20
+    request_interval_seconds: float = 0.0
+    request_jitter_seconds: float = 0.0
+    max_retries: int = 0
+    retry_backoff_seconds: float = 3.0
 
     def fetch_recent_videos(self, owner_mid: int, since: datetime) -> list[CandidateVideo]:
         discovered_at = datetime.now()
@@ -242,7 +328,13 @@ class BilibiliUserRecentVideoSource(AuthorVideoSource):
         candidates: list[CandidateVideo] = []
 
         for page_num in range(1, self.max_pages + 1):
-            payload = _run_async(user.get_videos(pn=page_num, ps=self.page_size, order=VideoOrder.PUBDATE))
+            payload = _run_async_with_retry(
+                lambda page_num=page_num: user.get_videos(pn=page_num, ps=self.page_size, order=VideoOrder.PUBDATE),
+                request_interval_seconds=self.request_interval_seconds,
+                request_jitter_seconds=self.request_jitter_seconds,
+                max_retries=self.max_retries,
+                retry_backoff_seconds=self.retry_backoff_seconds,
+            )
             items = payload.get("list", {}).get("vlist", [])
             if not items:
                 break

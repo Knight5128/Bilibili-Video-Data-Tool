@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Callable
 
 from bili_pipeline.config import DiscoverConfig
 from bili_pipeline.discover.interfaces import AuthorVideoSource, SeedSource
@@ -61,16 +62,33 @@ class VideoPoolBuilder:
         entries = sorted(merged_backfill.values(), key=lambda item: item.discovered_at)
         return DiscoverResult(entries=entries, owner_mids=owner_mids)
 
-    def build_from_owner_mids(self, owner_mids: list[int], now: datetime | None = None) -> DiscoverResult:
+    def build_from_owner_mids(
+        self,
+        owner_mids: list[int],
+        now: datetime | None = None,
+        *,
+        progress_callback: Callable[[int, int, int, int], None] | None = None,
+        error_callback: Callable[[int, int, int, Exception], None] | None = None,
+    ) -> DiscoverResult:
         current_time = now or datetime.now()
         since = current_time - timedelta(days=self.config.lookback_days)
         normalized_owner_mids = sorted({int(owner_mid) for owner_mid in owner_mids})
+        total_owners = len(normalized_owner_mids)
 
         candidates: list[CandidateVideo] = []
-        for owner_mid in normalized_owner_mids:
-            for candidate in self.author_source.fetch_recent_videos(owner_mid, since):
+        for index, owner_mid in enumerate(normalized_owner_mids, start=1):
+            try:
+                author_candidates = self.author_source.fetch_recent_videos(owner_mid, since)
+            except Exception as exc:  # noqa: BLE001
+                if error_callback is not None:
+                    error_callback(owner_mid, index, total_owners, exc)
+                continue
+
+            for candidate in author_candidates:
                 if self._allow_candidate(candidate, enforce_tid=False):
                     candidates.append(candidate)
+            if progress_callback is not None:
+                progress_callback(owner_mid, index, total_owners, len(author_candidates))
 
         merged = self._merge_candidates(candidates)
         entries = sorted(merged.values(), key=lambda item: item.discovered_at)

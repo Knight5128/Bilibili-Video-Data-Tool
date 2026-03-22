@@ -165,6 +165,44 @@ class VideoPoolBuilderTest(unittest.TestCase):
         self.assertEqual([101, 202], result.owner_mids)
         self.assertEqual(["BV_author_1", "BV_author_2"], [entry.bvid for entry in result.entries])
 
+    def test_build_from_owner_mids_skips_failed_author_and_reports_callback(self) -> None:
+        now = self.now
+
+        class PartiallyFailingAuthorVideoSource:
+            def fetch_recent_videos(self, owner_mid: int, since: datetime) -> list[CandidateVideo]:
+                if owner_mid == 202:
+                    raise RuntimeError("网络错误，状态码：412")
+                return [
+                    CandidateVideo(
+                        bvid="BV_author_ok",
+                        source_type="author_expand",
+                        source_ref=f"owner:{owner_mid}",
+                        discovered_at=now,
+                        owner_mid=owner_mid,
+                        tid=17,
+                        pubdate=now - timedelta(days=3),
+                        duration_seconds=180,
+                    )
+                ]
+
+        failed_owner_mids: list[int] = []
+        builder = VideoPoolBuilder(
+            config=DiscoverConfig(lookback_days=90),
+            hot_sources=[],
+            partition_sources=[],
+            author_source=PartiallyFailingAuthorVideoSource(),
+        )
+
+        result = builder.build_from_owner_mids(
+            [101, 202],
+            now=self.now,
+            error_callback=lambda owner_mid, *_: failed_owner_mids.append(owner_mid),
+        )
+
+        self.assertEqual([101, 202], result.owner_mids)
+        self.assertEqual(["BV_author_ok"], [entry.bvid for entry in result.entries])
+        self.assertEqual([202], failed_owner_mids)
+
     def test_build_from_seed_candidates_can_disable_author_backfill(self) -> None:
         hot = StaticSeedSource(
             [
