@@ -58,6 +58,7 @@ CUSTOM_EXPORT_MAX_RETRIES = 4
 CUSTOM_EXPORT_RETRY_BACKOFF_SECONDS = 5.0
 CUSTOM_EXPORT_BATCH_SIZE = 20
 CUSTOM_EXPORT_BATCH_PAUSE_SECONDS = 8.0
+FAILED_OWNER_MID_LOG_PATTERN = re.compile(r"\[WARN\]:\s*作者\s+(\d+)\s+抓取失败")
 
 
 def _build_logo_data_uri(logo_path: Path) -> str | None:
@@ -150,6 +151,31 @@ def _extract_bvids(df: pd.DataFrame, column_name: str) -> list[str]:
     values = df[column_name].astype("string").fillna("").str.strip()
     bvids = [value for value in values.tolist() if value]
     return list(dict.fromkeys(bvids))
+
+
+def _decode_uploaded_text_file(uploaded_file) -> str:
+    raw = uploaded_file.getvalue()
+    for encoding in ("utf-8-sig", "utf-8", "gb18030"):
+        try:
+            return raw.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    raise ValueError(f"无法识别文本编码：{uploaded_file.name}")
+
+
+def _read_uploaded_text_files(uploaded_files) -> list[tuple[str, str]]:
+    texts: list[tuple[str, str]] = []
+    for uploaded_file in uploaded_files:
+        try:
+            texts.append((uploaded_file.name, _decode_uploaded_text_file(uploaded_file)))
+        except Exception as e:  # noqa: BLE001
+            st.error(f"读取日志文件失败：{uploaded_file.name}（{e}）")
+            return []
+    return texts
+
+
+def _extract_failed_owner_mids_from_text(text: str) -> list[int]:
+    return [int(match.group(1)) for match in FAILED_OWNER_MID_LOG_PATTERN.finditer(text)]
 
 
 def _chunk_list(values: list[int], chunk_size: int) -> list[list[int]]:
@@ -430,11 +456,13 @@ with tab_tid:
 with tab_custom_export:
     st.subheader("自定义导出视频列表")
     st.caption(
-        "支持按作者 ID 列表，或按 BVID 列表反查作者后，批量导出这些作者在 lookback_days 内上传的全部视频。"
+        "支持按作者 ID 列表、按 BVID 列表反查作者，或直接从抓取日志中提取失败作者 UID。"
         " 当前已内置保守限速、指数退避重试与分批冷却，以降低长批量导出时的风控触发概率。"
     )
 
-    tab_custom_owner, tab_custom_bvid = st.tabs(["按作者ID导出", "按BVID反查作者导出"])
+    tab_custom_owner, tab_custom_bvid, tab_failed_uid_log = st.tabs(
+        ["按作者ID导出", "按BVID反查作者导出", "从日志提取失败作者UID"]
+    )
 
     with tab_custom_owner:
         owner_files = st.file_uploader(
@@ -654,6 +682,76 @@ with tab_custom_export:
                                 _preview_discover_result(result)
                         finally:
                             _show_saved_log_path(_save_task_logs("custom_bvid_export", bvid_logs))
+
+    with tab_failed_uid_log:
+        log_files = st.file_uploader(
+            "上传抓取日志文件（支持 .log / .txt，可多选）",
+            type=["log", "txt"],
+            accept_multiple_files=True,
+            key="failed_owner_uid_log_files",
+        )
+        log_text = st.text_area(
+            "或直接粘贴日志文本",
+            value="",
+            height=180,
+            key="failed_owner_uid_log_text",
+        )
+        default_failed_owner_uid_name = (
+            f"failed_owner_mid_from_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        )
+        failed_owner_uid_out_path = st.text_input(
+            "输出 CSV 文件路径",
+            value=str(Path("outputs") / default_failed_owner_uid_name),
+            key="failed_owner_uid_out_path",
+        )
+        failed_owner_uid_log_placeholder = st.empty()
+
+        if st.button("开始解析失败作者 UID 并导出", key="failed_owner_uid_submit"):
+            failed_owner_uid_logs: list[str] = []
+
+            def _failed_owner_uid_log(message: str) -> None:
+                _append_log(failed_owner_uid_logs, failed_owner_uid_log_placeholder, message)
+
+            try:
+                if not log_files and not log_text.strip():
+                    st.warning("请至少上传一个日志文件，或直接粘贴日志文本。")
+                else:
+                    matched_owner_mids: list[int] = []
+                    uploaded_texts = _read_uploaded_text_files(log_files) if log_files else []
+
+                    if uploaded_texts:
+                        _failed_owner_uid_log(f"[INFO]: 已读取 {len(uploaded_texts)} 个日志文件。")
+                    for file_name, text in uploaded_texts:
+                        file_owner_mids = _extract_failed_owner_mids_from_text(text)
+                        matched_owner_mids.extend(file_owner_mids)
+                        _failed_owner_uid_log(
+                            f"[INFO]: 文件 {file_name} 中解析到 {len(file_owner_mids)} 条失败作者记录。"
+                        )
+
+                    if log_text.strip():
+                        pasted_owner_mids = _extract_failed_owner_mids_from_text(log_text)
+                        matched_owner_mids.extend(pasted_owner_mids)
+                        _failed_owner_uid_log(
+                            f"[INFO]: 粘贴文本中解析到 {len(pasted_owner_mids)} 条失败作者记录。"
+                        )
+
+                    unique_owner_mids = sorted(set(matched_owner_mids))
+                    if not unique_owner_mids:
+                        _failed_owner_uid_log("[WARN]: 未匹配到失败作者 UID，请检查日志格式。")
+                        st.warning("未从日志中匹配到失败作者 UID。")
+                    else:
+                        output_path = resolve_output_path(failed_owner_uid_out_path)
+                        result_df = pd.DataFrame({"owner_mid": unique_owner_mids})
+                        saved = export_dataframe(result_df, output_path)
+                        _failed_owner_uid_log(
+                            f"[INFO]: 已去重并升序整理为 {len(unique_owner_mids)} 个作者 UID。"
+                        )
+                        _failed_owner_uid_log(f"[INFO]: 导出完成：{saved}")
+                        st.success(f"已导出：{saved}")
+                        st.caption(f"共提取 {len(unique_owner_mids)} 个唯一失败作者 UID（展示前 200 条预览）")
+                        st.dataframe(result_df.head(200), width="stretch", hide_index=True)
+            finally:
+                _show_saved_log_path(_save_task_logs("failed_owner_uid_extract", failed_owner_uid_logs))
 
 
 with tab_merge:
