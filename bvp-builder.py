@@ -49,6 +49,7 @@ LOGO_PATH = APP_DIR / "assets" / "logos" / "bvp-builder.png"
 VALID_TAGS_PATH = APP_DIR / "all_valid_tags.csv"
 LOGS_DIR = APP_DIR / "logs"
 DEFAULT_VIDEO_POOL_OUTPUT_DIR = Path("outputs") / "video_pool"
+BVID_TO_UIDS_OUTPUT_DIR = DEFAULT_VIDEO_POOL_OUTPUT_DIR / "bvid_to_uids"
 FULL_EXPORT_REQUEST_INTERVAL_SECONDS = 1.5
 FULL_EXPORT_REQUEST_JITTER_SECONDS = 1.0
 FULL_EXPORT_MAX_RETRIES = 4
@@ -792,12 +793,12 @@ with tab_tid:
 with tab_custom_export:
     st.subheader("自定义导出视频列表")
     st.caption(
-        "支持按作者 ID 列表、按 BVID 列表反查作者，或直接从抓取日志中提取失败作者 UID。"
+        "支持按 BVID 列表回查作者 ID、导出作者一段时间内上传视频列表，或直接从抓取日志中提取失败作者 UID。"
         " 当前已内置保守限速、指数退避重试与分批冷却，以降低长批量导出时的风控触发概率。"
     )
 
-    tab_custom_owner, tab_custom_bvid, tab_failed_uid_log = st.tabs(
-        ["按作者ID导出", "按BVID反查作者导出", "从日志提取失败作者UID"]
+    tab_custom_bvid, tab_custom_owner, tab_failed_uid_log = st.tabs(
+        ["BVID回查作者ID➡️", "导出作者一段时间内上传视频列表🔁", "从日志提取失败作者UID"]
     )
 
     with tab_custom_owner:
@@ -827,7 +828,7 @@ with tab_custom_export:
         )
         owner_log_placeholder = st.empty()
 
-        if st.button("开始按作者 ID 抓取并导出", key="custom_owner_submit"):
+        if st.button("开始导出作者一段时间内上传视频列表", key="custom_owner_submit"):
             owner_logs: list[str] = []
 
             def _owner_log(message: str) -> None:
@@ -880,7 +881,7 @@ with tab_custom_export:
                             _save_owner_mid_csv(owner_mids, original_uids_path)
                             _owner_log(f"[INFO]: 已保存首轮原始作者 UID 列表：{original_uids_path}")
                         try:
-                            with st.spinner("正在根据作者 ID 抓取视频并导出..."):
+                            with st.spinner("正在导出作者一段时间内上传视频列表..."):
                                 outcome = _build_result_from_owner_mids_with_guardrails(
                                     owner_mids,
                                     int(owner_lookback_days),
@@ -901,7 +902,7 @@ with tab_custom_export:
                             _owner_log(f"[INFO]: 导出完成：{saved}")
                         except Exception as e:  # noqa: BLE001
                             _owner_log(f"[ERROR]: 作者批量抓取任务失败：{_summarize_exception(e)}")
-                            st.error(f"按作者 ID 抓取失败：{e}")
+                            st.error(f"导出作者一段时间内上传视频列表失败：{e}")
                         else:
                             if outcome is not None and outcome.failed_owner_mids:
                                 preview_failed_owner_mids = ", ".join(
@@ -964,25 +965,17 @@ with tab_custom_export:
             value="bvid",
             key="custom_bvid_column",
         )
-        bvid_lookback_days = st.number_input(
-            "lookback_days",
-            min_value=1,
-            max_value=3650,
-            value=90,
-            step=1,
-            key="custom_bvid_lookback_days",
-        )
         default_bvid_name = (
-            f"custom_bvid_{int(bvid_lookback_days)}_days_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            f"bvid_to_uids_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
         )
         bvid_out_path = st.text_input(
             "输出 CSV 文件路径",
-            value=str(_default_output_path(default_bvid_name)),
+            value=str(BVID_TO_UIDS_OUTPUT_DIR / default_bvid_name),
             key="custom_bvid_out_path",
         )
         bvid_log_placeholder = st.empty()
 
-        if st.button("开始按 BVID 反查作者并导出", key="custom_bvid_submit"):
+        if st.button("开始 BVID 回查作者 ID 并导出 owner_mid 列表", key="custom_bvid_submit"):
             bvid_logs: list[str] = []
 
             def _bvid_log(message: str) -> None:
@@ -1007,9 +1000,7 @@ with tab_custom_export:
                         st.warning("未从上传文件中解析出有效的 BVID。")
                     else:
                         _bvid_log(f"[INFO]: 去重后共有 {len(bvids)} 个 BVID 待反查作者。")
-                        _bvid_log(
-                            f"[INFO]: 开始执行 BVID 反查作者抓取任务，lookback_days={int(bvid_lookback_days)}。"
-                        )
+                        _bvid_log("[INFO]: 开始执行 BVID 回查作者 ID 任务。")
 
                         def _on_bvid_progress(_bvid: str, index: int, total: int, _owner_mid: int | None) -> None:
                             if index == 1 or index == total or index % 20 == 0:
@@ -1021,7 +1012,7 @@ with tab_custom_export:
                             )
 
                         try:
-                            with st.spinner("正在根据 BVID 反查作者并导出..."):
+                            with st.spinner("正在根据 BVID 回查作者 ID 并导出 owner_mid 列表..."):
                                 owner_mids, failed_bvids = resolve_owner_mids_from_bvids(
                                     bvids,
                                     request_interval_seconds=CUSTOM_EXPORT_REQUEST_INTERVAL_SECONDS,
@@ -1033,54 +1024,33 @@ with tab_custom_export:
                                 )
 
                                 if owner_mids:
-                                    _bvid_log(f"[INFO]: 已解析出 {len(owner_mids)} 个唯一作者，开始抓取作者近期视频。")
-                                    owner_outcome = _build_result_from_owner_mids_with_guardrails(
-                                        owner_mids,
-                                        int(bvid_lookback_days),
-                                        logger=_bvid_log,
-                                    )
-                                    result = owner_outcome.result
-                                    failed_owner_mids = owner_outcome.failed_owner_mids
-                                    saved = export_discover_result_csv(result, bvid_out_path)
+                                    _bvid_log(f"[INFO]: 已解析出 {len(owner_mids)} 个唯一作者，准备导出 owner_mid 列表。")
+                                    saved = _save_owner_mid_csv(owner_mids, Path(bvid_out_path))
                                 else:
-                                    result = None
                                     saved = None
-                                    failed_owner_mids = []
                             if saved is not None:
                                 _bvid_log(f"[INFO]: 导出完成：{saved}")
                             else:
                                 _bvid_log("[WARN]: 未解析出有效作者，因此未生成导出文件。")
                         except Exception as e:  # noqa: BLE001
                             _bvid_log(f"[ERROR]: BVID 反查作者抓取任务失败：{_summarize_exception(e)}")
-                            st.error(f"按 BVID 反查作者抓取失败：{e}")
+                            st.error(f"BVID 回查作者 ID 失败：{e}")
                         else:
                             if failed_bvids:
                                 preview_failed = ", ".join(failed_bvids[:10])
                                 if len(failed_bvids) > 10:
                                     preview_failed += " ..."
                                 st.warning(f"有 {len(failed_bvids)} 个 BVID 未能解析出作者：{preview_failed}")
-                            if failed_owner_mids:
-                                preview_failed_owner_mids = ", ".join(
-                                    str(owner_mid) for owner_mid in failed_owner_mids[:10]
-                                )
-                                if len(failed_owner_mids) > 10:
-                                    preview_failed_owner_mids += " ..."
-                                st.warning(
-                                    f"有 {len(failed_owner_mids)} 个作者近期视频抓取失败并被跳过：{preview_failed_owner_mids}"
-                                )
-
-                            if not owner_mids or result is None or saved is None:
+                            if not owner_mids or saved is None:
                                 st.warning("未能根据上传的 BVID 解析出有效作者，因此没有导出结果。")
                             else:
                                 st.success(f"已导出：{saved}")
                                 st.caption(
-                                    "输入 BVID 数 "
-                                    f"{len(bvids)}，解析出作者数 {len(owner_mids)}，导出视频数 {len(result.entries)}"
-                                    "（展示前 200 条预览）"
+                                    f"输入 BVID 数 {len(bvids)}，解析出唯一作者数 {len(owner_mids)}（展示前 200 条预览）"
                                 )
-                                _preview_discover_result(result)
+                                st.dataframe(_owner_mid_dataframe(owner_mids).head(200), width="stretch", hide_index=True)
                         finally:
-                            _show_saved_log_path(_save_task_logs("custom_bvid_export", bvid_logs))
+                            _show_saved_log_path(_save_task_logs("bvid_to_uids_export", bvid_logs))
 
     with tab_failed_uid_log:
         log_files = st.file_uploader(
