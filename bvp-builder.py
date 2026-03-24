@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import base64
+import json
+from dataclasses import dataclass
 from datetime import datetime
 from html import escape
 import importlib
@@ -46,6 +48,7 @@ APP_DIR = Path(__file__).resolve().parent
 LOGO_PATH = APP_DIR / "assets" / "logos" / "bvp-builder.png"
 VALID_TAGS_PATH = APP_DIR / "all_valid_tags.csv"
 LOGS_DIR = APP_DIR / "logs"
+DEFAULT_VIDEO_POOL_OUTPUT_DIR = Path("outputs") / "video_pool"
 FULL_EXPORT_REQUEST_INTERVAL_SECONDS = 1.5
 FULL_EXPORT_REQUEST_JITTER_SECONDS = 1.0
 FULL_EXPORT_MAX_RETRIES = 4
@@ -59,6 +62,36 @@ CUSTOM_EXPORT_RETRY_BACKOFF_SECONDS = 5.0
 CUSTOM_EXPORT_BATCH_SIZE = 20
 CUSTOM_EXPORT_BATCH_PAUSE_SECONDS = 8.0
 FAILED_OWNER_MID_LOG_PATTERN = re.compile(r"\[WARN\]:\s*作者\s+(\d+)\s+抓取失败")
+REMAINING_UIDS_PART_PATTERN = re.compile(r"remaining_uids_part_(\d+)\.csv$", re.IGNORECASE)
+UID_EXPANSION_PART_FILE_PATTERN = re.compile(
+    r"(?:videolist|remaining_uids)_part_(\d+)\.csv$",
+    re.IGNORECASE,
+)
+UID_EXPANSION_DIRNAME = "uid_expansions"
+UID_EXPANSION_STATE_FILENAME = "uid_expansion_state.json"
+UID_EXPANSION_SUMMARY_FILENAME = "uid_expansion_summary.log"
+UID_EXPANSION_ORIGINAL_UIDS_FILENAME = "original_uids.csv"
+
+
+@dataclass(slots=True)
+class OwnerBatchExportOutcome:
+    result: DiscoverResult
+    failed_owner_mids: list[int]
+    remaining_owner_mids: list[int]
+    successful_owner_count: int
+    processed_batches: int
+    total_batches: int
+    stopped_due_to_full_failed_batch: bool
+    stopped_batch_index: int | None
+
+
+@dataclass(slots=True)
+class UidExpansionSessionContext:
+    root_dir: Path
+    session_dir: Path
+    logs_dir: Path
+    part_number: int
+    is_new_session: bool
 
 
 def _build_logo_data_uri(logo_path: Path) -> str | None:
@@ -193,14 +226,282 @@ def _summarize_exception(exc: Exception, limit: int = 160) -> str:
     return f"{summary[: limit - 3]}..."
 
 
+def _default_output_path(filename: str) -> Path:
+    return DEFAULT_VIDEO_POOL_OUTPUT_DIR / filename
+
+
+def _normalize_output_root(raw_path: str) -> Path:
+    stripped = raw_path.strip() if raw_path else ""
+    if not stripped:
+        return DEFAULT_VIDEO_POOL_OUTPUT_DIR
+    path = Path(stripped)
+    return path if not path.suffix else path.parent
+
+
+def _owner_mid_dataframe(owner_mids: list[int]) -> pd.DataFrame:
+    return pd.DataFrame({"owner_mid": owner_mids})
+
+
+def _save_owner_mid_csv(owner_mids: list[int], path: Path) -> Path:
+    return export_dataframe(_owner_mid_dataframe(owner_mids), path)
+
+
+def _display_path(path: Path) -> str:
+    try:
+        return path.relative_to(APP_DIR).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def _load_uid_expansion_state(session_dir: Path) -> dict:
+    state_path = session_dir / UID_EXPANSION_STATE_FILENAME
+    if not state_path.exists():
+        return {}
+    try:
+        return json.loads(state_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {}
+
+
+def _save_uid_expansion_state(session_dir: Path, state: dict) -> Path:
+    state_path = session_dir / UID_EXPANSION_STATE_FILENAME
+    session_dir.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(
+        json.dumps(state, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return state_path
+
+
+def _infer_next_uid_expansion_part(session_dir: Path) -> int:
+    highest_part = 0
+    state = _load_uid_expansion_state(session_dir)
+    for part in state.get("parts", []):
+        try:
+            highest_part = max(highest_part, int(part.get("part_number", 0)))
+        except (TypeError, ValueError):
+            continue
+    for path in session_dir.glob("*_part_*.csv"):
+        match = UID_EXPANSION_PART_FILE_PATTERN.search(path.name)
+        if match is None:
+            continue
+        highest_part = max(highest_part, int(match.group(1)))
+    return highest_part + 1
+
+
+def _build_uid_expansion_summary_text(state: dict) -> str:
+    parts = sorted(
+        state.get("parts", []),
+        key=lambda item: int(item.get("part_number", 0)),
+    )
+    interruption_count = sum(1 for part in parts if int(part.get("remaining_owner_count", 0)) > 0)
+    total_videos = sum(int(part.get("video_count", 0)) for part in parts)
+    total_successful_owners = sum(int(part.get("successful_owner_count", 0)) for part in parts)
+    lines = [
+        "uid_expansion 任务总结",
+        f"session_dir: {state.get('session_dir', '')}",
+        f"lookback_days: {state.get('lookback_days', '')}",
+        f"original_uid_count: {state.get('original_uid_count', '')}",
+        f"part_count: {len(parts)}",
+        f"interruption_count: {interruption_count}",
+        f"total_video_count: {total_videos}",
+        f"total_successful_owner_count: {total_successful_owners}",
+        "",
+        "parts:",
+    ]
+    for part in parts:
+        stop_reason = "full_failed_batch_stop" if part.get("stopped_due_to_full_failed_batch") else "completed_all_batches"
+        lines.extend(
+            [
+                f"- part_{part.get('part_number')}:",
+                f"  started_at={part.get('run_started_at', '')}",
+                f"  finished_at={part.get('run_finished_at', '')}",
+                f"  input_owner_count={part.get('input_owner_count', 0)}",
+                f"  successful_owner_count={part.get('successful_owner_count', 0)}",
+                f"  failed_owner_count={part.get('failed_owner_count', 0)}",
+                f"  remaining_owner_count={part.get('remaining_owner_count', 0)}",
+                f"  video_count={part.get('video_count', 0)}",
+                f"  processed_batches={part.get('processed_batches', 0)}/{part.get('total_batches', 0)}",
+                f"  stop_reason={stop_reason}",
+                f"  stopped_batch_index={part.get('stopped_batch_index', '')}",
+                f"  video_file={part.get('video_file', '')}",
+                f"  remaining_file={part.get('remaining_file', '')}",
+                f"  log_file={part.get('log_file', '')}",
+            ]
+        )
+    return "\n".join(lines).strip() + "\n"
+
+
+def _write_uid_expansion_summary(session_dir: Path, state: dict) -> Path:
+    summary_path = session_dir / UID_EXPANSION_SUMMARY_FILENAME
+    summary_path.write_text(_build_uid_expansion_summary_text(state), encoding="utf-8")
+    return summary_path
+
+
+def _find_matching_uid_expansion_session(
+    root_dir: Path,
+    uploaded_file_names: list[str],
+    owner_mids: list[int],
+    lookback_days: int,
+) -> tuple[Path | None, int | None]:
+    matched_parts = []
+    for file_name in uploaded_file_names:
+        match = REMAINING_UIDS_PART_PATTERN.fullmatch(Path(file_name).name)
+        if match is not None:
+            matched_parts.append(int(match.group(1)))
+    if not matched_parts:
+        return None, None
+
+    uploaded_part_number = max(matched_parts)
+    uid_expansions_root = root_dir / UID_EXPANSION_DIRNAME
+    if not uid_expansions_root.exists():
+        return None, uploaded_part_number
+
+    candidate_paths = sorted(
+        uid_expansions_root.glob(
+            f"uid_expansion_{lookback_days}_days_*/remaining_uids_part_{uploaded_part_number}.csv"
+        ),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    fallback_dirs: list[Path] = []
+    exact_match_dirs: list[Path] = []
+    for candidate_path in candidate_paths:
+        fallback_dirs.append(candidate_path.parent)
+        try:
+            candidate_df = pd.read_csv(candidate_path)
+        except Exception:  # noqa: BLE001
+            continue
+        if "owner_mid" not in candidate_df.columns:
+            continue
+        candidate_owner_mids, _ = _extract_owner_mids(candidate_df, "owner_mid")
+        if candidate_owner_mids == owner_mids:
+            exact_match_dirs.append(candidate_path.parent)
+
+    if exact_match_dirs:
+        return exact_match_dirs[0], uploaded_part_number
+    if fallback_dirs:
+        return fallback_dirs[0], uploaded_part_number
+    return None, uploaded_part_number
+
+
+def _prepare_uid_expansion_session(
+    root_dir: Path,
+    uploaded_file_names: list[str],
+    owner_mids: list[int],
+    lookback_days: int,
+    logger=None,
+) -> UidExpansionSessionContext:
+    normalized_root_dir = _normalize_output_root(str(root_dir))
+    session_dir, uploaded_part_number = _find_matching_uid_expansion_session(
+        normalized_root_dir,
+        uploaded_file_names,
+        owner_mids,
+        lookback_days,
+    )
+    if session_dir is not None:
+        part_number = max(_infer_next_uid_expansion_part(session_dir), (uploaded_part_number or 0) + 1)
+        if logger is not None:
+            logger(
+                f"[INFO]: 识别到已有 uid_expansion 会话：{_display_path(session_dir)}，本次将保存为 part_{part_number}。"
+            )
+        return UidExpansionSessionContext(
+            root_dir=normalized_root_dir,
+            session_dir=session_dir,
+            logs_dir=session_dir / "logs",
+            part_number=part_number,
+            is_new_session=False,
+        )
+
+    session_dir = (
+        normalized_root_dir
+        / UID_EXPANSION_DIRNAME
+        / f"uid_expansion_{lookback_days}_days_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    )
+    if logger is not None:
+        if uploaded_part_number is not None:
+            logger(
+                "[WARN]: 上传文件名看起来像历史 remaining_uids_part_n.csv，但未找到匹配会话；"
+                "已按新的 uid_expansion 任务创建目录。"
+            )
+        logger(f"[INFO]: 已创建新的 uid_expansion 会话目录：{_display_path(session_dir)}。")
+    return UidExpansionSessionContext(
+        root_dir=normalized_root_dir,
+        session_dir=session_dir,
+        logs_dir=session_dir / "logs",
+        part_number=1,
+        is_new_session=True,
+    )
+
+
+def _record_uid_expansion_part(
+    session: UidExpansionSessionContext,
+    lookback_days: int,
+    input_owner_count: int,
+    outcome: OwnerBatchExportOutcome,
+    video_path: Path,
+    remaining_path: Path | None,
+    log_path: Path | None,
+    run_started_at: str,
+    run_finished_at: str,
+) -> dict:
+    state = _load_uid_expansion_state(session.session_dir)
+    parts = [part for part in state.get("parts", []) if int(part.get("part_number", 0)) != session.part_number]
+    parts.append(
+        {
+            "part_number": session.part_number,
+            "run_started_at": run_started_at,
+            "run_finished_at": run_finished_at,
+            "input_owner_count": input_owner_count,
+            "successful_owner_count": outcome.successful_owner_count,
+            "failed_owner_count": len(outcome.failed_owner_mids),
+            "remaining_owner_count": len(outcome.remaining_owner_mids),
+            "video_count": len(outcome.result.entries),
+            "processed_batches": outcome.processed_batches,
+            "total_batches": outcome.total_batches,
+            "stopped_due_to_full_failed_batch": outcome.stopped_due_to_full_failed_batch,
+            "stopped_batch_index": outcome.stopped_batch_index,
+            "video_file": video_path.name,
+            "remaining_file": remaining_path.name if remaining_path is not None else "",
+            "log_file": (
+                log_path.relative_to(session.session_dir).as_posix()
+                if log_path is not None
+                else ""
+            ),
+        }
+    )
+    parts.sort(key=lambda item: int(item.get("part_number", 0)))
+    original_uid_count = int(state.get("original_uid_count") or input_owner_count)
+    state.update(
+        {
+            "session_dir": _display_path(session.session_dir),
+            "lookback_days": int(lookback_days),
+            "original_uid_count": original_uid_count,
+            "parts": parts,
+            "updated_at": run_finished_at,
+        }
+    )
+    _save_uid_expansion_state(session.session_dir, state)
+    return state
+
+
 def _build_result_from_owner_mids_with_guardrails(
     owner_mids: list[int],
     lookback_days: int,
     logger=None,
-) -> tuple[DiscoverResult, list[int]]:
-    normalized_owner_mids = sorted({int(owner_mid) for owner_mid in owner_mids})
+) -> OwnerBatchExportOutcome:
+    normalized_owner_mids = list(dict.fromkeys(int(owner_mid) for owner_mid in owner_mids))
     if not normalized_owner_mids:
-        return DiscoverResult(entries=[], owner_mids=[]), []
+        return OwnerBatchExportOutcome(
+            result=DiscoverResult(entries=[], owner_mids=[]),
+            failed_owner_mids=[],
+            remaining_owner_mids=[],
+            successful_owner_count=0,
+            processed_batches=0,
+            total_batches=0,
+            stopped_due_to_full_failed_batch=False,
+            stopped_batch_index=None,
+        )
 
     builder = VideoPoolBuilder(
         config=DiscoverConfig(lookback_days=lookback_days),
@@ -218,6 +519,10 @@ def _build_result_from_owner_mids_with_guardrails(
     batches = _chunk_list(normalized_owner_mids, CUSTOM_EXPORT_BATCH_SIZE)
     merged_entries = {}
     failed_owner_mids: list[int] = []
+    successful_owner_count = 0
+    processed_batches = 0
+    stopped_due_to_full_failed_batch = False
+    stopped_batch_index: int | None = None
 
     for batch_index, batch_owner_mids in enumerate(batches, start=1):
         batch_failed_owner_mids: list[int] = []
@@ -239,23 +544,53 @@ def _build_result_from_owner_mids_with_guardrails(
         for entry in batch_result.entries:
             merged_entries.setdefault(entry.bvid, entry)
 
-        failed_owner_mids.extend(batch_failed_owner_mids)
+        batch_failed_owner_mid_set = set(batch_failed_owner_mids)
+        failed_owner_mids.extend(
+            [owner_mid for owner_mid in batch_owner_mids if owner_mid in batch_failed_owner_mid_set]
+        )
+        successful_owner_count += len(batch_owner_mids) - len(batch_failed_owner_mid_set)
+        processed_batches = batch_index
         if logger is not None:
             logger(
                 f"[INFO]: 第 {batch_index}/{len(batches)} 批完成，新增 {len(merged_entries) - before_count} 条视频，累计 {len(merged_entries)} 条。"
             )
             if batch_failed_owner_mids:
                 logger(f"[WARN]: 本批有 {len(batch_failed_owner_mids)} 个作者抓取失败。")
-            if batch_index < len(batches):
-                logger(f"[INFO]: 批次间暂停 {int(CUSTOM_EXPORT_BATCH_PAUSE_SECONDS)} 秒，降低请求频率。")
+        if batch_failed_owner_mid_set and len(batch_failed_owner_mid_set) == len(batch_owner_mids):
+            stopped_due_to_full_failed_batch = True
+            stopped_batch_index = batch_index
+            if logger is not None:
+                logger(
+                    "[WARN]: 检测到当前批次全部作者抓取失败，已提前停止后续批次，并将输出本次已抓取视频列表及剩余作者 UID。"
+                )
+            break
         if batch_index < len(batches):
+            if logger is not None:
+                logger(f"[INFO]: 批次间暂停 {int(CUSTOM_EXPORT_BATCH_PAUSE_SECONDS)} 秒，降低请求频率。")
             time.sleep(CUSTOM_EXPORT_BATCH_PAUSE_SECONDS)
 
     result = DiscoverResult(
         entries=sorted(merged_entries.values(), key=lambda item: item.discovered_at),
         owner_mids=normalized_owner_mids,
     )
-    return result, list(dict.fromkeys(failed_owner_mids))
+    remaining_owner_mids = list(dict.fromkeys(failed_owner_mids))
+    if stopped_due_to_full_failed_batch and stopped_batch_index is not None:
+        remaining_owner_mids.extend(
+            owner_mid
+            for batch_owner_mids in batches[stopped_batch_index:]
+            for owner_mid in batch_owner_mids
+        )
+        remaining_owner_mids = list(dict.fromkeys(remaining_owner_mids))
+    return OwnerBatchExportOutcome(
+        result=result,
+        failed_owner_mids=list(dict.fromkeys(failed_owner_mids)),
+        remaining_owner_mids=remaining_owner_mids,
+        successful_owner_count=successful_owner_count,
+        processed_batches=processed_batches,
+        total_batches=len(batches),
+        stopped_due_to_full_failed_batch=stopped_due_to_full_failed_batch,
+        stopped_batch_index=stopped_batch_index,
+    )
 
 
 def _append_log(logs: list[str], placeholder, message: str) -> None:
@@ -263,13 +598,14 @@ def _append_log(logs: list[str], placeholder, message: str) -> None:
     placeholder.code("\n".join(logs), language=None)
 
 
-def _save_task_logs(task_name: str, logs: list[str]) -> Path | None:
+def _save_task_logs(task_name: str, logs: list[str], *, log_dir: Path | None = None) -> Path | None:
     if not logs:
         return None
-    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    target_log_dir = log_dir or LOGS_DIR
+    target_log_dir.mkdir(parents=True, exist_ok=True)
     safe_task_name = re.sub(r"[^A-Za-z0-9._-]+", "_", task_name).strip("_") or "task"
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    log_path = LOGS_DIR / f"{timestamp}_{safe_task_name}.log"
+    log_path = target_log_dir / f"{timestamp}_{safe_task_name}.log"
     content = "\n".join(logs).strip()
     log_path.write_text(content + "\n", encoding="utf-8")
     return log_path
@@ -327,7 +663,7 @@ with tab_full_export:
     with st.form("full_export_params"):
         full_lookback_days = st.number_input("lookback_days", min_value=1, max_value=3650, value=90, step=1)
         default_full_name = f"full_site_{int(full_lookback_days)}_days_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        full_out_path = st.text_input("输出 CSV 文件路径", value=str(Path("outputs") / default_full_name))
+        full_out_path = st.text_input("输出 CSV 文件路径", value=str(_default_output_path(default_full_name)))
         full_submitted = st.form_submit_button("开始全量抓取并导出")
 
     if valid_tid_count is not None:
@@ -378,7 +714,7 @@ with tab_export:
         tid = st.number_input("tid", min_value=1, max_value=999999, value=17, step=1)
         lookback_days = st.number_input("lookback_days", min_value=1, max_value=3650, value=90, step=1)
         default_name = f"tid{int(tid)}_{int(lookback_days)}_days_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        out_path = st.text_input("输出 CSV 文件路径", value=str(Path("outputs") / default_name))
+        out_path = st.text_input("输出 CSV 文件路径", value=str(_default_output_path(default_name)))
         submitted = st.form_submit_button("开始构建并导出")
 
     export_log_placeholder = st.empty()
@@ -484,12 +820,9 @@ with tab_custom_export:
             step=1,
             key="custom_owner_lookback_days",
         )
-        default_owner_name = (
-            f"custom_owner_{int(owner_lookback_days)}_days_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        )
         owner_out_path = st.text_input(
-            "输出 CSV 文件路径",
-            value=str(Path("outputs") / default_owner_name),
+            "输出根目录（将自动在其下创建 uid_expansions/...）",
+            value=str(DEFAULT_VIDEO_POOL_OUTPUT_DIR),
             key="custom_owner_out_path",
         )
         owner_log_placeholder = st.empty()
@@ -521,39 +854,103 @@ with tab_custom_export:
                     if not owner_mids:
                         st.warning("未从上传文件中解析出有效的作者 ID。")
                     else:
+                        output_root = _normalize_output_root(owner_out_path)
+                        session = _prepare_uid_expansion_session(
+                            output_root,
+                            [uploaded_file.name for uploaded_file in owner_files],
+                            owner_mids,
+                            int(owner_lookback_days),
+                            logger=_owner_log,
+                        )
+                        run_started_at = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        saved: Path | None = None
+                        remaining_saved: Path | None = None
+                        summary_saved: Path | None = None
+                        outcome: OwnerBatchExportOutcome | None = None
+
                         _owner_log(f"[INFO]: 去重后共有 {len(owner_mids)} 个作者待抓取。")
                         _owner_log(
                             f"[INFO]: 开始执行作者批量抓取任务，lookback_days={int(owner_lookback_days)}。"
                         )
+                        _owner_log(
+                            f"[INFO]: 本次 uid_expansion 会话目录：{_display_path(session.session_dir)}，当前 part_{session.part_number}。"
+                        )
+                        if session.is_new_session:
+                            original_uids_path = session.session_dir / UID_EXPANSION_ORIGINAL_UIDS_FILENAME
+                            _save_owner_mid_csv(owner_mids, original_uids_path)
+                            _owner_log(f"[INFO]: 已保存首轮原始作者 UID 列表：{original_uids_path}")
                         try:
                             with st.spinner("正在根据作者 ID 抓取视频并导出..."):
-                                result, failed_owner_mids = _build_result_from_owner_mids_with_guardrails(
+                                outcome = _build_result_from_owner_mids_with_guardrails(
                                     owner_mids,
                                     int(owner_lookback_days),
                                     logger=_owner_log,
                                 )
-                                saved = export_discover_result_csv(result, owner_out_path)
+                                video_output_path = session.session_dir / f"videolist_part_{session.part_number}.csv"
+                                saved = export_discover_result_csv(outcome.result, video_output_path)
+                                _owner_log(f"[INFO]: 视频列表已导出：{saved}")
+                                if outcome.remaining_owner_mids:
+                                    remaining_output_path = (
+                                        session.session_dir / f"remaining_uids_part_{session.part_number}.csv"
+                                    )
+                                    remaining_saved = _save_owner_mid_csv(
+                                        outcome.remaining_owner_mids,
+                                        remaining_output_path,
+                                    )
+                                    _owner_log(f"[INFO]: 剩余作者 UID 已导出：{remaining_saved}")
                             _owner_log(f"[INFO]: 导出完成：{saved}")
                         except Exception as e:  # noqa: BLE001
                             _owner_log(f"[ERROR]: 作者批量抓取任务失败：{_summarize_exception(e)}")
                             st.error(f"按作者 ID 抓取失败：{e}")
                         else:
-                            if failed_owner_mids:
+                            if outcome is not None and outcome.failed_owner_mids:
                                 preview_failed_owner_mids = ", ".join(
-                                    str(owner_mid) for owner_mid in failed_owner_mids[:10]
+                                    str(owner_mid) for owner_mid in outcome.failed_owner_mids[:10]
                                 )
-                                if len(failed_owner_mids) > 10:
+                                if len(outcome.failed_owner_mids) > 10:
                                     preview_failed_owner_mids += " ..."
                                 st.warning(
-                                    f"有 {len(failed_owner_mids)} 个作者抓取失败并被跳过：{preview_failed_owner_mids}"
+                                    f"本次共有 {len(outcome.failed_owner_mids)} 个作者抓取失败：{preview_failed_owner_mids}"
                                 )
-                            st.success(f"已导出：{saved}")
+                            if outcome is not None and outcome.remaining_owner_mids:
+                                if outcome.stopped_due_to_full_failed_batch:
+                                    st.warning(
+                                        "检测到某一批作者全部抓取失败，程序已提前停止，并导出了当前已抓取视频列表与剩余作者 UID。"
+                                    )
+                                else:
+                                    st.warning("本次已跑完全部批次，但仍有失败作者，已导出 remaining_uids_part 文件供继续重试。")
+                                if remaining_saved is not None:
+                                    st.caption(f"剩余作者 UID：`{_display_path(remaining_saved)}`")
+                            else:
+                                st.success(f"已导出：{saved}")
                             st.caption(
-                                f"输入作者数 {len(owner_mids)}，导出视频数 {len(result.entries)}（展示前 200 条预览）"
+                                f"输入作者数 {len(owner_mids)}，导出视频数 {len(outcome.result.entries) if outcome is not None else 0}"
+                                "（展示前 200 条预览）"
                             )
-                            _preview_discover_result(result)
+                            if outcome is not None:
+                                _preview_discover_result(outcome.result)
                         finally:
-                            _show_saved_log_path(_save_task_logs("custom_owner_export", owner_logs))
+                            log_path = _save_task_logs(
+                                f"uid_expansion_part_{session.part_number}",
+                                owner_logs,
+                                log_dir=session.logs_dir,
+                            )
+                            _show_saved_log_path(log_path)
+                            if outcome is not None and saved is not None:
+                                state = _record_uid_expansion_part(
+                                    session,
+                                    int(owner_lookback_days),
+                                    len(owner_mids),
+                                    outcome,
+                                    saved,
+                                    remaining_saved,
+                                    log_path,
+                                    run_started_at,
+                                    datetime.now().strftime("%Y%m%d_%H%M%S"),
+                                )
+                                if not outcome.remaining_owner_mids:
+                                    summary_saved = _write_uid_expansion_summary(session.session_dir, state)
+                                    st.caption(f"任务总结已保存：`{_display_path(summary_saved)}`")
 
     with tab_custom_bvid:
         bvid_files = st.file_uploader(
@@ -580,7 +977,7 @@ with tab_custom_export:
         )
         bvid_out_path = st.text_input(
             "输出 CSV 文件路径",
-            value=str(Path("outputs") / default_bvid_name),
+            value=str(_default_output_path(default_bvid_name)),
             key="custom_bvid_out_path",
         )
         bvid_log_placeholder = st.empty()
@@ -637,11 +1034,13 @@ with tab_custom_export:
 
                                 if owner_mids:
                                     _bvid_log(f"[INFO]: 已解析出 {len(owner_mids)} 个唯一作者，开始抓取作者近期视频。")
-                                    result, failed_owner_mids = _build_result_from_owner_mids_with_guardrails(
+                                    owner_outcome = _build_result_from_owner_mids_with_guardrails(
                                         owner_mids,
                                         int(bvid_lookback_days),
                                         logger=_bvid_log,
                                     )
+                                    result = owner_outcome.result
+                                    failed_owner_mids = owner_outcome.failed_owner_mids
                                     saved = export_discover_result_csv(result, bvid_out_path)
                                 else:
                                     result = None
@@ -701,7 +1100,7 @@ with tab_custom_export:
         )
         failed_owner_uid_out_path = st.text_input(
             "输出 CSV 文件路径",
-            value=str(Path("outputs") / default_failed_owner_uid_name),
+            value=str(_default_output_path(default_failed_owner_uid_name)),
             key="failed_owner_uid_out_path",
         )
         failed_owner_uid_log_placeholder = st.empty()
@@ -788,7 +1187,7 @@ with tab_merge:
     default_merge_name = f"merged_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
     out_merge_path = st.text_input(
         "输出文件路径",
-        value=str(Path("outputs") / default_merge_name),
+        value=str(_default_output_path(default_merge_name)),
     )
 
     do_merge = st.button("开始拼接并导出")

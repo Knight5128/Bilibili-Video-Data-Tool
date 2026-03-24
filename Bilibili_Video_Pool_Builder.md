@@ -8,10 +8,10 @@
 - **全量导出视频列表**：一键汇总全站热门榜单、过去若干周的“每周必看”以及全部有效分区在 `lookback_days` 时间窗内的投稿视频，自动按 `bvid` 去重后导出为 CSV；该流程现已启用更保守的请求间隔、指数退避重试与分区分批冷却，以降低长时间全量抓取时出现 `-404` 等接口错误的概率。若个别分区返回 `-404 / 啥都木有`，系统会自动跳过该分区并在最终日志中汇总提示。
 - **热门 / 每周必看 / 分区多源发现**：内置“全站热门榜单”“每周必看”“分区近期投稿”等独立 seed source，便于构建更全面的视频池；全量模式下这些 source 会复用统一的限速与重试参数。
 - **作者历史视频扩展**：对发现的视频作者，抓取其在设定 lookback 窗口内的所有上传视频，用于放大样本量和创作者视角。
-- **视频池构建与导出**：将所有发现的视频统一整理为 `video_pool` 结构，支持导出为 UTF-8 编码的 CSV 文件，便于后续分析。
-- **导出文件默认命名优化**：抓取类导出的默认 CSV 文件名会自动包含本次 `lookback_days` 数值（如 `custom_bvid_90_days_<datetime>.csv`），并移除了默认文件名中的 `video_pool` 字样，便于快速识别时间窗参数。
+- **视频池构建与导出**：将所有发现的视频统一整理为 `video_pool` 结构，支持导出为 UTF-8 编码的 CSV 文件，便于后续分析；`Bilibili_Video_Pool_Builder` 中各类导出任务的默认输出根目录现统一为 `outputs/video_pool/`。
+- **导出文件默认命名优化**：抓取类导出的默认 CSV 文件名会自动包含本次 `lookback_days` 数值（如 `custom_bvid_90_days_<datetime>.csv`），便于快速识别时间窗参数。
 - **任务运行日志归档**：每次执行“全量导出视频列表”“按分区导出视频列表”或“自定义导出视频列表”中的抓取任务后，前端运行日志都会自动保存为 `logs/` 目录下的一份 `.log` 文件，便于事后排查与留档。
-- **自定义导出视频列表**：支持上传作者 ID 列表、上传 BVID 列表反查作者，或从抓取日志中提取失败作者 UID。前两类任务可批量抓取对应作者在 `lookback_days` 时间窗内上传的全部视频并导出为 CSV；日志提取功能会将失败作者的 `owner_mid` 去重、升序排序后导出为单列 CSV，便于重试或后续分析。
+- **自定义导出视频列表**：支持上传作者 ID 列表、上传 BVID 列表反查作者，或从抓取日志中提取失败作者 UID。前两类任务可批量抓取对应作者在 `lookback_days` 时间窗内上传的全部视频并导出为 CSV；其中“按作者ID导出”现支持 `uid_expansion` 续跑机制，会自动保存 `original_uids.csv`、`videolist_part_n.csv`、`remaining_uids_part_n.csv`、分 part 运行日志，以及最终的任务总结日志，便于在批量任务被风控或接口异常打断后继续重试。日志提取功能会将失败作者的 `owner_mid` 去重、升序排序后导出为单列 CSV，便于重试或后续分析。
 - **CSV/XLSX 文件拼接及去重**：从本地上传多个 `video_pool` CSV/XLSX 文件，按指定排序键（或默认按主键 `bvid` 降序）拼接为一个新文件；可选基于用户填写的键对拼接结果去重，并额外导出去重后的结果文件。
 - **tid 与分区名称对照**：内置来自 [视频分区一览 | bilibili-API-collect](https://lxb007981.github.io/bilibili-API-collect/video/video_zone.html) 的 `tid → 分区/子分区` 映射，可在前端界面中随时查阅。
 - **快捷跳转**：支持在前端直接输入单个视频 `bvid` 或作者 `owner_mid`，一键调用系统默认浏览器跳转到对应的视频播放页或作者主页。
@@ -33,10 +33,10 @@ streamlit run bvp-builder.py
 - Logo 资源目录：界面会优先读取 `assets/logos/bvp-builder.png` 作为浏览器标签页图标，并显示在主界面顶部的居中标题旁；若该文件不存在，则自动回退为纯文本标题。
 
 - 前端主要包含六个标签页：
-  - **全量导出视频列表**：设置 `lookback_days`，基于 `all_valid_tags.csv` 中的有效分区列表，一键抓取全站热门榜单、过去 `lookback_days // 7 + 1` 周的“每周必看”以及全部有效分区在 `lookback_days` 内的投稿视频；抓取过程中会动态显示日志，并默认启用更保守的请求间隔、指数退避重试和分区分批冷却。若个别分区返回 `-404 / 啥都木有`，会自动跳过该分区并在最终输出一行 INFO 汇总被略过的 `tid`；最终结果仍会按 `bvid` 去重后导出 CSV，并将本次运行日志写入 `logs/` 目录。默认导出文件名形如 `full_site_90_days_<datetime>.csv`。
-  - **按分区导出视频列表**：设置 `tid` 与 `lookback_days`，构建 `video_pool` 并导出 CSV；抓取过程会显示阶段性日志，并在任务结束后自动保存到 `logs/` 目录。默认导出文件名形如 `tid17_90_days_<datetime>.csv`。
+  - **全量导出视频列表**：设置 `lookback_days`，基于 `all_valid_tags.csv` 中的有效分区列表，一键抓取全站热门榜单、过去 `lookback_days // 7 + 1` 周的“每周必看”以及全部有效分区在 `lookback_days` 内的投稿视频；抓取过程中会动态显示日志，并默认启用更保守的请求间隔、指数退避重试和分区分批冷却。若个别分区返回 `-404 / 啥都木有`，会自动跳过该分区并在最终输出一行 INFO 汇总被略过的 `tid`；最终结果仍会按 `bvid` 去重后导出 CSV，并将本次运行日志写入 `logs/` 目录。默认输出路径位于 `outputs/video_pool/` 下，文件名形如 `full_site_90_days_<datetime>.csv`。
+  - **按分区导出视频列表**：设置 `tid` 与 `lookback_days`，构建 `video_pool` 并导出 CSV；抓取过程会显示阶段性日志，并在任务结束后自动保存到 `logs/` 目录。默认输出路径位于 `outputs/video_pool/` 下，文件名形如 `tid17_90_days_<datetime>.csv`。
   - **tid与分区名称对应**：查看/搜索 B 站各分区及其 `tid` 映射，便于选择合适的分区进行抓取。
-  - **自定义导出视频列表**：包含三项功能。功能 A 可上传保存作者 ID 的 CSV/XLSX 文件（默认列名 `owner_mid`，支持多文件拼接并按该列去重），导出这些作者在 `lookback_days` 内上传的全部视频；功能 B 可上传保存 BVID 的 CSV/XLSX 文件（默认列名 `bvid`，同样支持多文件拼接并按该列去重），先反查作者，再导出这些作者在 `lookback_days` 内上传的全部视频；功能 C 可上传 `.log/.txt` 抓取日志文件或直接粘贴日志文本，从形如“`[WARN]: 作者 889299 抓取失败，已跳过。原因：...`”的失败行中提取 `owner_mid`，去重并按升序导出为单列 CSV。前两项抓取任务都会在前端显示阶段性日志，并默认启用请求间隔、指数退避重试、分批冷却和单条失败跳过，避免个别作者或 BVID 失败时整批任务直接中断；每次任务结束后，运行日志也会自动落盘到 `logs/` 目录。默认导出文件名分别形如 `custom_owner_90_days_<datetime>.csv`、`custom_bvid_90_days_<datetime>.csv` 与 `failed_owner_mid_from_logs_<datetime>.csv`。
+  - **自定义导出视频列表**：包含三项功能。功能 A 可上传保存作者 ID 的 CSV/XLSX 文件（默认列名 `owner_mid`，支持多文件拼接并按该列去重），导出这些作者在 `lookback_days` 内上传的全部视频；该模式默认以 `outputs/video_pool/` 为输出根目录，并会在 `outputs/video_pool/uid_expansions/uid_expansion_<lookback_days>_days_<timestamp>/` 下自动管理本轮任务。首次执行时会保存 `original_uids.csv`；每次执行都会按 part 编号写出 `videolist_part_n.csv` 与日志文件。若某一批作者全部抓取失败，程序会立即停止后续批次，并把本次抓取失败和尚未抓取的作者统一导出为 `remaining_uids_part_n.csv`；若整轮跑完后仍有零散失败作者，也会同样导出 `remaining_uids_part_n.csv` 供继续重试。再次上传 `remaining_uids_part_n.csv` 时，程序会自动识别并继续保存为下一次 `part_(n+1)`。当全部作者都抓取完成后，会在同目录下额外生成一份独立的 `uid_expansion_summary.log`，汇总中断次数、各 part 成功抓取条目数等信息。功能 B 可上传保存 BVID 的 CSV/XLSX 文件（默认列名 `bvid`，同样支持多文件拼接并按该列去重），先反查作者，再导出这些作者在 `lookback_days` 内上传的全部视频；功能 C 可上传 `.log/.txt` 抓取日志文件或直接粘贴日志文本，从形如“`[WARN]: 作者 889299 抓取失败，已跳过。原因：...`”的失败行中提取 `owner_mid`，去重并按升序导出为单列 CSV。功能 B、功能 C 的默认输出路径也位于 `outputs/video_pool/` 下；三类任务的前端运行日志仍会实时展示，其中功能 A 的日志额外会同步归档到对应 `uid_expansion` 目录下的 `logs/` 子目录。
   - **文件拼接及去重**：上传多个本地 CSV/XLSX 文件（通常为已导出的 `video_pool`），指定一个或多个排序键进行拼接；当排序键留空时，默认按主键 `bvid` 降序排序。若勾选去重，则可进一步填写去重键与保留键，系统会在导出拼接文件的同时，额外导出一份去重后的文件；去重时默认优先保留获取时间较晚的记录，若时间相同则保留拼接结果中排在前面的一条。
   - **快捷跳转**：输入单个 `bvid` 或作者 ID，也可直接粘贴 B 站视频链接/作者主页链接，界面会自动提取有效标识并在系统默认浏览器中打开目标页面。
 
