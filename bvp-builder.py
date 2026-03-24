@@ -47,8 +47,11 @@ from bili_pipeline.utils.streamlit_night_sky import render_night_sky_background
 APP_DIR = Path(__file__).resolve().parent
 LOGO_PATH = APP_DIR / "assets" / "logos" / "bvp-builder.png"
 VALID_TAGS_PATH = APP_DIR / "all_valid_tags.csv"
-LOGS_DIR = APP_DIR / "logs"
 DEFAULT_VIDEO_POOL_OUTPUT_DIR = Path("outputs") / "video_pool"
+FULL_SITE_FLOORINGS_OUTPUT_DIR = DEFAULT_VIDEO_POOL_OUTPUT_DIR / "full_site_floorings"
+FULL_SITE_FLOORINGS_LOGS_DIR = FULL_SITE_FLOORINGS_OUTPUT_DIR / "logs"
+SINGLE_TID_EXPANSIONS_OUTPUT_DIR = DEFAULT_VIDEO_POOL_OUTPUT_DIR / "single_tid_expansions"
+SINGLE_TID_EXPANSIONS_LOGS_DIR = SINGLE_TID_EXPANSIONS_OUTPUT_DIR / "logs"
 BVID_TO_UIDS_OUTPUT_DIR = DEFAULT_VIDEO_POOL_OUTPUT_DIR / "bvid_to_uids"
 FULL_EXPORT_REQUEST_INTERVAL_SECONDS = 1.5
 FULL_EXPORT_REQUEST_JITTER_SECONDS = 1.0
@@ -229,6 +232,14 @@ def _summarize_exception(exc: Exception, limit: int = 160) -> str:
 
 def _default_output_path(filename: str) -> Path:
     return DEFAULT_VIDEO_POOL_OUTPUT_DIR / filename
+
+
+def _default_full_export_output_path(filename: str) -> Path:
+    return FULL_SITE_FLOORINGS_OUTPUT_DIR / filename
+
+
+def _default_single_tid_output_path(filename: str) -> Path:
+    return SINGLE_TID_EXPANSIONS_OUTPUT_DIR / filename
 
 
 def _normalize_output_root(raw_path: str) -> Path:
@@ -602,7 +613,7 @@ def _append_log(logs: list[str], placeholder, message: str) -> None:
 def _save_task_logs(task_name: str, logs: list[str], *, log_dir: Path | None = None) -> Path | None:
     if not logs:
         return None
-    target_log_dir = log_dir or LOGS_DIR
+    target_log_dir = log_dir or (DEFAULT_VIDEO_POOL_OUTPUT_DIR / "logs")
     target_log_dir.mkdir(parents=True, exist_ok=True)
     safe_task_name = re.sub(r"[^A-Za-z0-9._-]+", "_", task_name).strip("_") or "task"
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
@@ -664,7 +675,7 @@ with tab_full_export:
     with st.form("full_export_params"):
         full_lookback_days = st.number_input("lookback_days", min_value=1, max_value=3650, value=90, step=1)
         default_full_name = f"full_site_{int(full_lookback_days)}_days_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        full_out_path = st.text_input("输出 CSV 文件路径", value=str(_default_output_path(default_full_name)))
+        full_out_path = st.text_input("输出 CSV 文件路径", value=str(_default_full_export_output_path(default_full_name)))
         full_submitted = st.form_submit_button("开始全量抓取并导出")
 
     if valid_tid_count is not None:
@@ -708,14 +719,16 @@ with tab_full_export:
                 st.caption(f"共 {len(result.entries)} 条 entries（展示前 200 条预览）")
                 _preview_discover_result(result)
             finally:
-                _show_saved_log_path(_save_task_logs("full_export", full_logs))
+                _show_saved_log_path(
+                    _save_task_logs("full_export", full_logs, log_dir=FULL_SITE_FLOORINGS_LOGS_DIR)
+                )
 
 with tab_export:
     with st.form("params"):
         tid = st.number_input("tid", min_value=1, max_value=999999, value=17, step=1)
         lookback_days = st.number_input("lookback_days", min_value=1, max_value=3650, value=90, step=1)
         default_name = f"tid{int(tid)}_{int(lookback_days)}_days_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        out_path = st.text_input("输出 CSV 文件路径", value=str(_default_output_path(default_name)))
+        out_path = st.text_input("输出 CSV 文件路径", value=str(_default_single_tid_output_path(default_name)))
         submitted = st.form_submit_button("开始构建并导出")
 
     export_log_placeholder = st.empty()
@@ -743,7 +756,13 @@ with tab_export:
             st.caption(f"共 {len(result.entries)} 条 entries（展示前 200 条预览）")
             _preview_discover_result(result)
         finally:
-            _show_saved_log_path(_save_task_logs(f"tid_{int(tid)}_export", export_logs))
+            _show_saved_log_path(
+                _save_task_logs(
+                    f"tid_{int(tid)}_export",
+                    export_logs,
+                    log_dir=SINGLE_TID_EXPANSIONS_LOGS_DIR,
+                )
+            )
 
 with tab_tid:
     st.subheader("tid 与分区名称对应")
