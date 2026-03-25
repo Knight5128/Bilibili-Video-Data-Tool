@@ -2,6 +2,7 @@
 
 from .bilibili_sources import (
     BilibiliHotSource,
+    BilibiliRankboardSource,
     BilibiliUserRecentVideoSource,
     BilibiliWeeklyHotSource,
     BilibiliZoneNewVideosSource,
@@ -15,6 +16,7 @@ from .full_site import build_full_site_result, load_valid_partition_tids
 
 __all__ = [
     "BilibiliHotSource",
+    "BilibiliRankboardSource",
     "BilibiliUserRecentVideoSource",
     "BilibiliWeeklyHotSource",
     "BilibiliZoneNewVideosSource",

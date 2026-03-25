@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Literal
 
 
-SourceType = Literal["hot", "weekly_hot", "partition", "author_expand", "search_supplement"]
+SourceType = Literal["hot", "weekly_hot", "partition", "author_expand", "search_supplement", "rankboard"]
 
 
 @dataclass(slots=True)
@@ -56,3 +56,27 @@ class VideoPoolEntry:
 class DiscoverResult:
     entries: list[VideoPoolEntry]
     owner_mids: list[int]
+
+
+@dataclass(slots=True)
+class RankboardEntry:
+    """Single row from a live UGC rankboard snapshot."""
+
+    board_rid: int
+    board_name: str
+    board_rank: int
+    bvid: str
+    source_type: SourceType
+    source_ref: str
+    discovered_at: datetime
+    owner_mid: int | None = None
+    tid: int | None = None
+    pubdate: datetime | None = None
+    duration_seconds: int | None = None
+    seed_score: float | None = None
+    source_refs: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class RankboardResult:
+    entries: list[RankboardEntry]

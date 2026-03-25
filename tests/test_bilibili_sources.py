@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, patch
 
 from bili_pipeline.discover.bilibili_sources import (
     BilibiliHotSource,
+    BilibiliRankboardSource,
     BilibiliUserRecentVideoSource,
     BilibiliWeeklyHotSource,
     BilibiliZoneRecentVideosSource,
@@ -110,6 +111,48 @@ class BilibiliSourceAdaptersTest(unittest.TestCase):
         self.assertEqual("partition", items[0].source_type)
         self.assertEqual(155, items[0].duration_seconds)
 
+    @patch("bili_pipeline.discover.bilibili_sources._get_json_response", new_callable=AsyncMock)
+    def test_rankboard_source_parses_ranked_rows(self, mock_get_json_response: AsyncMock) -> None:
+        mock_get_json_response.return_value = {
+            "code": 0,
+            "data": {
+                "list": [
+                    {
+                        "bvid": "BV_rank_1",
+                        "tid": 17,
+                        "pubdate": 1773203400,
+                        "duration": 155,
+                        "owner": {"mid": 111},
+                        "stat": {"view": 100, "like": 10, "reply": 3, "coin": 5, "now_rank": 1},
+                    },
+                    {
+                        "bvid": "BV_rank_2",
+                        "tid": 36,
+                        "pubdate": 1773203500,
+                        "duration": 188,
+                        "owner": {"mid": 222},
+                        "stat": {"view": 200, "like": 20, "reply": 4, "coin": 6, "now_rank": 2},
+                    },
+                ]
+            },
+        }
+
+        items = BilibiliRankboardSource(
+            board_rid=1005,
+            board_name="动画",
+            board_url="https://www.bilibili.com/v/popular/rank/douga",
+        ).fetch()
+
+        self.assertEqual(2, len(items))
+        self.assertEqual("rankboard", items[0].source_type)
+        self.assertEqual(1005, items[0].board_rid)
+        self.assertEqual("动画", items[0].board_name)
+        self.assertEqual(1, items[0].board_rank)
+        self.assertEqual("BV_rank_2", items[1].bvid)
+        self.assertEqual(2, items[1].board_rank)
+        self.assertEqual(222, items[1].owner_mid)
+        self.assertEqual(188, items[1].duration_seconds)
+
     @patch("bili_pipeline.discover.bilibili_sources.video_zone.get_zone_new_videos", new_callable=AsyncMock)
     def test_zone_recent_source_stops_after_lookback(self, mock_get_zone_new_videos: AsyncMock) -> None:
         mock_get_zone_new_videos.side_effect = [
@@ -203,6 +246,11 @@ class BilibiliSourceAdaptersTest(unittest.TestCase):
                             "favorites": 10,
                         },
                     ]
+                }
+            },
+            {
+                "list": {
+                    "vlist": []
                 }
             }
         ]

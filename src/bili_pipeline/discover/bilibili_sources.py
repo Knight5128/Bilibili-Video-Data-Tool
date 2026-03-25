@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import json
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 import random
 import time
 from dataclasses import dataclass
@@ -12,12 +15,22 @@ from bilibili_api.user import User, VideoOrder
 from bilibili_api.video import Video
 
 from bili_pipeline.discover.interfaces import AuthorVideoSource, SeedSource
-from bili_pipeline.models import CandidateVideo
+from bili_pipeline.models import CandidateVideo, RankboardEntry
 from bili_pipeline.utils import run_async
 
 
 def _run_async(awaitable):
     return asyncio.run(awaitable)
+
+
+def _fetch_json_response(url: str, headers: dict[str, str] | None = None) -> dict:
+    request = Request(url, headers=headers or {})
+    with urlopen(request, timeout=30) as response:  # noqa: S310
+        return json.loads(response.read().decode("utf-8"))
+
+
+async def _get_json_response(url: str, headers: dict[str, str] | None = None) -> dict:
+    return await asyncio.to_thread(_fetch_json_response, url, headers)
 
 
 def _from_timestamp(value: int | float | None) -> datetime | None:
@@ -95,6 +108,35 @@ def _parse_user_video(item: dict, source_ref: str, discovered_at: datetime) -> C
         pubdate=_parse_datetime(item.get("created") or item.get("create") or item.get("pubdate")),
         duration_seconds=_parse_length_to_seconds(item.get("length") or item.get("duration")),
         seed_score=float(item.get("play", 0)) + float(item.get("favorites", 0)) * 2,
+    )
+
+
+def _parse_rankboard_item(
+    item: dict,
+    *,
+    board_rid: int,
+    board_name: str,
+    board_rank: int,
+    board_url: str,
+    discovered_at: datetime,
+) -> RankboardEntry:
+    owner = item.get("owner", {})
+    stat = item.get("stat", {})
+    source_ref = f"rankboard:rid={board_rid}:rank={board_rank}"
+    return RankboardEntry(
+        board_rid=board_rid,
+        board_name=board_name,
+        board_rank=board_rank,
+        bvid=item["bvid"],
+        source_type="rankboard",
+        source_ref=source_ref,
+        discovered_at=discovered_at,
+        owner_mid=owner.get("mid"),
+        tid=item.get("tid"),
+        pubdate=_from_timestamp(item.get("pubdate") or item.get("ctime")),
+        duration_seconds=item.get("duration"),
+        seed_score=_score_from_stat(stat),
+        source_refs=[source_ref, board_url],
     )
 
 
@@ -289,6 +331,59 @@ class BilibiliZoneTop10Source(SeedSource):
         payload = _run_async(video_zone.get_zone_top10(tid=self.tid, day=self.day))
         source_ref = f"partition_top10:tid={self.tid}:day={self.day}"
         return [_parse_zone_item(item, source_ref, discovered_at, fallback_tid=self.tid) for item in payload]
+
+
+@dataclass(slots=True)
+class BilibiliRankboardSource:
+    board_rid: int
+    board_name: str
+    board_url: str
+    request_interval_seconds: float = 0.0
+    request_jitter_seconds: float = 0.0
+    max_retries: int = 0
+    retry_backoff_seconds: float = 3.0
+
+    def fetch(self) -> list[RankboardEntry]:
+        discovered_at = datetime.now()
+        payload = _run_async_with_retry(
+            lambda: _get_json_response(
+                "https://api.bilibili.com/x/web-interface/ranking/v2?"
+                + urlencode(
+                    {
+                        "rid": self.board_rid,
+                        "type": "all",
+                        "web_location": "333.934",
+                    }
+                ),
+                headers={
+                    "Referer": self.board_url,
+                    "Origin": "https://www.bilibili.com",
+                    "User-Agent": (
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/131.0.0.0 Safari/537.36"
+                    ),
+                },
+            ),
+            request_interval_seconds=self.request_interval_seconds,
+            request_jitter_seconds=self.request_jitter_seconds,
+            max_retries=self.max_retries,
+            retry_backoff_seconds=self.retry_backoff_seconds,
+        )
+        if payload.get("code") != 0:
+            raise ValueError(f"排行榜接口返回异常: {payload.get('message') or payload.get('msg') or payload.get('code')}")
+        items = payload.get("data", {}).get("list", [])
+        return [
+            _parse_rankboard_item(
+                item,
+                board_rid=self.board_rid,
+                board_name=self.board_name,
+                board_rank=index,
+                board_url=self.board_url,
+                discovered_at=discovered_at,
+            )
+            for index, item in enumerate(items, start=1)
+        ]
 
 
 @dataclass(slots=True)

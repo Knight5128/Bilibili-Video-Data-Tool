@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import csv
 import json
 from dataclasses import dataclass
 from datetime import date, datetime, time as dt_time
@@ -17,6 +18,7 @@ from bili_pipeline.bilibili_zones import find_by_tid, list_zones, unique_mains
 from bili_pipeline.config import DiscoverConfig
 from bili_pipeline.discover import (
     BilibiliHotSource,
+    BilibiliRankboardSource,
     BilibiliUserRecentVideoSource,
     BilibiliWeeklyHotSource,
     BilibiliZoneTop10Source,
@@ -24,9 +26,15 @@ from bili_pipeline.discover import (
     load_valid_partition_tids,
     resolve_owner_mids_from_bvids,
 )
-from bili_pipeline.discover.export_csv import discover_entries_to_rows, export_discover_result_csv
+from bili_pipeline.discover.export_csv import (
+    discover_entries_to_rows,
+    discover_entries_to_full_export_rows,
+    export_discover_result_csv,
+    export_rows_csv,
+    rankboard_entries_to_rows,
+)
 from bili_pipeline.discover.real_demo import build_real_result
-from bili_pipeline.models import DiscoverResult
+from bili_pipeline.models import DiscoverResult, RankboardResult
 from bili_pipeline.utils.file_merge import (
     build_deduplicated_output_path,
     deduplicate_dataframe,
@@ -51,6 +59,7 @@ from bili_pipeline.utils.streamlit_night_sky import render_night_sky_background
 APP_DIR = Path(__file__).resolve().parent
 LOGO_PATH = APP_DIR / "assets" / "logos" / "bvp-builder.png"
 VALID_TAGS_PATH = APP_DIR / "all_valid_tags.csv"
+RANKBOARD_VALID_RIDS_PATH = APP_DIR / "rankboard_valid_rids.csv"
 DEFAULT_VIDEO_POOL_OUTPUT_DIR = Path("outputs") / "video_pool"
 FULL_SITE_FLOORINGS_OUTPUT_DIR = DEFAULT_VIDEO_POOL_OUTPUT_DIR / "full_site_floorings"
 FULL_SITE_FLOORINGS_LOGS_DIR = FULL_SITE_FLOORINGS_OUTPUT_DIR / "logs"
@@ -110,10 +119,19 @@ class UidExpansionSessionContext:
 
 
 @dataclass(slots=True)
+class RankboardBoard:
+    rid: int
+    name: str
+    slug: str
+    url: str
+
+
+@dataclass(slots=True)
 class CustomSeedSelection:
     include_daily_hot: bool
     weekly_weeks: int
     include_column_top: bool
+    include_rankboard: bool
 
     def active_tokens(self) -> list[str]:
         tokens: list[str] = []
@@ -123,6 +141,8 @@ class CustomSeedSelection:
             tokens.append(f"weeklymustsee_{self.weekly_weeks}")
         if self.include_column_top:
             tokens.append("column_top")
+        if self.include_rankboard:
+            tokens.append("rankboard")
         return tokens
 
 
@@ -162,12 +182,16 @@ def _render_centered_header(title: str, logo_path: Path) -> None:
     )
 
 
-def _preview_discover_result(result, limit: int = 200) -> None:
-    preview = pd.DataFrame(discover_entries_to_rows(result.entries)).head(limit)
+def _preview_rows(rows: list[dict], limit: int = 200) -> None:
+    preview = pd.DataFrame(rows).head(limit)
     if preview.empty:
         st.info("本次结果为空。")
         return
     st.dataframe(preview, width="stretch", hide_index=True)
+
+
+def _preview_discover_result(result, limit: int = 200) -> None:
+    _preview_rows(discover_entries_to_rows(result.entries), limit=limit)
 
 
 def _read_uploaded_files(uploaded_files) -> list[pd.DataFrame]:
@@ -358,6 +382,22 @@ def _extract_owner_mids_from_entries(entries) -> tuple[list[int], list[str]]:
         owner_mid = int(entry.owner_mid)
         if owner_mid not in owner_mids:
             owner_mids.append(owner_mid)
+    return owner_mids, missing_bvids
+
+
+def _extract_owner_mids_from_rows(rows: list[dict]) -> tuple[list[int], list[str]]:
+    owner_mids: list[int] = []
+    missing_bvids: list[str] = []
+    for row in rows:
+        owner_mid = row.get("owner_mid")
+        if owner_mid in (None, ""):
+            bvid = row.get("bvid")
+            if bvid:
+                missing_bvids.append(str(bvid))
+            continue
+        coerced = int(owner_mid)
+        if coerced not in owner_mids:
+            owner_mids.append(coerced)
     return owner_mids, missing_bvids
 
 
@@ -976,6 +1016,22 @@ def _load_full_export_tids() -> list[int]:
     return load_valid_partition_tids(VALID_TAGS_PATH)
 
 
+def _load_rankboard_boards() -> list[RankboardBoard]:
+    boards: list[RankboardBoard] = []
+    with RANKBOARD_VALID_RIDS_PATH.open("r", encoding="utf-8-sig", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            boards.append(
+                RankboardBoard(
+                    rid=int(row["rid"]),
+                    name=row["board_name"].strip(),
+                    slug=row["board_slug"].strip(),
+                    url=row["board_url"].strip(),
+                )
+            )
+    return boards
+
+
 def _build_full_site_result_with_latest_impl(**kwargs) -> DiscoverResult:
     # Streamlit reruns may keep imported package modules cached; reload here so
     # the full-export path always picks up the latest throttling implementation.
@@ -1053,6 +1109,27 @@ def _build_custom_seed_result(
     return builder.build_from_seed_candidates(candidates, now=datetime.now())
 
 
+def _build_rankboard_result(boards: list[RankboardBoard], logger=None) -> RankboardResult:
+    entries = []
+    total = len(boards)
+    for index, board in enumerate(boards, start=1):
+        if logger is not None:
+            logger(f"[INFO]: 正在抓取第 {index}/{total} 个实时排行榜分区：{board.name}（rid={board.rid}）。")
+        board_entries = BilibiliRankboardSource(
+            board_rid=board.rid,
+            board_name=board.name,
+            board_url=board.url,
+            request_interval_seconds=FULL_EXPORT_REQUEST_INTERVAL_SECONDS,
+            request_jitter_seconds=FULL_EXPORT_REQUEST_JITTER_SECONDS,
+            max_retries=FULL_EXPORT_MAX_RETRIES,
+            retry_backoff_seconds=FULL_EXPORT_RETRY_BACKOFF_SECONDS,
+        ).fetch()
+        entries.extend(board_entries)
+        if logger is not None:
+            logger(f"[INFO]: 排行榜 {board.name} 抓取完成，新增 {len(board_entries)} 条榜单记录。")
+    return RankboardResult(entries=entries)
+
+
 page_config = {"page_title": "Bilibili Video Pool Builder", "layout": "centered"}
 if LOGO_PATH.exists():
     page_config["page_icon"] = str(LOGO_PATH)
@@ -1067,16 +1144,22 @@ tab_full_export, tab_custom_export, tab_merge, tab_quick_jump, tab_tid, tab_expo
 with tab_full_export:
     st.subheader("自定义全量导出")
     st.caption(
-        "可自由选择抓取当日全站热门（默认400条）、过去 n 期每周必看、以及全部有效分区的当天主流视频，"
+        "可自由选择抓取当日全站热门（默认400条）、过去 n 期每周必看、全部有效分区的当天主流视频，"
+        "以及全部 UGC 实时排行榜（每个分区当前 100 条），"
         "并自动导出同批次的作者 UID 列表。当前已启用更保守的请求间隔、重试退避与分批冷却，"
         "以降低长时间批量抓取时的 404 / 风控触发概率。"
     )
 
     valid_tid_count = None
+    rankboard_count = None
     try:
         valid_tid_count = len(_load_full_export_tids())
     except Exception as e:  # noqa: BLE001
         st.error(f"读取有效分区列表失败：{e}")
+    try:
+        rankboard_count = len(_load_rankboard_boards())
+    except Exception as e:  # noqa: BLE001
+        st.error(f"读取排行榜分区列表失败：{e}")
     full_daily_hot = st.checkbox("抓取当日全站热门（默认400条）", value=True, key="full_export_daily_hot")
     full_weekly_enabled = st.checkbox("抓取过去 n 期每周必看", value=True, key="full_export_weekly_enabled")
     full_weekly_weeks = st.number_input(
@@ -1089,10 +1172,12 @@ with tab_full_export:
         key="full_export_weekly_weeks",
     )
     full_column_top = st.checkbox("抓取全部分区的当天主流视频", value=True, key="full_export_column_top")
+    full_rankboard = st.checkbox("抓取实时排行榜（每个分区实时显示100条）", value=False, key="full_export_rankboard")
     full_selection = CustomSeedSelection(
         include_daily_hot=bool(full_daily_hot),
         weekly_weeks=int(full_weekly_weeks) if full_weekly_enabled else 0,
         include_column_top=bool(full_column_top),
+        include_rankboard=bool(full_rankboard),
     )
     full_selection_signature = "|".join(full_selection.active_tokens()) or "none"
     full_default_name = (
@@ -1113,6 +1198,9 @@ with tab_full_export:
 
     if valid_tid_count is not None and full_selection.include_column_top:
         st.caption(f"当前“全部分区的当天主流视频”将覆盖 `all_valid_tags.csv` 中的 {valid_tid_count} 个有效分区。")
+    if rankboard_count is not None and full_selection.include_rankboard:
+        st.caption(f"当前“实时排行榜”将覆盖 `rankboard_valid_rids.csv` 中的 {rankboard_count} 个 UGC 榜单分区。")
+        st.caption("排行榜会按 `(榜单分区, 排名, bvid)` 逐行保存；同一视频若同时上多个榜单，会保留多条记录。")
 
     full_log_placeholder = st.empty()
     if st.button("开始执行自定义全量导出", key="full_export_submit"):
@@ -1125,16 +1213,34 @@ with tab_full_export:
             st.warning("请至少选择一种抓取来源。")
         else:
             try:
-                valid_tids = _load_full_export_tids()
+                valid_tids = _load_full_export_tids() if full_selection.include_column_top else []
+                rankboard_boards = _load_rankboard_boards() if full_selection.include_rankboard else []
             except Exception as e:  # noqa: BLE001
-                st.error(f"读取有效分区列表失败：{e}")
+                st.error(f"读取自定义全量导出配置失败：{e}")
             else:
                 try:
                     with st.spinner("正在抓取自定义全量视频列表..."):
                         _log(f"[INFO]: 开始执行自定义全量导出：{', '.join(full_selection.active_tokens())}。")
-                        result = _build_custom_seed_result(full_selection, valid_tids, logger=_log)
-                        saved = export_discover_result_csv(result, full_out_path)
-                        owner_mids, missing_bvids = _extract_owner_mids_from_entries(result.entries)
+                        has_seed_sources = (
+                            full_selection.include_daily_hot
+                            or full_selection.weekly_weeks > 0
+                            or full_selection.include_column_top
+                        )
+                        result = (
+                            _build_custom_seed_result(full_selection, valid_tids, logger=_log) if has_seed_sources else None
+                        )
+                        rankboard_result = (
+                            _build_rankboard_result(rankboard_boards, logger=_log)
+                            if full_selection.include_rankboard
+                            else None
+                        )
+                        full_export_rows: list[dict] = []
+                        if result is not None:
+                            full_export_rows.extend(discover_entries_to_full_export_rows(result.entries))
+                        if rankboard_result is not None:
+                            full_export_rows.extend(rankboard_entries_to_rows(rankboard_result.entries))
+                        saved = export_rows_csv(full_export_rows, full_out_path)
+                        owner_mids, missing_bvids = _extract_owner_mids_from_rows(full_export_rows)
                         if missing_bvids:
                             _log(f"[WARN]: 有 {len(missing_bvids)} 条结果缺少 owner_mid，开始补做 BVID 回查。")
                             fallback_owner_mids, failed_bvids = resolve_owner_mids_from_bvids(
@@ -1161,9 +1267,9 @@ with tab_full_export:
                     st.caption(f"配套作者 UID 列表：`{_display_path(authors_saved)}`")
                     st.caption(
                         f"抓取来源 {', '.join(full_selection.active_tokens())}，"
-                        f"视频数 {len(result.entries)}，作者数 {len(owner_mids)}（展示前 200 条预览）"
+                        f"记录数 {len(full_export_rows)}，作者数 {len(owner_mids)}（展示前 200 条预览）"
                     )
-                    _preview_discover_result(result)
+                    _preview_rows(full_export_rows)
                 finally:
                     _show_saved_log_path(
                         _save_task_logs("custom_full_export", full_logs, log_dir=FULL_SITE_FLOORINGS_LOGS_DIR)

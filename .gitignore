@@ -24,5 +24,6 @@ Thumbs.db
 .idea/
 
 TODO.md
+prompts/
 docs/
 __*.csv

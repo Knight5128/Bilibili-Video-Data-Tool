@@ -13,7 +13,7 @@ from .crawl import (
     OSSStorageConfig,
     StatSnapshot,
 )
-from .video_pool import CandidateVideo, DiscoverResult, VideoPoolEntry
+from .video_pool import CandidateVideo, DiscoverResult, RankboardEntry, RankboardResult, VideoPoolEntry
 
 __all__ = [
     "BatchCrawlReport",
@@ -28,6 +28,8 @@ __all__ = [
     "MediaResult",
     "MetaResult",
     "OSSStorageConfig",
+    "RankboardEntry",
+    "RankboardResult",
     "StatSnapshot",
     "VideoPoolEntry",
 ]
