@@ -271,6 +271,10 @@ export function renderDashboardHtml(defaultEnvKeys) {
           return response.json();
         }
 
+        function errorText(error) {
+          return error?.message || String(error);
+        }
+
         function renderRunLogs(rows) {
           if (!rows.length) {
             return "<p class='muted'>No run logs yet.</p>";
@@ -333,6 +337,9 @@ export function renderDashboardHtml(defaultEnvKeys) {
           setText("metric-scheduler-detail", scheduler.schedule || "No schedule");
           setText("metric-paused-until", control.paused_until || "-");
           setText("metric-pause-reason", control.pause_reason || "No pause reason");
+          if (state.metrics?.cache?.stale) {
+            setText("metric-comment-24h", "Last 24h: " + String(metrics.comment_snapshot_last_24h ?? 0) + " (stale)");
+          }
           document.getElementById("service-summary").textContent = JSON.stringify({
             uri: cloudRun.uri,
             revision: cloudRun.latestReadyRevision,
@@ -343,19 +350,56 @@ export function renderDashboardHtml(defaultEnvKeys) {
         }
 
         async function reloadAll() {
-          const [status, metrics, controlPlane, runLogs] = await Promise.all([
+          const [status, metrics, controlPlane, runLogs] = await Promise.allSettled([
             api("/api/status"),
             api("/api/tracker/metrics"),
             api("/api/gcp/status"),
             api("/api/tracker/run-logs?limit=12"),
           ]);
-          state.status = status;
-          state.metrics = metrics;
-          state.controlPlane = controlPlane;
-          hydrateEnvForm(controlPlane.cloudRun?.env || {});
-          hydrateRuntimeForm(status.control || {});
+
+          const warnings = [];
+          if (status.status === "fulfilled") {
+            state.status = status.value;
+          } else {
+            warnings.push("Status refresh failed: " + errorText(status.reason));
+          }
+
+          if (metrics.status === "fulfilled") {
+            state.metrics = metrics.value;
+            if (metrics.value?.cache?.stale) {
+              warnings.push("Metrics fallback to cached data: " + (metrics.value.cache.error || "upstream unavailable"));
+            }
+          } else {
+            warnings.push("Metrics refresh failed: " + errorText(metrics.reason));
+          }
+
+          if (controlPlane.status === "fulfilled") {
+            state.controlPlane = controlPlane.value;
+          } else {
+            warnings.push("Cloud Run status refresh failed: " + errorText(controlPlane.reason));
+          }
+
+          if (controlPlane.status === "fulfilled") {
+            hydrateEnvForm(controlPlane.value.cloudRun?.env || {});
+          }
+          if (status.status === "fulfilled") {
+            hydrateRuntimeForm(status.value.control || {});
+          }
+
           renderDashboard();
-          document.getElementById("run-logs-table").innerHTML = renderRunLogs(runLogs.rows || []);
+
+          if (runLogs.status === "fulfilled") {
+            document.getElementById("run-logs-table").innerHTML = renderRunLogs(runLogs.value.rows || []);
+          } else if (!state.status && !state.controlPlane && !state.metrics) {
+            document.getElementById("run-logs-table").innerHTML = "<p class='muted'>Unable to load run logs right now.</p>";
+            warnings.push("Run logs refresh failed: " + errorText(runLogs.reason));
+          } else {
+            warnings.push("Run logs refresh failed: " + errorText(runLogs.reason));
+          }
+
+          if (warnings.length) {
+            showToast(warnings[0], true);
+          }
         }
 
         document.getElementById("env-form").addEventListener("submit", async (event) => {
@@ -440,8 +484,8 @@ export function renderDashboardHtml(defaultEnvKeys) {
         });
 
         reloadAll().catch((error) => {
-          showToast(error.message || String(error), true);
-          document.getElementById("run-logs-table").innerHTML = "<pre>" + (error.stack || error.message || String(error)) + "</pre>";
+          showToast(errorText(error), true);
+          document.getElementById("run-logs-table").innerHTML = "<p class='muted'>Dashboard loaded with partial data.</p>";
         });
       </script>
     `,

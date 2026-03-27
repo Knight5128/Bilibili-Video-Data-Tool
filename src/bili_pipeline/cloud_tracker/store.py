@@ -304,7 +304,7 @@ class TrackerStore:
         payload: dict[str, Any] | None = None,
     ) -> int:
         normalized = sorted({int(owner_mid) for owner_mid in owner_mids})
-        self._query(f"DELETE FROM `{self.tracker_table_id('author_sources')}`")
+        self._query(f"DELETE FROM `{self.tracker_table_id('author_sources')}` WHERE TRUE")
         uploaded_at = _iso(_utcnow())
         rows = [
             {

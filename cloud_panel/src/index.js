@@ -14,10 +14,15 @@ import {
   getTrackerStatus,
   proxyTrackerCsv,
   runTrackerCycle,
-  trackerFetch,
   updateTrackerConfig,
 } from "./tracker.js";
 import { renderDashboardHtml, renderDocsHtml } from "./ui.js";
+
+const METRICS_CACHE_TTL_MS = 15_000;
+let trackerMetricsCache = {
+  data: null,
+  expiresAt: 0,
+};
 
 function getDefaultEnvKeys(env) {
   return (env.TRACKER_DEFAULT_ENV_KEYS || "")
@@ -26,16 +31,39 @@ function getDefaultEnvKeys(env) {
     .filter(Boolean);
 }
 
-async function trackerHealth(env) {
-  const response = await fetch(`${env.TRACKER_BASE_URL.replace(/\/$/, "")}/healthz`);
-  const text = await response.text();
-  let data = null;
-  try {
-    data = JSON.parse(text);
-  } catch {
-    data = { raw: text };
+async function getCachedTrackerMetrics(env) {
+  const now = Date.now();
+  if (trackerMetricsCache.data && trackerMetricsCache.expiresAt > now) {
+    return {
+      ...trackerMetricsCache.data,
+      cache: { hit: true, stale: false, ttl_ms: Math.max(0, trackerMetricsCache.expiresAt - now) },
+    };
   }
-  return { ok: response.ok, status: response.status, data };
+
+  try {
+    const data = await getTrackerMetrics(env);
+    trackerMetricsCache = {
+      data,
+      expiresAt: now + METRICS_CACHE_TTL_MS,
+    };
+    return {
+      ...data,
+      cache: { hit: false, stale: false, ttl_ms: METRICS_CACHE_TTL_MS },
+    };
+  } catch (error) {
+    if (trackerMetricsCache.data) {
+      return {
+        ...trackerMetricsCache.data,
+        cache: {
+          hit: true,
+          stale: true,
+          ttl_ms: 0,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      };
+    }
+    throw error;
+  }
 }
 
 function jsonError(error, status = 500) {
@@ -56,16 +84,20 @@ async function handleApi(request, env, user) {
   }
 
   if (path === "/api/status") {
-    const [status, health] = await Promise.all([getTrackerStatus(env), trackerHealth(env)]);
+    const status = await getTrackerStatus(env);
     return jsonResponse({
       viewer: { email: user.email },
-      health: { tracker_health: health.data, tracker_http_ok: health.ok, tracker_http_status: health.status },
+      health: {
+        tracker_health: { status: "ok", service: "bilibili-cloud-tracker", source: "/admin/status" },
+        tracker_http_ok: true,
+        tracker_http_status: 200,
+      },
       ...status,
     });
   }
 
   if (path === "/api/tracker/metrics") {
-    return jsonResponse(await getTrackerMetrics(env));
+    return jsonResponse(await getCachedTrackerMetrics(env));
   }
 
   if (path === "/api/tracker/run-logs") {

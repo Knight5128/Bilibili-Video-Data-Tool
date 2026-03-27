@@ -7,11 +7,11 @@ enabled = true
 
 [vars]
 CF_ACCESS_REQUIRED = "true"
-TRACKER_BASE_URL = "https://your-cloud-run-service-url"
-GCP_PROJECT_ID = "your-gcp-project-id"
-GCP_REGION = "asia-east1"
+TRACKER_BASE_URL = "https://bilibili-cloud-tracker-821794372172.us-central1.run.app"
+GCP_PROJECT_ID = "bilibili-m2s2vp-research"
+GCP_REGION = "us-central1"
 CLOUD_RUN_SERVICE = "bilibili-cloud-tracker"
-CLOUD_SCHEDULER_LOCATION = "asia-east1"
+CLOUD_SCHEDULER_LOCATION = "us-central1"
 CLOUD_SCHEDULER_JOB = "bilibili-cloud-tracker-2h"
 CLOUD_RUN_TIMEOUT_SECONDS = "1800"
 CLOUD_RUN_MAX_INSTANCES = "1"

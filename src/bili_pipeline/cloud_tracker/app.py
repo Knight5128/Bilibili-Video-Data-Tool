@@ -43,7 +43,10 @@ def create_app(settings: TrackerSettings | None = None) -> Flask:
         if "file" not in request.files:
             return jsonify({"error": "请通过 multipart/form-data 上传 file 字段。"}), 400
         upload = request.files["file"]
-        owner_mids = parse_owner_mid_upload(upload)
+        try:
+            owner_mids = parse_owner_mid_upload(upload)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
         source_name = (request.form.get("source_name") or upload.filename or "manual_upload").strip()
         saved = runner.tracker_store.replace_author_sources(
             owner_mids=owner_mids,

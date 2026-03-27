@@ -105,7 +105,13 @@ class TrackerRunner:
             )
 
             report.phase = "discovery"
-            rankboard_rows = discover_rankboard_videos(self.settings, logger=report.log)
+            rankboard_rows = []
+            try:
+                rankboard_rows = discover_rankboard_videos(self.settings, logger=report.log)
+            except Exception as exc:  # noqa: BLE001
+                # Keep the cycle alive when rankboard discovery is rate-limited or flaky.
+                report.log(f"[DISCOVERY] 排行榜发现失败，已跳过：{exc}")
+                report.details["rankboard_error"] = str(exc)
             author_rows = self.tracker_store.list_author_sources()
             author_discovered, author_failures = discover_author_videos(
                 self.settings,
