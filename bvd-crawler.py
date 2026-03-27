@@ -919,7 +919,7 @@ with tab_db:
                         with st.expander("最新统计快照（video_stat_snapshots 表）", expanded=False):
                             st.json(stat_row)
                     if comment_row is not None:
-                        with st.expander("最新评论快照（topn_comment_snapshots 表）", expanded=False):
+                        with st.expander("最热评论快照（topn_comment_snapshots 表）", expanded=False):
                             st.json(comment_row)
 
     if asset_view_col.button("查看该 bvid 的媒体资产", width="stretch"):

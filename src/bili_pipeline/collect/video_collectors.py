@@ -172,7 +172,7 @@ def crawl_latest_comments(bvid: str, limit: int = 10, credential: Any | None = N
         comment.get_comments_lazy(
             oid=int(info["aid"]),
             type_=comment.CommentResourceType.VIDEO,
-            order=comment.OrderType.TIME,
+            order=comment.OrderType.LIKE,
             **kwargs,
         )
     )
