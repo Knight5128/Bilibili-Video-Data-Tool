@@ -1,0 +1,13 @@
+[TIMESTAMP][BEGIN] 2026-03-27T14:57:56
+Bilibili Video Data Crawler - MEDIA API Debug
+api_name: media
+bvid: BV1X2XWBXE7f
+started_at: 2026-03-27T14:57:56.803705
+finished_at: 2026-03-27T14:59:22.558810
+use_streaming_api: False
+status: failed
+error: 400 GET https://bigquery.googleapis.com/bigquery/v2/projects/bilibili-m2s2vp-research/queries/85c98ca0-e5f9-4af1-9a41-046800557b8d?maxResults=0&location=US&prettyPrint=false: UPDATE or DELETE statement over table bilibili-m2s2vp-research.bili_video_data_test_1.assets would affect rows in the streaming buffer, which is not supported
+
+Location: US
+Job ID: 85c98ca0-e5f9-4af1-9a41-046800557b8d
+[TIMESTAMP][END] 2026-03-27T14:59:22

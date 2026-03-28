@@ -1,0 +1,42 @@
+[TIMESTAMP][BEGIN] 2026-03-27T14:56:03
+Bilibili Video Data Crawler - COMMENT API Debug
+api_name: comment
+bvid: BV1X2XWBXE7f
+started_at: 2026-03-27T14:56:03.736987
+finished_at: 2026-03-27T14:56:10.224926
+comment_limit: 10
+status: success
+
+payload_json:
+{
+  "bvid": "BV1X2XWBXE7f",
+  "snapshot_time": "2026-03-27T14:56:04.122363",
+  "limit": 10,
+  "comment_top10": [
+    {
+      "rpid": 294301675073,
+      "message": "…有人帮我跑一下@2500w的纯币吗@《130》…=",
+      "like": 0,
+      "ctime": "2026-03-27T14:49:02",
+      "mid": 513488385,
+      "uname": "大筒木羽衣村"
+    },
+    {
+      "rpid": 296822980800,
+      "message": "这期神了",
+      "like": 0,
+      "ctime": "2026-03-27T14:48:39",
+      "mid": 1211488711,
+      "uname": "seapet_"
+    },
+    {
+      "rpid": 294301433873,
+      "message": "…有人帮我跑一下@2500w的纯币吗@《130》…=",
+      "like": 0,
+      "ctime": "2026-03-27T14:45:44",
+      "mid": 3493269291927587,
+      "uname": "不想跑刀"
+    }
+  ]
+}
+[TIMESTAMP][END] 2026-03-27T14:56:10

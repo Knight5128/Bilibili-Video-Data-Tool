@@ -1,0 +1,210 @@
+[TIMESTAMP][BEGIN] 2026-03-27T16:54:04
+[INFO]: 去重后共有 3269 个 BVID 待反查作者。
+[INFO]: 开始执行 BVID 回查作者 ID 任务。
+[INFO]: BVID 反查进度 1/3269。
+[INFO]: BVID 反查进度 20/3269。
+[INFO]: BVID 反查进度 40/3269。
+[INFO]: BVID 反查进度 60/3269。
+[INFO]: BVID 反查进度 80/3269。
+[INFO]: BVID 反查进度 100/3269。
+[INFO]: BVID 反查进度 120/3269。
+[INFO]: BVID 反查进度 140/3269。
+[INFO]: BVID 反查进度 160/3269。
+[WARN]: BVID 反查失败 170/3269：BV1McAwzGEXs。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 180/3269。
+[INFO]: BVID 反查进度 200/3269。
+[INFO]: BVID 反查进度 220/3269。
+[INFO]: BVID 反查进度 240/3269。
+[WARN]: BVID 反查失败 245/3269：BV1tzwjzmE8n。原因：接口返回错误代码：-404，信息：啥都木有。 {'code': -404, 'message': '啥都木有', 'ttl': 1}
+[INFO]: BVID 反查进度 260/3269。
+[INFO]: BVID 反查进度 280/3269。
+[INFO]: BVID 反查进度 300/3269。
+[INFO]: BVID 反查进度 320/3269。
+[INFO]: BVID 反查进度 340/3269。
+[INFO]: BVID 反查进度 360/3269。
+[INFO]: BVID 反查进度 380/3269。
+[INFO]: BVID 反查进度 400/3269。
+[INFO]: BVID 反查进度 420/3269。
+[INFO]: BVID 反查进度 440/3269。
+[INFO]: BVID 反查进度 460/3269。
+[INFO]: BVID 反查进度 480/3269。
+[INFO]: BVID 反查进度 500/3269。
+[INFO]: BVID 反查进度 520/3269。
+[INFO]: BVID 反查进度 540/3269。
+[INFO]: BVID 反查进度 560/3269。
+[WARN]: BVID 反查失败 563/3269：BV1LnwqzHEmz。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 580/3269。
+[INFO]: BVID 反查进度 600/3269。
+[INFO]: BVID 反查进度 620/3269。
+[INFO]: BVID 反查进度 640/3269。
+[WARN]: BVID 反查失败 642/3269：BV1MhPizkEZp。原因：接口返回错误代码：62012，信息：62012。 {'code': 62012, 'message': '62012', 'ttl': 1}
+[INFO]: BVID 反查进度 660/3269。
+[INFO]: BVID 反查进度 680/3269。
+[INFO]: BVID 反查进度 700/3269。
+[INFO]: BVID 反查进度 720/3269。
+[INFO]: BVID 反查进度 740/3269。
+[INFO]: BVID 反查进度 760/3269。
+[INFO]: BVID 反查进度 780/3269。
+[INFO]: BVID 反查进度 800/3269。
+[INFO]: BVID 反查进度 820/3269。
+[INFO]: BVID 反查进度 840/3269。
+[INFO]: BVID 反查进度 860/3269。
+[INFO]: BVID 反查进度 880/3269。
+[WARN]: BVID 反查失败 888/3269：BV1d4rpBtEoL。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 900/3269。
+[INFO]: BVID 反查进度 920/3269。
+[INFO]: BVID 反查进度 940/3269。
+[WARN]: BVID 反查失败 960/3269：BV17TNMzEEea。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 980/3269。
+[INFO]: BVID 反查进度 1000/3269。
+[WARN]: BVID 反查失败 1011/3269：BV1UUfmBwEmL。原因：接口返回错误代码：-404，信息：啥都木有。 {'code': -404, 'message': '啥都木有', 'ttl': 1}
+[INFO]: BVID 反查进度 1020/3269。
+[INFO]: BVID 反查进度 1040/3269。
+[INFO]: BVID 反查进度 1060/3269。
+[INFO]: BVID 反查进度 1080/3269。
+[INFO]: BVID 反查进度 1100/3269。
+[INFO]: BVID 反查进度 1120/3269。
+[WARN]: BVID 反查失败 1124/3269：BV1nAPmzhEYD。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 1140/3269。
+[INFO]: BVID 反查进度 1160/3269。
+[WARN]: BVID 反查失败 1180/3269：BV1WHAgzfEst。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 1200/3269。
+[INFO]: BVID 反查进度 1220/3269。
+[INFO]: BVID 反查进度 1240/3269。
+[INFO]: BVID 反查进度 1260/3269。
+[INFO]: BVID 反查进度 1280/3269。
+[INFO]: BVID 反查进度 1300/3269。
+[INFO]: BVID 反查进度 1320/3269。
+[INFO]: BVID 反查进度 1340/3269。
+[INFO]: BVID 反查进度 1360/3269。
+[INFO]: BVID 反查进度 1380/3269。
+[WARN]: BVID 反查失败 1387/3269：BV1sLP5zVEo1。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 1400/3269。
+[INFO]: BVID 反查进度 1420/3269。
+[INFO]: BVID 反查进度 1440/3269。
+[INFO]: BVID 反查进度 1460/3269。
+[WARN]: BVID 反查失败 1475/3269：BV1uXwiz6Eeu。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 1480/3269。
+[INFO]: BVID 反查进度 1500/3269。
+[INFO]: BVID 反查进度 1520/3269。
+[INFO]: BVID 反查进度 1540/3269。
+[INFO]: BVID 反查进度 1560/3269。
+[INFO]: BVID 反查进度 1580/3269。
+[INFO]: BVID 反查进度 1600/3269。
+[WARN]: BVID 反查失败 1620/3269：BV1CkwvztEzL。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 1640/3269。
+[INFO]: BVID 反查进度 1660/3269。
+[INFO]: BVID 反查进度 1680/3269。
+[WARN]: BVID 反查失败 1695/3269：BV1XcwezqECv。原因：接口返回错误代码：-404，信息：啥都木有。 {'code': -404, 'message': '啥都木有', 'ttl': 1}
+[WARN]: BVID 反查失败 1697/3269：BV1UKwRz9E19。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[WARN]: BVID 反查失败 1699/3269：BV1i7w2z5ESw。原因：接口返回错误代码：-404，信息：啥都木有。 {'code': -404, 'message': '啥都木有', 'ttl': 1}
+[INFO]: BVID 反查进度 1700/3269。
+[WARN]: BVID 反查失败 1707/3269：BV1UGwszMEor。原因：接口返回错误代码：62012，信息：62012。 {'code': 62012, 'message': '62012', 'ttl': 1}
+[INFO]: BVID 反查进度 1720/3269。
+[INFO]: BVID 反查进度 1740/3269。
+[WARN]: BVID 反查失败 1755/3269：BV1yncXzkERy。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 1760/3269。
+[INFO]: BVID 反查进度 1780/3269。
+[WARN]: BVID 反查失败 1792/3269：BV1EKANzvELM。原因：接口返回错误代码：-404，信息：啥都木有。 {'code': -404, 'message': '啥都木有', 'ttl': 1}
+[INFO]: BVID 反查进度 1800/3269。
+[INFO]: BVID 反查进度 1820/3269。
+[INFO]: BVID 反查进度 1840/3269。
+[INFO]: BVID 反查进度 1860/3269。
+[INFO]: BVID 反查进度 1880/3269。
+[INFO]: BVID 反查进度 1900/3269。
+[WARN]: BVID 反查失败 1901/3269：BV15aAPzfEaw。原因：接口返回错误代码：62012，信息：62012。 {'code': 62012, 'message': '62012', 'ttl': 1}
+[INFO]: BVID 反查进度 1920/3269。
+[INFO]: BVID 反查进度 1940/3269。
+[INFO]: BVID 反查进度 1960/3269。
+[WARN]: BVID 反查失败 1963/3269：BV1ePAgz3Exz。原因：接口返回错误代码：62012，信息：62012。 {'code': 62012, 'message': '62012', 'ttl': 1}
+[INFO]: BVID 反查进度 1980/3269。
+[INFO]: BVID 反查进度 2000/3269。
+[INFO]: BVID 反查进度 2020/3269。
+[INFO]: BVID 反查进度 2040/3269。
+[INFO]: BVID 反查进度 2060/3269。
+[INFO]: BVID 反查进度 2080/3269。
+[WARN]: BVID 反查失败 2096/3269：BV18hw2zvEn6。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 2100/3269。
+[INFO]: BVID 反查进度 2120/3269。
+[INFO]: BVID 反查进度 2140/3269。
+[INFO]: BVID 反查进度 2160/3269。
+[INFO]: BVID 反查进度 2180/3269。
+[WARN]: BVID 反查失败 2188/3269：BV1S1wCztEaj。原因：接口返回错误代码：-404，信息：啥都木有。 {'code': -404, 'message': '啥都木有', 'ttl': 1}
+[WARN]: BVID 反查失败 2200/3269：BV1ZffTBwE2n。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 2220/3269。
+[INFO]: BVID 反查进度 2240/3269。
+[WARN]: BVID 反查失败 2250/3269：BV1i7AuzCEZh。原因：接口返回错误代码：-404，信息：啥都木有。 {'code': -404, 'message': '啥都木有', 'ttl': 1}
+[INFO]: BVID 反查进度 2260/3269。
+[WARN]: BVID 反查失败 2275/3269：BV1uDAMzwEox。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 2280/3269。
+[WARN]: BVID 反查失败 2295/3269：BV1PNA3z8E75。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 2300/3269。
+[INFO]: BVID 反查进度 2320/3269。
+[INFO]: BVID 反查进度 2340/3269。
+[INFO]: BVID 反查进度 2360/3269。
+[INFO]: BVID 反查进度 2380/3269。
+[WARN]: BVID 反查失败 2399/3269：BV14zAFzqEcK。原因：接口返回错误代码：62012，信息：62012。 {'code': 62012, 'message': '62012', 'ttl': 1}
+[INFO]: BVID 反查进度 2400/3269。
+[INFO]: BVID 反查进度 2420/3269。
+[INFO]: BVID 反查进度 2440/3269。
+[WARN]: BVID 反查失败 2446/3269：BV13ow6zWEHb。原因：接口返回错误代码：62012，信息：62012。 {'code': 62012, 'message': '62012', 'ttl': 1}
+[INFO]: BVID 反查进度 2460/3269。
+[WARN]: BVID 反查失败 2477/3269：BV13PAJzAERs。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 2480/3269。
+[INFO]: BVID 反查进度 2500/3269。
+[WARN]: BVID 反查失败 2506/3269：BV15icDzRE9o。原因：接口返回错误代码：-404，信息：啥都木有。 {'code': -404, 'message': '啥都木有', 'ttl': 1}
+[WARN]: BVID 反查失败 2515/3269：BV1KzAFzqEFX。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 2520/3269。
+[WARN]: BVID 反查失败 2524/3269：BV1HTAFzbEbd。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[WARN]: BVID 反查失败 2528/3269：BV1QwPqznEfA。原因：接口返回错误代码：62012，信息：62012。 {'code': 62012, 'message': '62012', 'ttl': 1}
+[WARN]: BVID 反查失败 2532/3269：BV1FdAFzdEPb。原因：接口返回错误代码：-404，信息：啥都木有。 {'code': -404, 'message': '啥都木有', 'ttl': 1}
+[INFO]: BVID 反查进度 2540/3269。
+[INFO]: BVID 反查进度 2560/3269。
+[INFO]: BVID 反查进度 2580/3269。
+[INFO]: BVID 反查进度 2600/3269。
+[WARN]: BVID 反查失败 2616/3269：BV1WRAKzDEfR。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 2620/3269。
+[INFO]: BVID 反查进度 2640/3269。
+[INFO]: BVID 反查进度 2660/3269。
+[WARN]: BVID 反查失败 2665/3269：BV11pwLz6E2L。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 2680/3269。
+[INFO]: BVID 反查进度 2700/3269。
+[INFO]: BVID 反查进度 2720/3269。
+[INFO]: BVID 反查进度 2740/3269。
+[INFO]: BVID 反查进度 2760/3269。
+[INFO]: BVID 反查进度 2780/3269。
+[INFO]: BVID 反查进度 2800/3269。
+[INFO]: BVID 反查进度 2820/3269。
+[WARN]: BVID 反查失败 2837/3269：BV17bAKzBEY6。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 2840/3269。
+[WARN]: BVID 反查失败 2842/3269：BV1CHwpzWEwQ。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[WARN]: BVID 反查失败 2860/3269：BV1D4AuziEpf。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 2880/3269。
+[INFO]: BVID 反查进度 2900/3269。
+[WARN]: BVID 反查失败 2915/3269：BV1AKA3zfE13。原因：接口返回错误代码：62012，信息：62012。 {'code': 62012, 'message': '62012', 'ttl': 1}
+[INFO]: BVID 反查进度 2920/3269。
+[INFO]: BVID 反查进度 2940/3269。
+[INFO]: BVID 反查进度 2960/3269。
+[INFO]: BVID 反查进度 2980/3269。
+[INFO]: BVID 反查进度 3000/3269。
+[WARN]: BVID 反查失败 3001/3269：BV1o6AHzLECB。原因：接口返回错误代码：-404，信息：啥都木有。 {'code': -404, 'message': '啥都木有', 'ttl': 1}
+[INFO]: BVID 反查进度 3020/3269。
+[INFO]: BVID 反查进度 3040/3269。
+[INFO]: BVID 反查进度 3060/3269。
+[WARN]: BVID 反查失败 3077/3269：BV156wizUEp2。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 3080/3269。
+[INFO]: BVID 反查进度 3100/3269。
+[INFO]: BVID 反查进度 3120/3269。
+[WARN]: BVID 反查失败 3137/3269：BV1r4AgzxEWu。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[WARN]: BVID 反查失败 3138/3269：BV1J4czzwEZm。原因：接口返回错误代码：62002，信息：稿件不可见。 {'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[INFO]: BVID 反查进度 3140/3269。
+[INFO]: BVID 反查进度 3160/3269。
+[INFO]: BVID 反查进度 3180/3269。
+[INFO]: BVID 反查进度 3200/3269。
+[INFO]: BVID 反查进度 3220/3269。
+[INFO]: BVID 反查进度 3240/3269。
+[INFO]: BVID 反查进度 3260/3269。
+[INFO]: BVID 反查进度 3269/3269。
+[INFO]: 已解析出 2967 个唯一作者，准备导出 owner_mid 列表。
+[INFO]: 导出完成：outputs\video_pool\bvid_to_uids\bvid_to_uids_20260327_165321.csv
+[TIMESTAMP][END] 2026-03-27T18:28:12

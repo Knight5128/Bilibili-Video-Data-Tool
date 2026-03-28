@@ -1,0 +1,19 @@
+[TIMESTAMP][BEGIN] 2026-03-26T20:33:36
+[INFO]: 识别到已有 uid_expansion 会话：outputs/video_pool/uid_expansions/uid_expansion_20250923_20260322_214916，本次将保存为 part_11。
+[INFO]: 历史任务增量检查完成：0 个作者命中过往 original_uids，60 个作者按全局 start_date 抓取；命中历史的作者将从其最近一次任务开始日（含当天）继续抓取。
+[INFO]: 去重后共有 60 个作者待抓取。
+[INFO]: 开始执行作者批量抓取任务，start_date=2025-09-23T00:00:00，end_date=2026-03-26T20:33:36。
+[INFO]: 本次 uid_expansion 会话目录：outputs/video_pool/uid_expansions/uid_expansion_20250923_20260322_214916，当前 part_11。
+[INFO]: 开始处理第 1/3 批作者，共 20 个。
+[INFO]: 第 1/3 批完成，新增 2234 条视频，累计 2234 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 2/3 批作者，共 20 个。
+[INFO]: 第 2/3 批完成，新增 1320 条视频，累计 3554 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 3/3 批作者，共 20 个。
+[INFO]: 第 3/3 批完成，新增 551 条视频，累计 4105 条。
+[INFO]: 全局 videolist 去重检查完成：历史任务中已有 290536 个唯一 bvid，本次过滤掉 0 条重复视频。
+[INFO]: 视频列表已导出：outputs\video_pool\uid_expansions\uid_expansion_20250923_20260322_214916\videolist_part_11.csv
+[INFO]: 本次实际抓取到的视频发布日期范围为 2025-09-24T13:19:24 -> 2026-03-26T20:03:12。
+[INFO]: 导出完成：outputs\video_pool\uid_expansions\uid_expansion_20250923_20260322_214916\videolist_part_11.csv
+[TIMESTAMP][END] 2026-03-26T20:41:27

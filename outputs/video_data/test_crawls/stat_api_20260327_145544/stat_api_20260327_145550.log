@@ -1,0 +1,26 @@
+[TIMESTAMP][BEGIN] 2026-03-27T14:55:44
+Bilibili Video Data Crawler - STAT API Debug
+api_name: stat
+bvid: BV1X2XWBXE7f
+started_at: 2026-03-27T14:55:44.358290
+finished_at: 2026-03-27T14:55:50.366737
+status: success
+
+payload_json:
+{
+  "bvid": "BV1X2XWBXE7f",
+  "snapshot_time": "2026-03-27T14:55:44.564354",
+  "stat_view": 110795,
+  "stat_like": 1884,
+  "stat_coin": 217,
+  "stat_favorite": 261,
+  "stat_share": 156,
+  "stat_reply": 331,
+  "stat_danmu": 885,
+  "stat_dislike": 0,
+  "stat_his_rank": 0,
+  "stat_now_rank": 0,
+  "stat_evaluation": "",
+  "source_pool": "video_pool"
+}
+[TIMESTAMP][END] 2026-03-27T14:55:50

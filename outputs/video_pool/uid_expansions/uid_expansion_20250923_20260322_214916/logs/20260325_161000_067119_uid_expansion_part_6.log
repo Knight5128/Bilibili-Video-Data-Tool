@@ -1,0 +1,13 @@
+[INFO]: 识别到已有 uid_expansion 会话：outputs/video_pool/uid_expansions/uid_expansion_180_days_20260322_214916，本次将保存为 part_6。
+[INFO]: 历史任务增量检查完成：0 个作者命中过往 original_uids，1291 个作者按全局 start_date 抓取。
+[INFO]: 去重后共有 1291 个作者待抓取。
+[INFO]: 开始执行作者批量抓取任务，start_date=2025-09-23T00:00:00，end_date=2026-03-25T16:09:47.105297。
+[INFO]: 本次 uid_expansion 会话目录：outputs/video_pool/uid_expansions/uid_expansion_180_days_20260322_214916，当前 part_6。
+[INFO]: 开始处理第 1/65 批作者，共 20 个。
+[WARN]: 作者 497987732 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_0aaf6b14-18dc-4e6b-8389-84aed6a07f44'}}
+[WARN]: 作者 498099165 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_e58274fd-a0f0-4029-9cfb-ce098c80711d'}}
+[WARN]: 作者 498380319 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_473494be-a5c0-4488-9a6b-eb55d2ff2149'}}
+[WARN]: 作者 498399023 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_385e57bd-f421-474c-9180-44af342efc13'}}
+[WARN]: 作者 498517753 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_6e4135c9-cbf0-40a5-97b6-c0fed83ef697'}}
+[WARN]: 作者 499130220 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_a31521ad-b6da-45d9-800b-a9cc148a33e2'}}
+[WARN]: 作者 499568617 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_2b7b6cee-0b68-4a50-ae90-52df0a79e3e9'}}

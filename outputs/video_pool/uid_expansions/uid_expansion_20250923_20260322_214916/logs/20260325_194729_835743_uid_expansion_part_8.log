@@ -1,0 +1,35 @@
+[TIMESTAMP][BEGIN] 2026-03-25T19:46:45
+[INFO]: 识别到已有 uid_expansion 会话：outputs/video_pool/uid_expansions/uid_expansion_20250923_20260322_214916，本次将保存为 part_8。
+[INFO]: 历史任务增量检查完成：0 个作者命中过往 original_uids，750 个作者按全局 start_date 抓取；命中历史的作者将从其最近一次任务开始日（含当天）继续抓取。
+[INFO]: 去重后共有 750 个作者待抓取。
+[INFO]: 开始执行作者批量抓取任务，start_date=2025-09-23T00:00:00，end_date=2026-03-25T19:46:45。
+[INFO]: 本次 uid_expansion 会话目录：outputs/video_pool/uid_expansions/uid_expansion_20250923_20260322_214916，当前 part_8。
+[INFO]: 开始处理第 1/38 批作者，共 20 个。
+[WARN]: 作者 1719391457 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_7831a3ec-fa00-4cbb-9d80-07e74dcb17ca'}}
+[WARN]: 作者 1721055966 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_950719cf-b8f5-4a4f-a798-1ff57a8c8db9'}}
+[WARN]: 作者 1721505402 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_90eb611c-637a-4557-944f-fabe4e2c7807'}}
+[WARN]: 作者 1722314110 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_50943d83-7bf8-4435-b962-9b95d96b9d48'}}
+[WARN]: 作者 1722904045 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_68bc3996-c970-4a4f-aa6d-a3abcbe6f928'}}
+[WARN]: 作者 1729181759 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_38c1dca2-c646-4234-b479-99e2591058ab'}}
+[WARN]: 作者 1729427784 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_c6d548eb-9afa-4930-863d-72352dfbb5b9'}}
+[WARN]: 作者 1730260849 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_e6451f08-94ff-45c0-8cb5-b7f22a13b4ff'}}
+[WARN]: 作者 1732349847 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_7aa9ecb5-1f2e-45e6-a481-32bc3dfa38f4'}}
+[WARN]: 作者 1739503103 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_5549c9ba-001d-4c6a-9356-19f6f7c987f3'}}
+[WARN]: 作者 1741555775 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_75be8e1c-efab-484a-ac85-57ba7942f377'}}
+[WARN]: 作者 1742004653 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_92ce6802-220f-4a81-a54c-6b2fc15ed72c'}}
+[WARN]: 作者 1745143606 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_8cdcc666-8432-4fe1-b6de-ceac33daedf1'}}
+[WARN]: 作者 1746745880 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_a7621bbb-af49-4d74-b962-e1fc4b221c82'}}
+[WARN]: 作者 1749048990 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_369a4b62-8341-4f8a-baf6-1567a50bffd6'}}
+[WARN]: 作者 1756547706 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_edce9041-79a1-476e-bfe5-4bb4c6ca9c19'}}
+[WARN]: 作者 1759413084 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_716a7ef9-5974-4c79-b409-cf413fdc1a4c'}}
+[WARN]: 作者 1761812300 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_45f393de-e1c5-4abc-b31d-9c69d9ac51e2'}}
+[WARN]: 作者 1764043516 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_4915c96a-fe82-4bc1-851e-fa7e9f6dc6b5'}}
+[WARN]: 作者 1772077854 抓取失败，已跳过。原因：接口返回错误代码：-352，信息：风控校验失败。 {'code': -352, 'message': '风控校验失败', 'ttl': 1, 'data': {'v_voucher': 'voucher_102a4168-a865-4756-a2f0-03718b8cf294'}}
+[INFO]: 第 1/38 批完成，新增 0 条视频，累计 0 条。
+[WARN]: 本批有 20 个作者抓取失败。
+[WARN]: 检测到当前批次全部作者抓取失败，已提前停止后续批次，并将输出本次已抓取视频列表及剩余作者 UID。
+[INFO]: 全局 videolist 去重检查完成：历史任务中已有 205199 个唯一 bvid，本次过滤掉 0 条重复视频。
+[INFO]: 视频列表已导出：outputs\video_pool\uid_expansions\uid_expansion_20250923_20260322_214916\videolist_part_8.csv
+[INFO]: 剩余作者 UID 已导出：outputs\video_pool\uid_expansions\uid_expansion_20250923_20260322_214916\remaining_uids_part_8.csv
+[INFO]: 导出完成：outputs\video_pool\uid_expansions\uid_expansion_20250923_20260322_214916\videolist_part_8.csv
+[TIMESTAMP][END] 2026-03-25T19:47:29

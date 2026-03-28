@@ -1,0 +1,42 @@
+[TIMESTAMP][BEGIN] 2026-03-27T15:12:03
+Bilibili Video Data Crawler - COMMENT API Debug
+api_name: comment
+bvid: BV1X2XWBXE7f
+started_at: 2026-03-27T15:12:03.807549
+finished_at: 2026-03-27T15:12:13.933301
+comment_limit: 10
+status: success
+
+payload_json:
+{
+  "bvid": "BV1X2XWBXE7f",
+  "snapshot_time": "2026-03-27T15:12:04.067554",
+  "limit": 10,
+  "comment_top10": [
+    {
+      "rpid": 296773608688,
+      "message": "现在这挂耳咖啡真难摸吧 绝密一晚上刷了五六把二员 航空箱吃了十几个愣是一个不出 上赛季挂耳咖啡不说绝密玩一晚上 机密一晚上都少说得出俩吧 今天刚把最后一个搓了 我是真不想花现金买金蛋啊",
+      "like": 13,
+      "ctime": "2026-03-26T23:49:43",
+      "mid": 171933509,
+      "uname": "卡门青德_"
+    },
+    {
+      "rpid": 296779965472,
+      "message": "蜂医三分钟吃光总裁被护航队逮到后",
+      "like": 49,
+      "ctime": "2026-03-27T01:11:01",
+      "mid": 1290620059,
+      "uname": "彭于诺"
+    },
+    {
+      "rpid": 296804867072,
+      "message": "老皮装傻充愣有一手",
+      "like": 0,
+      "ctime": "2026-03-27T11:15:40",
+      "mid": 478582040,
+      "uname": "敢敢敢敢敢の"
+    }
+  ]
+}
+[TIMESTAMP][END] 2026-03-27T15:12:13

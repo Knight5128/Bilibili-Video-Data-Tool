@@ -1,0 +1,7 @@
+[TIMESTAMP][BEGIN] 2026-03-28T18:15:33
+[INFO]: 开始执行自定义全量导出：daily_hot。
+[INFO]: 正在抓取当天全站热门视频（默认400条）。
+[INFO]: 热门 400 条抓取完成，新增 400 条候选视频。
+[INFO]: 视频列表已导出：outputs\video_pool\full_site_floorings\daily_hot-20260328_181525.csv
+[INFO]: 作者 UID 列表已导出：outputs\video_pool\full_site_floorings\daily_hot-20260328_181525_authors.csv
+[TIMESTAMP][END] 2026-03-28T18:16:16
