@@ -11,9 +11,7 @@ import streamlit as st
 
 from bili_pipeline.cloud_tracker.admin import parse_owner_mid_upload
 from bili_pipeline.crawl_api import (
-    DEFAULT_VIDEO_DATA_OUTPUT_DIR,
     TEST_CRAWLS_OUTPUT_DIR,
-    crawl_bvid_list_from_csv,
     crawl_full_video_bundle,
     crawl_latest_comments,
     crawl_media_assets,
@@ -58,6 +56,12 @@ from bili_pipeline.datahub.discover_ops import (
     write_uid_expansion_summary,
 )
 from bili_pipeline.datahub.local_cycle_runner import DataHubLocalCycleRunner
+from bili_pipeline.datahub.manual_batch_runner import (
+    DEFAULT_STREAM_DATA_TIME_WINDOW_HOURS,
+    MANUAL_CRAWLS_OUTPUT_DIR,
+    discover_manual_batch_source_csvs,
+    run_manual_realtime_batch_crawl,
+)
 from bili_pipeline.datahub.shared import (
     append_live_log,
     build_credential_from_cookie,
@@ -208,16 +212,6 @@ def _merge_and_deduplicate_by_column(dfs: list[pd.DataFrame], column_name: str) 
     return deduplicated.reset_index(drop=True)
 
 
-def _build_task_mode(include_realtime: bool, include_once: bool) -> CrawlTaskMode:
-    if include_realtime and include_once:
-        return CrawlTaskMode.FULL_BUNDLE
-    if include_realtime:
-        return CrawlTaskMode.REALTIME_ONLY
-    if include_once:
-        return CrawlTaskMode.ONCE_ONLY
-    raise ValueError("至少需要选择一种抓取范围。")
-
-
 def _load_gcp_form_defaults() -> dict[str, str]:
     return load_json_config(LOCAL_GCP_CONFIG_PATH, DEFAULT_GCP_CONFIG)
 
@@ -239,7 +233,7 @@ render_night_sky_background()
 render_centered_header(st, "Bilibili DataHub", LOGO_PATH)
 _sync_field_reference_doc_once()
 st.markdown(
-    "<p style='text-align: center; margin-bottom: 1rem;'>统一整合视频列表发现、批量抓取、接口调试、BigQuery/GCS 查看与本地自动追踪的一体化本地应用。</p>",
+    "<p style='text-align: center; margin-bottom: 1rem;'>统一整合视频列表发现、批量抓取、接口调试、BigQuery/GCS 查看与本地自动批量抓取的一体化本地应用。</p>",
     unsafe_allow_html=True,
 )
 
@@ -251,7 +245,7 @@ with st.sidebar:
     comment_limit_default = st.number_input("默认评论条数", min_value=1, max_value=100, value=10, step=1)
     chunk_size_mb = st.number_input("媒体分块大小（MB）", min_value=1, max_value=64, value=4, step=1)
     max_height = st.number_input("媒体最大分辨率（高度）", min_value=360, max_value=2160, value=1080, step=120)
-    consecutive_failure_limit = st.number_input("CSV 批量抓取连续失败暂停阈值", min_value=1, max_value=100, value=10, step=1)
+    consecutive_failure_limit = st.number_input("手动批量抓取连续失败暂停阈值", min_value=1, max_value=100, value=10, step=1)
     cookie_text = st.text_area("可选：B 站 Cookie（仅当前会话）", value="", height=80)
     st.divider()
     st.subheader("Google Cloud 配置")
@@ -264,8 +258,8 @@ with st.sidebar:
     gcs_public_base_url = st.text_input("公共访问基础 URL（可选）", value=gcp_defaults["gcs_public_base_url"])
     trigger_save_gcp_config = st.button("保存 GCP 配置", width="stretch")
     st.divider()
-    st.subheader("自动追踪设置")
-    auto_crawl_interval_hours = st.number_input("自动抓取触发间隔（小时）", min_value=1, max_value=24, value=int(auto_defaults["crawl_interval_hours"]), step=1)
+    st.subheader("自动批量抓取设置")
+    auto_crawl_interval_hours = st.number_input("自动批量抓取触发间隔（小时）", min_value=1, max_value=24, value=int(auto_defaults["crawl_interval_hours"]), step=1)
     auto_tracking_window_days = st.number_input("作者追踪窗口（天）", min_value=1, max_value=90, value=int(auto_defaults["tracking_window_days"]), step=1)
     auto_comment_limit = st.number_input("自动流程评论条数", min_value=1, max_value=100, value=int(auto_defaults["comment_limit"]), step=1)
     auto_max_videos_per_cycle = st.number_input("单轮最大追踪视频数", min_value=1, max_value=5000, value=int(auto_defaults["max_videos_per_cycle"]), step=1)
@@ -275,7 +269,7 @@ with st.sidebar:
     auto_lock_ttl_minutes = st.number_input("运行锁超时分钟数", min_value=1, max_value=720, value=int(auto_defaults["lock_ttl_minutes"]), step=1)
     auto_author_overlap_minutes = st.number_input("作者增量重叠分钟数", min_value=0, max_value=1440, value=int(auto_defaults["author_overlap_minutes"]), step=30)
     auto_pending_parallelism = st.number_input("待补元数据/媒体抓取并发度", min_value=1, max_value=16, value=int(auto_defaults["pending_once_batch_parallelism"]), step=1)
-    trigger_save_auto_config = st.button("保存自动追踪配置", width="stretch")
+    trigger_save_auto_config = st.button("保存自动批量抓取配置", width="stretch")
 
 gcp_payload = {
     "gcp_project_id": gcp_project_id,
@@ -305,7 +299,7 @@ if trigger_save_gcp_config:
     st.sidebar.success(f"GCP 配置已保存：{saved_path}")
 if trigger_save_auto_config:
     saved_path = save_json_config(LOCAL_AUTO_CONFIG_PATH, auto_payload)
-    st.sidebar.success(f"自动追踪配置已保存：{saved_path}")
+    st.sidebar.success(f"自动批量抓取配置已保存：{saved_path}")
 
 active_credential = build_credential_from_cookie(cookie_text)
 active_gcp_config = build_gcp_config(gcp_payload)
@@ -344,8 +338,8 @@ with reference_col:
         _render_field_reference_panel(field_reference_df)
 
 with main_col:
-    tab_discover, tab_merge, tab_crawl, tab_auto, tab_db, tab_quick_jump, tab_tid = st.tabs(
-        ["视频列表构建", "文件拼接及去重", "视频数据抓取", "自动追踪", "BigQuery / GCS 数据查看", "快捷跳转", "tid 与分区名称对应"]
+    tab_discover, tab_merge, tab_debug, tab_auto, tab_manual_batch, tab_db, tab_quick_jump, tab_tid = st.tabs(
+        ["视频列表构建", "文件拼接及去重", "数据抓取调试", "自动批量抓取", "手动批量抓取", "BigQuery / GCS 数据查看", "快捷跳转", "tid 与分区名称对应"]
     )
 
 with tab_discover:
@@ -595,9 +589,9 @@ with tab_merge:
                 st.caption(f"去重结果：`{display_path(dedup_saved, APP_DIR)}`")
             st.dataframe(merged.head(200), width="stretch", hide_index=True)
 
-with tab_crawl:
-    st.subheader("视频数据抓取")
-    single_tab, batch_tab, api_tab = st.tabs(["单 bvid 全流程", "CSV 批量抓取", "四类接口调试"])
+with tab_debug:
+    st.subheader("数据抓取调试")
+    single_tab, api_tab = st.tabs(["单 bvid 全流程", "四类接口调试"])
 
     with single_tab:
         if store_init_error:
@@ -633,52 +627,6 @@ with tab_crawl:
                     else:
                         st.success("单视频全流程抓取成功。")
                     _show_json("流程摘要", summary.to_dict())
-
-    with batch_tab:
-        if store_init_error:
-            st.warning(f"当前 GCP 存储尚未就绪：{store_init_error}")
-        uploaded = st.file_uploader("上传包含 `bvid` 列的 CSV 文件", type=["csv"], accept_multiple_files=False)
-        parallelism = st.number_input("并发度", min_value=1, max_value=16, value=2, step=1)
-        include_realtime_batch = st.checkbox("抓取评论数据/互动量数据（优先、及时更新）", value=True)
-        include_once_batch = st.checkbox("抓取元数据/媒体数据（一次性、可延后统一抓取）", value=False)
-        include_media_batch = st.checkbox("当启用一次性抓取时同步抓取媒体", value=False, disabled=not include_once_batch)
-        if uploaded is not None:
-            preview_df = pd.read_csv(uploaded)
-            st.dataframe(preview_df.head(20), width="stretch", hide_index=True)
-        if st.button("开始批量抓取"):
-            try:
-                if store is None:
-                    raise ValueError("请先完成 GCP 配置。")
-                if uploaded is None:
-                    raise ValueError("请先上传 CSV 文件。")
-                task_mode = _build_task_mode(include_realtime_batch, include_once_batch)
-                upload_cache_dir = DEFAULT_VIDEO_DATA_OUTPUT_DIR / "_uploaded_batches"
-                upload_cache_dir.mkdir(parents=True, exist_ok=True)
-                tmp_path = upload_cache_dir / f"batch_input_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-                tmp_path.write_bytes(uploaded.getbuffer())
-                report = crawl_bvid_list_from_csv(
-                    tmp_path,
-                    parallelism=int(parallelism),
-                    enable_media=include_media_batch,
-                    task_mode=task_mode,
-                    comment_limit=int(comment_limit_default),
-                    consecutive_failure_limit=int(consecutive_failure_limit),
-                    gcp_config=active_gcp_config,
-                    max_height=int(max_height),
-                    chunk_size_mb=int(chunk_size_mb),
-                    media_strategy=active_media_strategy,
-                    credential=active_credential,
-                    output_root_dir=DEFAULT_VIDEO_DATA_OUTPUT_DIR,
-                    source_csv_name=uploaded.name,
-                )
-            except Exception as exc:  # noqa: BLE001
-                st.error(f"批量抓取失败：{exc}")
-            else:
-                if report.completed_all:
-                    st.success("批量抓取完成。")
-                else:
-                    st.warning(report.stop_reason)
-                _show_json("批量运行报告", report.to_dict())
 
     with api_tab:
         meta_tab, stat_tab, comment_tab, media_tab = st.tabs(["Meta", "Stat", "Comment", "Media"])
@@ -716,16 +664,16 @@ with tab_crawl:
                 _show_json("MediaResult", result.to_dict())
 
 with tab_auto:
-    st.subheader("自动追踪")
+    st.subheader("自动批量抓取")
     if local_runner_error:
-        st.warning(f"自动追踪尚未就绪：{local_runner_error}")
+        st.warning(f"自动批量抓取尚未就绪：{local_runner_error}")
     author_upload = st.file_uploader("上传作者列表 CSV（必须包含 owner_mid 列）", type=["csv"], key="auto_author_upload")
     source_name = st.text_input("作者列表来源名称", value="selected_authors")
     upload_col, run_col, queue_col = st.columns(3)
     if upload_col.button("上传 / 替换作者列表", width="stretch"):
         try:
             if local_runner is None:
-                raise ValueError("自动追踪尚未就绪。")
+                raise ValueError("自动批量抓取尚未就绪。")
             if author_upload is None:
                 raise ValueError("请先上传作者 CSV。")
             owner_mids = parse_owner_mid_upload(type("Upload", (), {"read": lambda self=None: author_upload.getvalue()})())
@@ -738,16 +686,16 @@ with tab_auto:
             st.error(f"上传作者列表失败：{exc}")
         else:
             st.success(f"已更新作者列表，共 {saved_count} 个作者。")
-    if run_col.button("手动触发一轮自动抓取", width="stretch"):
+    if run_col.button("手动触发一轮自动批量抓取", width="stretch"):
         try:
             if local_runner is None:
-                raise ValueError("自动追踪尚未就绪。")
+                raise ValueError("自动批量抓取尚未就绪。")
             result = local_runner.run_cycle()
         except Exception as exc:  # noqa: BLE001
-            st.error(f"自动抓取失败：{exc}")
+            st.error(f"自动批量抓取失败：{exc}")
         else:
             if result.tracker_report.get("status") == "success":
-                st.success("自动追踪本轮执行成功。")
+                st.success("自动批量抓取本轮执行成功。")
             else:
                 st.warning(f"本轮状态：{result.tracker_report.get('status')}")
             st.json(result.to_dict())
@@ -756,7 +704,7 @@ with tab_auto:
     if queue_col.button("抓取待补元数据 / 媒体数据", width="stretch"):
         try:
             if local_runner is None:
-                raise ValueError("自动追踪尚未就绪。")
+                raise ValueError("自动批量抓取尚未就绪。")
             report = local_runner.crawl_pending_once_data(
                 include_media=include_media_pending,
                 limit=int(pending_limit),
@@ -777,7 +725,7 @@ with tab_auto:
         try:
             status_payload = local_runner.status()
         except Exception as exc:  # noqa: BLE001
-            st.warning(f"读取自动追踪状态失败：{exc}")
+            st.warning(f"读取自动批量抓取状态失败：{exc}")
         else:
             metrics = status_payload.get("metrics", {})
             st.caption(
@@ -791,6 +739,60 @@ with tab_auto:
                 st.dataframe(pd.DataFrame(status_payload.get("author_source_count") and local_runner.tracker_store.list_author_sources() or []), width="stretch", hide_index=True)
             with st.expander("待补元数据/媒体清单", expanded=False):
                 st.dataframe(pd.DataFrame(status_payload.get("meta_media_queue_rows", [])).head(200), width="stretch", hide_index=True)
+
+with tab_manual_batch:
+    st.subheader("手动批量抓取")
+    if store_init_error:
+        st.warning(f"当前 GCP 存储尚未就绪：{store_init_error}")
+    st.caption(
+        "点击开始后，会自动汇总 `outputs/video_pool/full_site_floorings/` 下非 `_authors.csv` 的视频列表，"
+        "以及 `outputs/video_pool/uid_expansions/` 目录及子目录下所有以 `videolist` 开头的 CSV，"
+        "再按发布时间窗口筛选后，仅抓取实时互动量 / 评论数据并上传到 BigQuery。"
+    )
+    stream_data_time_window_hours = st.number_input(
+        "STREAM_DATA_TIME_WINDOW（小时）",
+        min_value=1,
+        max_value=24 * 365,
+        value=DEFAULT_STREAM_DATA_TIME_WINDOW_HOURS,
+        step=24,
+    )
+    parallelism = st.number_input("并发度", min_value=1, max_value=16, value=2, step=1, key="manual_batch_parallelism")
+    source_csv_paths = discover_manual_batch_source_csvs()
+    st.caption(f"当前匹配到 {len(source_csv_paths)} 个源 CSV；任务目录将写入：`{MANUAL_CRAWLS_OUTPUT_DIR.as_posix()}`")
+    with st.expander("查看本次会被纳入候选池的源 CSV", expanded=False):
+        if source_csv_paths:
+            st.dataframe(
+                pd.DataFrame({"source_csv_path": [display_path(path, APP_DIR) for path in source_csv_paths]}),
+                width="stretch",
+                hide_index=True,
+            )
+        else:
+            st.info("暂未发现符合约定命名规则的视频列表 CSV。")
+    if st.button("开始手动批量抓取"):
+        try:
+            if store is None:
+                raise ValueError("请先完成 GCP 配置。")
+            report = run_manual_realtime_batch_crawl(
+                gcp_config=active_gcp_config,
+                stream_data_time_window_hours=int(stream_data_time_window_hours),
+                parallelism=int(parallelism),
+                comment_limit=int(comment_limit_default),
+                consecutive_failure_limit=int(consecutive_failure_limit),
+                credential=active_credential,
+                media_strategy=active_media_strategy,
+                max_height=int(max_height),
+                chunk_size_mb=int(chunk_size_mb),
+            )
+        except Exception as exc:  # noqa: BLE001
+            st.error(f"手动批量抓取失败：{exc}")
+        else:
+            if report.status == "completed":
+                st.success("手动批量抓取完成。")
+            elif report.status == "partial":
+                st.warning("手动批量抓取已结束，但仍有部分视频失败并已保留剩余清单。")
+            else:
+                st.info("本轮没有可抓取的视频，或已按条件跳过。")
+            _show_json("手动批量抓取运行报告", report.to_dict())
 
 with tab_db:
     st.subheader("BigQuery / GCS 数据查看")

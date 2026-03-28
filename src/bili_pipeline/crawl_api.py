@@ -243,6 +243,21 @@ def _prepare_batch_crawl_session(
     )
 
 
+def _prepare_explicit_batch_crawl_session(
+    session_dir: Path | str,
+    *,
+    root_dir: Path | str | None = None,
+) -> BatchCrawlSessionContext:
+    resolved_session_dir = Path(session_dir)
+    return BatchCrawlSessionContext(
+        root_dir=Path(root_dir or resolved_session_dir.parent),
+        session_dir=resolved_session_dir,
+        logs_dir=resolved_session_dir / "logs",
+        part_number=_infer_next_batch_part(resolved_session_dir) if resolved_session_dir.exists() else 1,
+        is_new_session=not resolved_session_dir.exists(),
+    )
+
+
 def _build_batch_crawl_summary_text(state: dict[str, Any]) -> str:
     parts = sorted(state.get("parts", []), key=lambda item: int(item.get("part_number", 0)))
     interruption_count = sum(1 for part in parts if part.get("stopped_due_to_consecutive_failures"))
@@ -512,6 +527,7 @@ def crawl_bvid_list_from_csv(
     credential: Any | None = None,
     output_root_dir: Path | str | None = None,
     source_csv_name: str | None = None,
+    session_dir: Path | str | None = None,
 ) -> BatchCrawlReport:
     resolved_config = _resolve_gcp_config(gcp_config, media_strategy)
     resolved_mode, include_meta, include_realtime, include_media = _resolve_stage_flags(
@@ -520,7 +536,11 @@ def crawl_bvid_list_from_csv(
     )
     fieldnames, original_rows, bvids = _read_csv_rows(csv_path)
     source_name = (source_csv_name or Path(csv_path).name).strip() or Path(csv_path).name
-    session = _prepare_batch_crawl_session(output_root_dir, source_name, bvids)
+    session = (
+        _prepare_explicit_batch_crawl_session(session_dir, root_dir=output_root_dir)
+        if session_dir is not None
+        else _prepare_batch_crawl_session(output_root_dir, source_name, bvids)
+    )
     session.session_dir.mkdir(parents=True, exist_ok=True)
     session.logs_dir.mkdir(parents=True, exist_ok=True)
     if session.is_new_session:

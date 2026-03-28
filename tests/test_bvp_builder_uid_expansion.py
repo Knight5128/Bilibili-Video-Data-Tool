@@ -158,6 +158,26 @@ class BvpBuilderUidExpansionTest(unittest.TestCase):
 
         self.assertEqual(datetime(2026, 3, 22, 21, 49, 16), task_started_at)
 
+    def test_resolve_uid_history_task_started_at_ignores_stale_late_task_started_at(self) -> None:
+        legacy_state = {
+            "task_started_at": "2026-03-25T18:57:26",
+            "requested_window_start_at": "2025-09-23T00:00:00",
+            "requested_window_end_at": "2026-03-26T20:33:36",
+            "parts": [
+                {"part_number": 7, "run_started_at": "2026-03-25T18:57:26"},
+                {"part_number": 3, "run_started_at": "20260324_233600"},
+                {"part_number": 1, "run_started_at": "20260322_214916"},
+            ],
+            "updated_at": "2026-03-26T20:41:27",
+        }
+
+        task_started_at = bvp_builder._resolve_uid_history_task_started_at(
+            legacy_state,
+            Path("uid_expansion_20250923_20260322_214916"),
+        )
+
+        self.assertEqual(datetime(2026, 3, 22, 21, 49, 16), task_started_at)
+
     def test_build_owner_since_overrides_uses_legacy_history_session_start_day(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root_dir = Path(tmp_dir)

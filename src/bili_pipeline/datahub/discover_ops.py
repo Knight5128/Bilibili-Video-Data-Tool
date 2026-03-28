@@ -481,14 +481,28 @@ def resolve_uid_history_task_started_at_from_session_dir(session_dir: Path | Non
 
 
 def resolve_uid_history_task_started_at(state: dict, session_dir: Path | None = None) -> datetime | None:
-    return (
-        parse_datetime_iso(state.get("task_started_at"))
-        or resolve_uid_history_task_started_at_from_session_dir(session_dir)
-        or resolve_uid_history_task_started_at_from_parts(state)
-        or parse_datetime_iso(state.get("updated_at"))
-        or parse_datetime_iso(state.get("requested_window_end_at"))
-        or parse_datetime_iso(state.get("effective_window_end_at"))
-    )
+    primary_candidates = [
+        candidate
+        for candidate in (
+            parse_datetime_iso(state.get("task_started_at")),
+            resolve_uid_history_task_started_at_from_session_dir(session_dir),
+            resolve_uid_history_task_started_at_from_parts(state),
+        )
+        if candidate is not None
+    ]
+    if primary_candidates:
+        return min(primary_candidates)
+
+    fallback_candidates = [
+        candidate
+        for candidate in (
+            parse_datetime_iso(state.get("updated_at")),
+            parse_datetime_iso(state.get("requested_window_end_at")),
+            parse_datetime_iso(state.get("effective_window_end_at")),
+        )
+        if candidate is not None
+    ]
+    return min(fallback_candidates, default=None)
 
 
 def load_owner_history_task_starts(

@@ -196,6 +196,47 @@ class CrawlTaskModeTest(unittest.TestCase):
         self.assertEqual(1, report.remaining_count)
         self.assertFalse(report.completed_all)
 
+    @patch("bili_pipeline.crawl_api._store", return_value=_FakeStore())
+    @patch("bili_pipeline.crawl_api._resolve_gcp_config", return_value=SimpleNamespace(bigquery_dataset="ds", gcs_bucket_name="bucket"))
+    @patch("bili_pipeline.crawl_api.crawl_full_video_bundle")
+    def test_crawl_bvid_list_from_csv_respects_explicit_session_dir(
+        self,
+        mock_bundle: Mock,
+        _mock_resolve: Mock,
+        _mock_store: Mock,
+    ) -> None:
+        mock_bundle.return_value = FullCrawlSummary(
+            bvid="BV_SESSION",
+            meta_ok=True,
+            stat_ok=True,
+            comment_ok=True,
+            media_ok=True,
+            snapshot_time=datetime.now(),
+            task_mode=CrawlTaskMode.REALTIME_ONLY.value,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            csv_path = Path(tmp_dir) / "input.csv"
+            session_dir = Path(tmp_dir) / "manual_crawl_20260329_120000"
+            with csv_path.open("w", encoding="utf-8-sig", newline="") as handle:
+                writer = csv.DictWriter(handle, fieldnames=["bvid"])
+                writer.writeheader()
+                writer.writerow({"bvid": "BV_SESSION"})
+
+            report = crawl_api.crawl_bvid_list_from_csv(
+                csv_path,
+                parallelism=1,
+                task_mode=CrawlTaskMode.REALTIME_ONLY,
+                enable_media=False,
+                gcp_config=SimpleNamespace(),
+                output_root_dir=tmp_dir,
+                session_dir=session_dir,
+            )
+
+            self.assertEqual(str(session_dir), report.session_dir)
+            self.assertTrue((session_dir / "original_bvids.csv").exists())
+            self.assertTrue(Path(report.task_log_path or "").exists())
+
 
 if __name__ == "__main__":
     unittest.main()
