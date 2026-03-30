@@ -9,9 +9,10 @@
 - **作者数据洞察与精简**：可上传作者列表并抓取 `MetaResult` 级作者字段（如昵称、签名、性别、等级、认证状态、会员类型、粉丝数、关注数、公开视频数），支持在连续风控报错达到阈值后自动暂停、导出 `remaining_authors_part_n.csv` 供后续续跑；抓取任务结束时只落盘累计扩充结果，后续需由用户手动上传完整作者清单并点击按钮，才会生成完整汇总、可视化图表与分层精简结果。
 - **CSV/XLSX 文件拼接及去重**：可对多个本地导出结果统一排序、拼接，并按指定键去重。
 - **数据抓取调试**：继续支持单 `bvid` 全流程抓取、四类接口调试，以及 BigQuery / GCS 数据查看与媒体文件回读导出。
-- **手动批量抓取**：点击一次即可自动汇总 `outputs/video_pool/full_site_floorings/` 下非 `_authors.csv` 的视频列表，以及 `outputs/video_pool/uid_expansions/` 下各任务导出的 `videolist*.csv`；再按 `STREAM_DATA_TIME_WINDOW`（默认 14 天，即 336 小时）筛选近期视频，只抓取评论/互动量等实时数据并上传至 BigQuery。
+- **手动批量抓取-动态数据**：点击一次即可自动汇总 `outputs/video_pool/full_site_floorings/` 下非 `_authors.csv` 的视频列表，以及 `outputs/video_pool/uid_expansions/` 下各任务导出的 `videolist*.csv`；再按 `STREAM_DATA_TIME_WINDOW`（默认 14 天，即 336 小时）筛选近期视频，只抓取评论/互动量等实时数据并上传至 BigQuery。
+- **手动批量抓取-媒体/元数据**：支持两种补抓模式。模式 A 会基于当前 BigQuery Dataset 中“已存在动态数据、但尚未同时具备 `videos` 元数据记录与 `assets` 中视频轨/音频轨记录”的视频，维护待补清单并按清单抓取；模式 B 支持用户手动上传一个或多个包含 `bvid` 列的文件，先拼接去重、再剔除当前 Dataset 中已完成媒体/元数据的视频后抓取。
 - **本地自动批量抓取**：在前端中可手动触发一轮“最新排行榜视频列表 + 作者源最新视频列表 + 实时评论/互动量抓取”；同样的逻辑也可通过统一脚本入口执行。
-- **待补元数据/媒体清单**：自动批量抓取阶段发现的新视频会同步进入 `tracker_meta_media_queue` 对应的待补队列；后续可在前端单独批量消化这些只需抓取一次的数据。
+- **待补元数据/媒体清单**：自动批量抓取阶段发现的新视频会同步进入 `tracker_meta_media_queue` 对应的待补队列；后续既可在“自动批量抓取”页直接消化，也可在“手动批量抓取-媒体/元数据”页按 Dataset 缺口或手动上传清单集中补抓。
 - **作者源管理**：在前端上传包含 `owner_mid` 列的 CSV，可直接替换自动批量抓取所使用的作者列表。
 
 ### 典型使用场景
@@ -46,13 +47,14 @@ python scripts/manual_batch_crawl_daemon.py
 python scripts/scheduled_discovery_daemon.py --tracking_ups_path tracking_ups_v1.csv
 ```
 
-- `bilibili-datahub.py` 当前主要包含九个主标签页：
+- `bilibili-datahub.py` 当前主要包含十个主标签页：
   - **视频列表构建**：承接原 `Bilibili_Video_Pool_Builder` 的自定义全量导出、作者视频扩展、BVID 回查作者 UID、失败 UID 提取。
   - **作者数据洞察&精简**：抓取作者元数据、支持断点续跑、查看粉丝量分布、叠加类别属性，并按粉丝量分层比例精简作者列表；也支持直接上传扩充后的作者表进行可视化。
   - **文件拼接及去重**：拼接多个 CSV/XLSX 并按指定键去重。
   - **数据抓取调试**：单视频全流程、四类接口调试。
   - **自动批量抓取**：作者列表上传、手动触发一轮自动批量抓取、查看运行状态、消化待补元数据/媒体队列。
-  - **手动批量抓取**：自动汇总本地 `video_pool` 导出结果，按发布时间窗口筛选近期视频，并统一抓取实时互动量 / 评论数据。
+  - **手动批量抓取-动态数据**：自动汇总本地 `video_pool` 导出结果，按发布时间窗口筛选近期视频，并统一抓取实时互动量 / 评论数据。
+  - **手动批量抓取-媒体/元数据**：维护待补媒体/元数据清单，或基于手动上传清单去重后补抓视频元数据与媒体文件。
   - **BigQuery / GCS 数据查看**：查看结构化数据和媒体资产，并导出媒体文件。
   - **快捷跳转**：打开视频页或作者主页。
   - **tid 与分区名称对应**：查询分区映射。
@@ -243,8 +245,9 @@ streamlit run bilibili-datahub.py
 1. 在 `数据抓取调试` 里找一个 `bvid`，执行一次 `Meta` 或 `单 bvid 全流程`。
 2. 到 `BigQuery / GCS 数据查看` 里查看这个 `bvid` 是否已经能查到结构化记录。
 3. 到 `自动批量抓取` 页上传一个只包含 `owner_mid` 列的小 CSV，手动触发一轮自动批量抓取，确认 `tracker_*` 控制表和 `meta_media_queue` 已开始写入。
-4. 到 `手动批量抓取` 页执行一轮任务，确认 `outputs/video_data/manual_crawls/manual_crawl_<date>_<time>/` 下已生成筛选后的视频列表与日志。
-5. 到 `作者数据洞察&精简` 页上传一个作者 CSV，确认 `outputs/author_refinements/author_refinement_<date>_<time>/` 下已生成扩充作者表、精简版作者表、HTML 图表与日志。
+4. 到 `手动批量抓取-动态数据` 页执行一轮任务，确认 `outputs/video_data/manual_crawls/manual_crawl_<date>_<time>/` 下已生成筛选后的视频列表与日志。
+5. 到 `手动批量抓取-媒体/元数据` 页先执行一次 `同步待补媒体/元数据视频清单`，再视需要触发模式 A 或模式 B，确认对应任务目录和清单文件已经生成。
+6. 到 `作者数据洞察&精简` 页上传一个作者 CSV，确认 `outputs/author_refinements/author_refinement_<date>_<time>/` 下已生成扩充作者表、精简版作者表、HTML 图表与日志。
 
 #### 10. 运行本地自动批量抓取脚本
 
@@ -299,8 +302,10 @@ $env:BILI_BUVID3 = "your-buvid3"
 - `google.auth` 或 `google.cloud` 相关报错：通常是虚拟环境未正确安装依赖，重新激活 `.venv` 后执行 `pip install -e .` 或 `uv sync`。
 - `权限不足`：检查 Service Account 是否已经拿到 `roles/bigquery.dataEditor`、`roles/bigquery.jobUser`、`roles/storage.objectAdmin`。
 - `自动批量抓取脚本能跑但前端查不到数据`：确认脚本读取到的是同一份 `.local/bilibili-datahub.gcp.config.json`，且没有在不同目录下启动。
-- `手动批量抓取没有筛出视频`：先检查 `outputs/video_pool/full_site_floorings/` 与 `outputs/video_pool/uid_expansions/` 下是否已有符合命名规则的 CSV，并确认这些 CSV 中存在 `pubdate` 且位于当前 `STREAM_DATA_TIME_WINDOW` 内。
-- `手动批量抓取任务中断后想排查`：到 `outputs/video_data/manual_crawls/manual_crawl_<date>_<time>/` 下查看 `filtered_video_list.csv`、`manual_crawl_state.json` 与 `logs/` 中的日志文件。
+- `手动批量抓取-动态数据没有筛出视频`：先检查 `outputs/video_pool/full_site_floorings/` 与 `outputs/video_pool/uid_expansions/` 下是否已有符合命名规则的 CSV，并确认这些 CSV 中存在 `pubdate` 且位于当前 `STREAM_DATA_TIME_WINDOW` 内。
+- `手动批量抓取-动态数据任务中断后想排查`：到 `outputs/video_data/manual_crawls/manual_crawl_<date>_<time>/` 下查看 `filtered_video_list.csv`、`manual_crawl_state.json` 与 `logs/` 中的日志文件。
+- `手动批量抓取-媒体/元数据` 看不到待补条目：先确认当前侧边栏填写的是目标 BigQuery Dataset；模式 A 只会纳入已进入 `video_stat_snapshots` 或 `topn_comment_snapshots`、但尚未同时具备 `videos` 与 `assets(video+audio)` 的视频。
+- `手动批量抓取-媒体/元数据` 在风控后暂停：查看对应任务目录下的 `manual_crawl_media_state.json`、`batch_crawl_state.json`、`remaining_bvids_part_n.csv` 与 `logs/`；模式 A 会在任务结束后刷新根目录 waitlist，模式 B 会把剩余清单保留在当前任务目录中。
 
 ### 自动批量抓取说明
 
@@ -315,9 +320,9 @@ $env:BILI_BUVID3 = "your-buvid3"
   - **风控暂停窗口**：触发风控后自动暂停，等待下一次脚本调用或前端手动重试；
   - **作者源 / watchlist / run_logs**：沿用现有结构，避免破坏旧数据。
 
-### 手动批量抓取说明
+### 手动批量抓取-动态数据说明
 
-- 当前 `手动批量抓取` 只负责抓取**实时数据**，即评论快照与互动量快照；不再在这一页直接处理元数据/媒体。
+- 当前 `手动批量抓取-动态数据` 只负责抓取**实时数据**，即评论快照与互动量快照；不再在这一页直接处理元数据/媒体。
 - 每次点击 `开始手动批量抓取` 后，程序会自动扫描两类来源：
   - `outputs/video_pool/full_site_floorings/` 下所有不带 `_authors.csv` 后缀的 `.csv`；
   - `outputs/video_pool/uid_expansions/` 目录及其子目录下所有以 `videolist` 开头的 `.csv`。
@@ -326,6 +331,23 @@ $env:BILI_BUVID3 = "your-buvid3"
   - `filtered_video_list.csv`：本轮最终送入实时抓取流程的视频清单；
   - `manual_crawl_state.json`：本轮任务状态摘要；
   - `logs/`：本轮筛选日志和批量抓取日志。
+
+### 手动批量抓取-媒体/元数据说明
+
+- 本页专门处理**一次性数据**，即视频元数据与媒体文件（视频轨 + 音频轨）。
+- **模式 A：基于数据集缺失条目**
+  - 点击 `同步待补媒体/元数据视频清单` 后，程序会在当前 BigQuery Dataset 中计算：
+    - 候选集：存在于 `video_stat_snapshots` 或 `topn_comment_snapshots` 的视频；
+    - 已完成集：同时存在于 `videos` 表，且 `assets` 表中同时具有 `asset_type=video` 与 `asset_type=audio` 的视频；
+    - 待补集：候选集减已完成集。
+  - 同步结果会写到 `outputs/video_data/manual_crawls/manual_crawl_media_waitlist_<DatasetName>.csv`。
+  - 点击 `按清单抓取媒体/元数据` 后，每次都会新建独立任务目录 `manual_crawl_media_mode_A_<date>_<time>/`，并按当前 waitlist 抓取。
+  - 若遇到风控，当前任务目录会直接留档；如启用了睡眠机制，则等待指定分钟数后再开启一个新的 Mode A 任务目录继续抓取。若遇到 `WinError`，则直接停止并保留结果。
+- **模式 B：基于手动上传清单**
+  - 可上传一个或多个包含 `bvid` 列的 CSV/XLSX 文件。
+  - 点击 `去重并抓取` 后，会新建 `manual_crawl_media_mode_B_<date>_<time>/` 目录，先拼接去重，再剔除当前 Dataset 中已经同时具备 `videos` 与 `assets(video+audio)` 的视频。
+  - 若触发风控，系统会把剩余待抓视频清单保存在当前任务目录中，睡眠后继续在同一任务目录内追加下一 part；若遇到 `WinError`，则直接停止。
+- 两种模式都会保留任务级状态文件、批量抓取状态文件和日志文件，便于中断后排查与续跑。
 
 ### 常驻脚本说明
 

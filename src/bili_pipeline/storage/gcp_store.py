@@ -2,15 +2,43 @@ from __future__ import annotations
 
 import json
 import threading
+import types
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, BinaryIO
 from urllib.parse import quote
 
-import google.auth
-from google.cloud import bigquery, storage
-from google.oauth2 import service_account
+try:
+    import google.auth as google_auth
+    from google.cloud import bigquery, storage
+    from google.oauth2 import service_account
+
+    _HAS_GOOGLE_CLOUD = True
+except ModuleNotFoundError:  # pragma: no cover - exercised in dependency-light test environments.
+    google_auth = None
+    _HAS_GOOGLE_CLOUD = False
+
+    class _MissingGoogleClass:
+        def __init__(self, *args, **kwargs) -> None:
+            raise ModuleNotFoundError("google-cloud dependencies are required to use GCP storage backends.")
+
+    def _schema_field(*args, **kwargs):
+        return None
+
+    bigquery = types.SimpleNamespace(
+        Client=_MissingGoogleClass,
+        DatasetReference=_MissingGoogleClass,
+        Dataset=_MissingGoogleClass,
+        Table=_MissingGoogleClass,
+        QueryJobConfig=_MissingGoogleClass,
+        ScalarQueryParameter=_MissingGoogleClass,
+        ArrayQueryParameter=_MissingGoogleClass,
+        SchemaField=_schema_field,
+        table=types.SimpleNamespace(Row=dict),
+    )
+    storage = types.SimpleNamespace(Client=_MissingGoogleClass)
+    service_account = types.SimpleNamespace(Credentials=_MissingGoogleClass)
 
 from bili_pipeline.models import (
     FullCrawlSummary,
@@ -23,6 +51,11 @@ from bili_pipeline.models import (
 )
 
 _BIGQUERY_SCOPES = ("https://www.googleapis.com/auth/cloud-platform",)
+
+
+def _ensure_google_cloud_dependencies() -> None:
+    if not _HAS_GOOGLE_CLOUD:
+        raise ModuleNotFoundError("google-cloud dependencies are required to use GCP storage backends.")
 
 
 def _json_dumps(value: Any) -> str:
@@ -42,6 +75,7 @@ def _timestamp_now() -> str:
 
 
 def _build_credentials(config: GCPStorageConfig) -> tuple[Any | None, str | None]:
+    _ensure_google_cloud_dependencies()
     if config.credentials_path.strip():
         credentials = service_account.Credentials.from_service_account_file(
             config.credentials_path.strip(),
@@ -49,7 +83,7 @@ def _build_credentials(config: GCPStorageConfig) -> tuple[Any | None, str | None
         )
         project_id = config.project_id.strip() or credentials.project_id
         return credentials, project_id
-    credentials, project_id = google.auth.default(scopes=_BIGQUERY_SCOPES)
+    credentials, project_id = google_auth.default(scopes=_BIGQUERY_SCOPES)
     resolved_project = config.project_id.strip() or project_id
     return credentials, resolved_project
 
@@ -112,6 +146,7 @@ class GcsMultipartUploadSession:
 
 class GcsMediaStore:
     def __init__(self, config: GCPStorageConfig) -> None:
+        _ensure_google_cloud_dependencies()
         if not config.is_enabled():
             raise ValueError("GCP storage configuration is incomplete.")
         credentials, project_id = _build_credentials(config)
@@ -287,6 +322,7 @@ class BigQueryCrawlerStore:
     ]
 
     def __init__(self, config: GCPStorageConfig) -> None:
+        _ensure_google_cloud_dependencies()
         if not config.is_enabled():
             raise ValueError("GCP storage configuration is incomplete.")
         credentials, project_id = _build_credentials(config)
@@ -571,6 +607,82 @@ class BigQueryCrawlerStore:
                 bigquery.ScalarQueryParameter("run_id", "STRING", run_id),
             ],
         )
+
+    def export_manual_media_waitlist_rows(self) -> list[dict[str, Any]]:
+        rows = self._query(
+            f"""
+            WITH candidate_bvids AS (
+                SELECT bvid, TRUE AS has_stat_snapshot, FALSE AS has_comment_snapshot
+                FROM `{self._table_id('video_stat_snapshots')}`
+                UNION ALL
+                SELECT bvid, FALSE AS has_stat_snapshot, TRUE AS has_comment_snapshot
+                FROM `{self._table_id('topn_comment_snapshots')}`
+            ),
+            candidate_rollup AS (
+                SELECT
+                    bvid,
+                    LOGICAL_OR(has_stat_snapshot) AS has_stat_snapshot,
+                    LOGICAL_OR(has_comment_snapshot) AS has_comment_snapshot
+                FROM candidate_bvids
+                GROUP BY bvid
+            ),
+            completed_bvids AS (
+                SELECT v.bvid
+                FROM `{self._table_id('videos')}` AS v
+                INNER JOIN (
+                    SELECT bvid
+                    FROM `{self._table_id('assets')}`
+                    WHERE asset_type = 'video' OR asset_type = 'audio'
+                    GROUP BY bvid
+                    HAVING COUNT(DISTINCT asset_type) = 2
+                ) AS ready_assets
+                ON ready_assets.bvid = v.bvid
+            )
+            SELECT
+                candidate_rollup.bvid,
+                candidate_rollup.has_stat_snapshot,
+                candidate_rollup.has_comment_snapshot
+            FROM candidate_rollup
+            LEFT JOIN completed_bvids
+            ON completed_bvids.bvid = candidate_rollup.bvid
+            WHERE completed_bvids.bvid IS NULL
+            ORDER BY candidate_rollup.bvid
+            """
+        )
+        return [dict(row.items()) for row in rows]
+
+    def fetch_completed_media_metadata_bvids(self, bvids: list[str]) -> set[str]:
+        normalized_bvids = [str(bvid).strip() for bvid in bvids if str(bvid).strip()]
+        if not normalized_bvids:
+            return set()
+        unique_bvids = list(dict.fromkeys(normalized_bvids))
+        rows = self._query(
+            f"""
+            WITH input_bvids AS (
+                SELECT bvid
+                FROM UNNEST(@bvids) AS bvid
+            ),
+            completed_bvids AS (
+                SELECT input_bvids.bvid
+                FROM input_bvids
+                INNER JOIN `{self._table_id('videos')}` AS v
+                ON v.bvid = input_bvids.bvid
+                INNER JOIN (
+                    SELECT bvid
+                    FROM `{self._table_id('assets')}`
+                    WHERE asset_type = 'video' OR asset_type = 'audio'
+                    GROUP BY bvid
+                    HAVING COUNT(DISTINCT asset_type) = 2
+                ) AS ready_assets
+                ON ready_assets.bvid = input_bvids.bvid
+            )
+            SELECT bvid
+            FROM completed_bvids
+            ORDER BY bvid
+            """,
+            [bigquery.ArrayQueryParameter("bvids", "STRING", unique_bvids)],
+        )
+        return {str(row["bvid"]).strip() for row in rows if str(row["bvid"]).strip()}
 
     def fetch_all_asset_rows(self, bvid: str) -> list[dict[str, Any]]:
         rows = self._query(

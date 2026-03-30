@@ -85,6 +85,13 @@ from bili_pipeline.datahub.manual_batch_runner import (
     discover_manual_batch_source_csvs,
     run_manual_realtime_batch_crawl,
 )
+from bili_pipeline.datahub.manual_media_runner import (
+    MANUAL_MEDIA_CRAWLS_OUTPUT_DIR,
+    build_manual_media_waitlist_path,
+    run_manual_media_mode_a,
+    run_manual_media_mode_b,
+    sync_manual_media_waitlist,
+)
 from bili_pipeline.datahub.shared import (
     append_live_log,
     build_credential_from_cookie,
@@ -487,14 +494,15 @@ with reference_col:
         _render_field_reference_panel(field_reference_df)
 
 with main_col:
-    tab_discover, tab_author_refinement, tab_merge, tab_debug, tab_auto, tab_manual_batch, tab_db, tab_quick_jump, tab_tid = st.tabs(
+    tab_discover, tab_author_refinement, tab_merge, tab_debug, tab_auto, tab_manual_batch, tab_manual_media, tab_db, tab_quick_jump, tab_tid = st.tabs(
         [
             "视频列表构建",
             "作者数据洞察&精简",
             "文件拼接及去重",
             "数据抓取调试",
             "自动批量抓取",
-            "手动批量抓取",
+            "手动批量抓取-动态数据",
+            "手动批量抓取-媒体/元数据",
             "BigQuery / GCS 数据查看",
             "快捷跳转",
             "tid 与分区名称对应",
@@ -1288,9 +1296,9 @@ with tab_auto:
             st.dataframe(pd.DataFrame(auto_status_snapshot.get("meta_media_queue_rows", [])).head(200), width="stretch", hide_index=True)
 
 with tab_manual_batch:
-    st.subheader("手动批量抓取")
+    st.subheader("手动批量抓取-动态数据")
     if not active_gcp_config.is_enabled():
-        st.warning("手动批量抓取依赖 GCP 配置；请先完成侧边栏中的 BigQuery / GCS 设置。")
+        st.warning("手动批量抓取-动态数据依赖 GCP 配置；请先完成侧边栏中的 BigQuery / GCS 设置。")
     st.caption(
         "点击开始后，会自动汇总 `outputs/video_pool/full_site_floorings/` 下非 `_authors.csv` 的视频列表，"
         "以及 `outputs/video_pool/uid_expansions/` 目录及子目录下所有以 `videolist` 开头的 CSV，"
@@ -1342,6 +1350,161 @@ with tab_manual_batch:
             else:
                 st.info("本轮没有可抓取的视频，或已按条件跳过。")
             _show_json("手动批量抓取运行报告", report.to_dict())
+
+with tab_manual_media:
+    st.subheader("手动批量抓取-媒体/元数据")
+    if not active_gcp_config.is_enabled():
+        st.warning("本页依赖 GCP 配置；请先完成侧边栏中的 BigQuery / GCS 设置。")
+    st.caption(
+        "本页用于集中补抓视频元数据与媒体文件（视频轨 + 音频轨）。"
+        "模式 A 基于数据集中的缺失条目维护待补清单，模式 B 基于用户手动上传的 `bvid` 清单去重后执行。"
+    )
+    manual_media_waitlist_path = build_manual_media_waitlist_path(
+        active_gcp_config.bigquery_dataset,
+        manual_crawls_root_dir=MANUAL_MEDIA_CRAWLS_OUTPUT_DIR,
+    )
+    mode_a_tab, mode_b_tab = st.tabs(["模式A:基于数据集缺失条目", "模式B:基于手动上传清单"])
+
+    with mode_a_tab:
+        st.caption(
+            f"当前维护中的待补媒体/元数据清单：`{manual_media_waitlist_path.as_posix()}`；"
+            f"任务目录根路径：`{MANUAL_MEDIA_CRAWLS_OUTPUT_DIR.as_posix()}`"
+        )
+        sync_col, run_col = st.columns(2)
+        with sync_col:
+            with st.form("manual_media_mode_a_sync_form"):
+                trigger_manual_media_sync = st.form_submit_button("同步待补媒体/元数据视频清单", width="stretch")
+        with run_col:
+            with st.form("manual_media_mode_a_run_form"):
+                manual_media_mode_a_parallelism = st.number_input(
+                    "并发度",
+                    min_value=1,
+                    max_value=16,
+                    value=1,
+                    step=1,
+                    key="manual_media_mode_a_parallelism",
+                )
+                manual_media_mode_a_enable_sleep = st.checkbox("启用睡眠机制", value=False, key="manual_media_mode_a_enable_sleep")
+                manual_media_mode_a_sleep_minutes = st.number_input(
+                    "睡眠时长（分钟）",
+                    min_value=1,
+                    max_value=240,
+                    value=5,
+                    step=1,
+                    key="manual_media_mode_a_sleep_minutes",
+                )
+                trigger_manual_media_mode_a = st.form_submit_button("按清单抓取媒体/元数据", width="stretch")
+        if trigger_manual_media_sync:
+            try:
+                store = _resolve_store()
+                sync_result = sync_manual_media_waitlist(
+                    store=store,
+                    gcp_config=active_gcp_config,
+                    manual_crawls_root_dir=MANUAL_MEDIA_CRAWLS_OUTPUT_DIR,
+                )
+            except Exception as exc:  # noqa: BLE001
+                st.error(f"同步待补媒体/元数据清单失败：{exc}")
+            else:
+                st.success(f"待补清单同步完成，当前共 {sync_result.pending_count} 条。")
+                _show_json("待补媒体/元数据清单同步结果", sync_result.to_dict())
+        current_waitlist_df = _load_saved_dataframe(str(manual_media_waitlist_path))
+        with st.expander("查看当前待补媒体/元数据清单", expanded=False):
+            if current_waitlist_df is None or current_waitlist_df.empty:
+                st.info("当前尚未生成待补清单，或清单内容为空。")
+            else:
+                st.dataframe(current_waitlist_df.head(200), width="stretch", hide_index=True)
+        if trigger_manual_media_mode_a:
+            try:
+                store = _resolve_store()
+                report = run_manual_media_mode_a(
+                    store=store,
+                    gcp_config=active_gcp_config,
+                    manual_crawls_root_dir=MANUAL_MEDIA_CRAWLS_OUTPUT_DIR,
+                    enable_sleep_resume=bool(manual_media_mode_a_enable_sleep),
+                    sleep_minutes=int(manual_media_mode_a_sleep_minutes),
+                    parallelism=int(manual_media_mode_a_parallelism),
+                    comment_limit=int(comment_limit_default),
+                    consecutive_failure_limit=int(consecutive_failure_limit),
+                    credential=active_credential,
+                    media_strategy=active_media_strategy,
+                    max_height=int(max_height),
+                    chunk_size_mb=int(chunk_size_mb),
+                )
+            except Exception as exc:  # noqa: BLE001
+                st.error(f"模式 A 抓取失败：{exc}")
+            else:
+                if report.status == "completed":
+                    st.success("模式 A 抓取完成。")
+                elif report.status == "partial":
+                    st.warning("模式 A 已结束，但仍有未完成条目；相关日志和剩余状态已留档。")
+                elif report.status == "failed":
+                    st.error("模式 A 因 WinError 或其它严重异常而停止；请查看任务目录日志。")
+                else:
+                    st.info("模式 A 当前没有可抓取的视频。")
+                _show_json("模式 A 运行报告", report.to_dict())
+
+    with mode_b_tab:
+        manual_media_mode_b_uploads = st.file_uploader(
+            "上传一份或多份包含 `bvid` 列的 CSV/XLSX 清单",
+            type=["csv", "xlsx", "xls"],
+            accept_multiple_files=True,
+            key="manual_media_mode_b_uploads",
+        )
+        if manual_media_mode_b_uploads:
+            st.caption("当前已上传：" + "，".join(upload.name for upload in manual_media_mode_b_uploads))
+        with st.form("manual_media_mode_b_form"):
+            manual_media_mode_b_parallelism = st.number_input(
+                "并发度",
+                min_value=1,
+                max_value=16,
+                value=1,
+                step=1,
+                key="manual_media_mode_b_parallelism",
+            )
+            manual_media_mode_b_enable_sleep = st.checkbox("启用睡眠机制", value=False, key="manual_media_mode_b_enable_sleep")
+            manual_media_mode_b_sleep_minutes = st.number_input(
+                "睡眠时长（分钟）",
+                min_value=1,
+                max_value=240,
+                value=5,
+                step=1,
+                key="manual_media_mode_b_sleep_minutes",
+            )
+            trigger_manual_media_mode_b = st.form_submit_button("去重并抓取", width="stretch")
+        if trigger_manual_media_mode_b:
+            try:
+                if not manual_media_mode_b_uploads:
+                    raise ValueError("请先上传至少一份包含 `bvid` 列的清单。")
+                store = _resolve_store()
+                uploaded_dfs = _read_uploaded_files(manual_media_mode_b_uploads)
+                report = run_manual_media_mode_b(
+                    uploaded_frames=uploaded_dfs,
+                    uploaded_names=[upload.name for upload in manual_media_mode_b_uploads],
+                    store=store,
+                    gcp_config=active_gcp_config,
+                    manual_crawls_root_dir=MANUAL_MEDIA_CRAWLS_OUTPUT_DIR,
+                    enable_sleep_resume=bool(manual_media_mode_b_enable_sleep),
+                    sleep_minutes=int(manual_media_mode_b_sleep_minutes),
+                    parallelism=int(manual_media_mode_b_parallelism),
+                    comment_limit=int(comment_limit_default),
+                    consecutive_failure_limit=int(consecutive_failure_limit),
+                    credential=active_credential,
+                    media_strategy=active_media_strategy,
+                    max_height=int(max_height),
+                    chunk_size_mb=int(chunk_size_mb),
+                )
+            except Exception as exc:  # noqa: BLE001
+                st.error(f"模式 B 抓取失败：{exc}")
+            else:
+                if report.status == "completed":
+                    st.success("模式 B 抓取完成。")
+                elif report.status == "partial":
+                    st.warning("模式 B 已结束，但仍有未完成条目；剩余清单已保存在任务目录中。")
+                elif report.status == "failed":
+                    st.error("模式 B 因 WinError 或其它严重异常而停止；请查看任务目录日志。")
+                else:
+                    st.info("模式 B 当前没有需要抓取的视频。")
+                _show_json("模式 B 运行报告", report.to_dict())
 
 with tab_db:
     st.subheader("BigQuery / GCS 数据查看")

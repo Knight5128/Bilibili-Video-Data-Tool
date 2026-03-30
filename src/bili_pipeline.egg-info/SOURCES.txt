@@ -28,6 +28,7 @@ src/bili_pipeline/datahub/config.py
 src/bili_pipeline/datahub/discover_ops.py
 src/bili_pipeline/datahub/local_cycle_runner.py
 src/bili_pipeline/datahub/manual_batch_runner.py
+src/bili_pipeline/datahub/manual_media_runner.py
 src/bili_pipeline/datahub/scheduled_discovery_runner.py
 src/bili_pipeline/datahub/shared.py
 src/bili_pipeline/discover/__init__.py
@@ -64,6 +65,8 @@ tests/test_datahub_local_cycle_runner.py
 tests/test_datahub_shared_logging.py
 tests/test_discover_export_csv.py
 tests/test_file_merge_utils.py
+tests/test_gcp_store_manual_media_helpers.py
 tests/test_log_files.py
 tests/test_manual_batch_runner.py
+tests/test_manual_media_runner.py
 tests/test_video_pool_builder.py

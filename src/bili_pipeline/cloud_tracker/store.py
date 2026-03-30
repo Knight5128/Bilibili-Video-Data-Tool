@@ -3,15 +3,46 @@ from __future__ import annotations
 import csv
 import io
 import json
+import types
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable
 
-from google.cloud import bigquery
+try:
+    from google.cloud import bigquery
+
+    _HAS_GOOGLE_CLOUD = True
+except ModuleNotFoundError:  # pragma: no cover - exercised in dependency-light test environments.
+    _HAS_GOOGLE_CLOUD = False
+
+    class _MissingGoogleClass:
+        def __init__(self, *args, **kwargs) -> None:
+            raise ModuleNotFoundError("google-cloud dependencies are required to use TrackerStore.")
+
+    def _schema_field(*args, **kwargs):
+        return None
+
+    bigquery = types.SimpleNamespace(
+        Client=_MissingGoogleClass,
+        DatasetReference=_MissingGoogleClass,
+        Dataset=_MissingGoogleClass,
+        Table=_MissingGoogleClass,
+        QueryJobConfig=_MissingGoogleClass,
+        ScalarQueryParameter=_MissingGoogleClass,
+        ArrayQueryParameter=_MissingGoogleClass,
+        LoadJobConfig=_MissingGoogleClass,
+        SchemaField=_schema_field,
+        table=types.SimpleNamespace(Row=dict),
+    )
 
 from bili_pipeline.models import GCPStorageConfig
 from bili_pipeline.storage.gcp_store import _build_credentials
+
+
+def _ensure_google_cloud_dependencies() -> None:
+    if not _HAS_GOOGLE_CLOUD:
+        raise ModuleNotFoundError("google-cloud dependencies are required to use TrackerStore.")
 
 
 def _utcnow() -> datetime:
@@ -129,6 +160,7 @@ class TrackerStore:
     ]
 
     def __init__(self, config: GCPStorageConfig, *, table_prefix: str = "tracker") -> None:
+        _ensure_google_cloud_dependencies()
         credentials, project_id = _build_credentials(config)
         self.config = config
         self.project_id = (project_id or config.project_id).strip()
@@ -180,8 +212,13 @@ class TrackerStore:
     ) -> None:
         if not rows:
             return
-        job_config = bigquery.LoadJobConfig(schema=schema, write_disposition="WRITE_APPEND")
-        self.client.load_table_from_json(rows, table_id, job_config=job_config).result()
+        if hasattr(self.client, "load_table_from_json") and _HAS_GOOGLE_CLOUD:
+            job_config = bigquery.LoadJobConfig(schema=schema, write_disposition="WRITE_APPEND")
+            self.client.load_table_from_json(rows, table_id, job_config=job_config).result()
+            return
+        errors = self.client.insert_rows_json(table_id, rows)
+        if errors:
+            raise RuntimeError(f"Failed to append rows to {table_id}: {errors}")
 
     def _load_temp_rows(
         self,

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+import inspect
 from typing import Callable
 
 from bili_pipeline.config import DiscoverConfig
@@ -70,7 +71,7 @@ class VideoPoolBuilder:
         total_owners = len(owner_mids)
         for index, owner_mid in enumerate(owner_mids, start=1):
             try:
-                author_candidates = self.author_source.fetch_recent_videos(owner_mid, since, until)
+                author_candidates = self._fetch_author_candidates(owner_mid, since, until)
             except Exception as exc:  # noqa: BLE001
                 if error_callback is not None:
                     error_callback(owner_mid, index, total_owners, exc)
@@ -105,7 +106,7 @@ class VideoPoolBuilder:
         for index, owner_mid in enumerate(normalized_owner_mids, start=1):
             try:
                 owner_since = owner_since_overrides.get(owner_mid, since)
-                author_candidates = self.author_source.fetch_recent_videos(owner_mid, owner_since, until)
+                author_candidates = self._fetch_author_candidates(owner_mid, owner_since, until)
             except Exception as exc:  # noqa: BLE001
                 if error_callback is not None:
                     error_callback(owner_mid, index, total_owners, exc)
@@ -128,6 +129,18 @@ class VideoPoolBuilder:
                 if self._allow_candidate(candidate, enforce_tid=True):
                     candidates.append(candidate)
         return candidates
+
+    def _fetch_author_candidates(
+        self,
+        owner_mid: int,
+        since: datetime,
+        until: datetime | None,
+    ) -> list[CandidateVideo]:
+        fetch_recent_videos = self.author_source.fetch_recent_videos
+        parameter_count = len(inspect.signature(fetch_recent_videos).parameters)
+        if parameter_count >= 3:
+            return fetch_recent_videos(owner_mid, since, until)
+        return fetch_recent_videos(owner_mid, since)
 
     def _allow_candidate(self, candidate: CandidateVideo, *, enforce_tid: bool) -> bool:
         if enforce_tid and not self.config.allows_tid(candidate.tid):
