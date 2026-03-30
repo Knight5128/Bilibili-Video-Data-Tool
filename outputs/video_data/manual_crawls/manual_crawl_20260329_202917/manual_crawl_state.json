@@ -1,0 +1,10 @@
+{
+  "status": "crawling",
+  "session_dir": "outputs/video_data/manual_crawls/manual_crawl_20260329_202917",
+  "started_at": "2026-03-29T20:29:17",
+  "stream_data_time_window_hours": 336,
+  "source_csv_count": 33,
+  "candidate_bvid_count": 313200,
+  "filtered_bvid_count": 52190,
+  "filtered_csv_path": "outputs/video_data/manual_crawls/manual_crawl_20260329_202917/filtered_video_list.csv"
+}
