@@ -12,5 +12,6 @@ Requires-Dist: google-cloud-storage
 Requires-Dist: gunicorn>=25.3.0
 Requires-Dist: openpyxl>=3.1.5
 Requires-Dist: pandas
+Requires-Dist: plotly
 Requires-Dist: streamlit
 Requires-Dist: xlrd>=2.0.2

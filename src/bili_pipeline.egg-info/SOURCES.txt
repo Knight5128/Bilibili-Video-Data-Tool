@@ -23,6 +23,7 @@ src/bili_pipeline/collect/video_collectors.py
 src/bili_pipeline/config/__init__.py
 src/bili_pipeline/config/discover.py
 src/bili_pipeline/datahub/__init__.py
+src/bili_pipeline/datahub/author_refinement.py
 src/bili_pipeline/datahub/config.py
 src/bili_pipeline/datahub/discover_ops.py
 src/bili_pipeline/datahub/local_cycle_runner.py
@@ -53,6 +54,7 @@ src/bili_pipeline/utils/bilibili_jump.py
 src/bili_pipeline/utils/file_merge.py
 src/bili_pipeline/utils/log_files.py
 src/bili_pipeline/utils/streamlit_night_sky.py
+tests/test_author_refinement.py
 tests/test_bilibili_sources.py
 tests/test_bvp_builder_custom_full_export.py
 tests/test_bvp_builder_uid_expansion.py

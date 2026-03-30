@@ -6,6 +6,7 @@
 
 - **统一的视频列表发现入口**：在同一页面中完成“当日热门 / 每周必看 / 全分区当天主流视频 / UGC 实时排行榜”视频列表抓取，并自动生成配套作者 UID 列表。
 - **作者历史视频扩展**：继续支持基于 `owner_mid` 列表的增量 `uid_expansion` 任务，保留 `original_uids.csv`、`videolist_part_n.csv`、`remaining_uids_part_n.csv` 与总结日志的续跑机制。
+- **作者数据洞察与精简**：可上传作者列表并抓取 `MetaResult` 级作者字段（如昵称、签名、性别、等级、认证状态、会员类型、粉丝数、关注数、公开视频数），支持在连续风控报错达到阈值后自动暂停、导出 `remaining_authors_part_n.csv` 供后续续跑；抓取任务结束时只落盘累计扩充结果，后续需由用户手动上传完整作者清单并点击按钮，才会生成完整汇总、可视化图表与分层精简结果。
 - **CSV/XLSX 文件拼接及去重**：可对多个本地导出结果统一排序、拼接，并按指定键去重。
 - **数据抓取调试**：继续支持单 `bvid` 全流程抓取、四类接口调试，以及 BigQuery / GCS 数据查看与媒体文件回读导出。
 - **手动批量抓取**：点击一次即可自动汇总 `outputs/video_pool/full_site_floorings/` 下非 `_authors.csv` 的视频列表，以及 `outputs/video_pool/uid_expansions/` 下各任务导出的 `videolist*.csv`；再按 `STREAM_DATA_TIME_WINDOW`（默认 14 天，即 336 小时）筛选近期视频，只抓取评论/互动量等实时数据并上传至 BigQuery。
@@ -45,8 +46,9 @@ python scripts/manual_batch_crawl_daemon.py
 python scripts/scheduled_discovery_daemon.py --tracking_ups_path tracking_ups_v1.csv
 ```
 
-- `bilibili-datahub.py` 当前主要包含八个主标签页：
+- `bilibili-datahub.py` 当前主要包含九个主标签页：
   - **视频列表构建**：承接原 `Bilibili_Video_Pool_Builder` 的自定义全量导出、作者视频扩展、BVID 回查作者 UID、失败 UID 提取。
+  - **作者数据洞察&精简**：抓取作者元数据、支持断点续跑、查看粉丝量分布、叠加类别属性，并按粉丝量分层比例精简作者列表；也支持直接上传扩充后的作者表进行可视化。
   - **文件拼接及去重**：拼接多个 CSV/XLSX 并按指定键去重。
   - **数据抓取调试**：单视频全流程、四类接口调试。
   - **自动批量抓取**：作者列表上传、手动触发一轮自动批量抓取、查看运行状态、消化待补元数据/媒体队列。
@@ -242,6 +244,7 @@ streamlit run bilibili-datahub.py
 2. 到 `BigQuery / GCS 数据查看` 里查看这个 `bvid` 是否已经能查到结构化记录。
 3. 到 `自动批量抓取` 页上传一个只包含 `owner_mid` 列的小 CSV，手动触发一轮自动批量抓取，确认 `tracker_*` 控制表和 `meta_media_queue` 已开始写入。
 4. 到 `手动批量抓取` 页执行一轮任务，确认 `outputs/video_data/manual_crawls/manual_crawl_<date>_<time>/` 下已生成筛选后的视频列表与日志。
+5. 到 `作者数据洞察&精简` 页上传一个作者 CSV，确认 `outputs/author_refinements/author_refinement_<date>_<time>/` 下已生成扩充作者表、精简版作者表、HTML 图表与日志。
 
 #### 10. 运行本地自动批量抓取脚本
 
