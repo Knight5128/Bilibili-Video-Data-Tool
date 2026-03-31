@@ -38,6 +38,12 @@ class AuthorCategoryOption:
     label: str
 
 
+@dataclass(frozen=True, slots=True)
+class PriorityRetentionRule:
+    min_follower_count: int
+    retention_ratio: float
+
+
 @dataclass(slots=True)
 class AuthorRefinementSessionContext:
     root_dir: Path
@@ -98,6 +104,40 @@ _OVERLAY_COLORS = [
     "#72B7B2",
     "#EECA3B",
 ]
+
+
+def parse_priority_retention_rules(text: str) -> list[PriorityRetentionRule]:
+    raw_text = (text or "").strip()
+    if not raw_text:
+        return []
+
+    rules: list[PriorityRetentionRule] = []
+    seen_thresholds: set[int] = set()
+    for line_number, raw_line in enumerate(raw_text.splitlines(), start=1):
+        line = raw_line.strip()
+        if not line:
+            continue
+        parts = [item.strip() for item in re.split(r"[,，\t]+", line) if item.strip()]
+        if len(parts) != 2:
+            raise ValueError(f"第 {line_number} 行格式不正确；请按“最低粉丝数,保留比例”填写。")
+        try:
+            min_follower_count = int(float(parts[0]))
+        except ValueError as exc:
+            raise ValueError(f"第 {line_number} 行最低粉丝数无法解析：{parts[0]}") from exc
+        try:
+            retention_ratio = float(parts[1])
+        except ValueError as exc:
+            raise ValueError(f"第 {line_number} 行保留比例无法解析：{parts[1]}") from exc
+        if min_follower_count < 0:
+            raise ValueError(f"第 {line_number} 行最低粉丝数必须大于等于 0。")
+        if not 0 <= retention_ratio <= 1:
+            raise ValueError(f"第 {line_number} 行保留比例必须位于 0 到 1 之间。")
+        if min_follower_count in seen_thresholds:
+            raise ValueError(f"第 {line_number} 行与前文存在重复的最低粉丝数阈值：{min_follower_count}。")
+        seen_thresholds.add(min_follower_count)
+        rules.append(PriorityRetentionRule(min_follower_count=min_follower_count, retention_ratio=retention_ratio))
+
+    return sorted(rules, key=lambda item: item.min_follower_count, reverse=True)
 
 
 def _to_int(value: Any) -> int | None:
@@ -549,6 +589,7 @@ def stratified_sample_by_followers(
     follower_column: str = "owner_follower_count",
     bin_count: int = 10,
     random_state: int = 42,
+    sample_target_count: int | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     if df.empty:
         empty = df.copy()
@@ -560,7 +601,7 @@ def stratified_sample_by_followers(
     working["refinement_follower_bin"] = _build_follower_bins(working[follower_column], bin_count=bin_count)
 
     total_count = len(working)
-    target_count = math.floor(total_count * sample_ratio)
+    target_count = int(sample_target_count) if sample_target_count is not None else math.ceil(total_count * sample_ratio)
     if target_count <= 0:
         working["refinement_keep"] = False
         summary = (
@@ -625,6 +666,127 @@ def stratified_sample_by_followers(
         }
     )
     return working, sampled_df, summary
+
+
+def sample_authors_with_priority_rules(
+    df: pd.DataFrame,
+    *,
+    sample_ratio: float,
+    priority_rules: list[PriorityRetentionRule] | None = None,
+    follower_column: str = "owner_follower_count",
+    bin_count: int = 10,
+    random_state: int = 42,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    rules = priority_rules or []
+    if not rules:
+        refined_full_df, sampled_df, bin_summary_df = stratified_sample_by_followers(
+            df,
+            sample_ratio=sample_ratio,
+            follower_column=follower_column,
+            bin_count=bin_count,
+            random_state=random_state,
+        )
+        empty_summary = pd.DataFrame(
+            columns=[
+                "区间",
+                "最低粉丝数",
+                "最高粉丝数",
+                "原始作者数",
+                "保留比例",
+                "保留作者数",
+            ]
+        )
+        return refined_full_df, sampled_df, bin_summary_df, empty_summary
+
+    if df.empty:
+        refined_full_df, sampled_df, bin_summary_df = stratified_sample_by_followers(
+            df,
+            sample_ratio=sample_ratio,
+            follower_column=follower_column,
+            bin_count=bin_count,
+            random_state=random_state,
+        )
+        empty_summary = pd.DataFrame(
+            columns=[
+                "区间",
+                "最低粉丝数",
+                "最高粉丝数",
+                "原始作者数",
+                "保留比例",
+                "保留作者数",
+            ]
+        )
+        return refined_full_df, sampled_df, bin_summary_df, empty_summary
+
+    working = df.copy()
+    follower_series = pd.to_numeric(working[follower_column], errors="coerce")
+    covered_mask = pd.Series(False, index=working.index)
+    priority_selected_parts: list[pd.DataFrame] = []
+    priority_summary_rows: list[dict[str, object]] = []
+    previous_upper_bound: int | None = None
+
+    for offset, rule in enumerate(rules):
+        interval_mask = follower_series >= rule.min_follower_count
+        if previous_upper_bound is not None:
+            interval_mask &= follower_series < previous_upper_bound
+        interval_df = working.loc[interval_mask].copy()
+        covered_mask |= interval_mask.fillna(False)
+        original_count = len(interval_df)
+        keep_count = min(original_count, math.ceil(original_count * float(rule.retention_ratio)))
+        if keep_count <= 0:
+            selected_df = interval_df.iloc[0:0].copy()
+        elif keep_count >= original_count:
+            selected_df = interval_df.copy()
+        else:
+            selected_df = interval_df.sample(n=keep_count, random_state=int(random_state) + offset)
+        priority_selected_parts.append(selected_df)
+        priority_summary_rows.append(
+            {
+                "区间": f"[{rule.min_follower_count}, {previous_upper_bound if previous_upper_bound is not None else 'inf'})",
+                "最低粉丝数": rule.min_follower_count,
+                "最高粉丝数": previous_upper_bound,
+                "原始作者数": original_count,
+                "保留比例": float(rule.retention_ratio),
+                "保留作者数": len(selected_df),
+            }
+        )
+        previous_upper_bound = rule.min_follower_count
+
+    priority_selected_df = (
+        pd.concat(priority_selected_parts, axis=0).sort_index().drop_duplicates()
+        if priority_selected_parts
+        else working.iloc[0:0].copy()
+    )
+    total_target_count = math.ceil(len(working) * float(sample_ratio))
+    remaining_pool = working.loc[~covered_mask].copy()
+    remaining_target_count = max(0, total_target_count - len(priority_selected_df))
+    remaining_refined_df, remaining_sampled_df, _remaining_bin_summary = stratified_sample_by_followers(
+        remaining_pool,
+        sample_ratio=sample_ratio,
+        follower_column=follower_column,
+        bin_count=bin_count,
+        random_state=int(random_state) + len(rules) + 1,
+        sample_target_count=remaining_target_count,
+    )
+    sampled_df = (
+        pd.concat([priority_selected_df, remaining_sampled_df], axis=0).sort_index().drop_duplicates()
+        if not priority_selected_df.empty or not remaining_sampled_df.empty
+        else working.iloc[0:0].copy()
+    )
+    full_refined_df = working.copy()
+    full_refined_df["refinement_follower_bin"] = _build_follower_bins(full_refined_df[follower_column], bin_count=bin_count)
+    full_refined_df["refinement_keep"] = full_refined_df.index.isin(sampled_df.index)
+    bin_summary_df = (
+        full_refined_df.groupby("refinement_follower_bin", dropna=False)
+        .agg(
+            original_count=(follower_column, "size"),
+            sampled_count=("refinement_keep", "sum"),
+        )
+        .reset_index()
+        .rename(columns={"refinement_follower_bin": "follower_bin"})
+    )
+    bin_summary_df["target_float"] = bin_summary_df["original_count"] * float(sample_ratio)
+    return full_refined_df, sampled_df, bin_summary_df, pd.DataFrame(priority_summary_rows)
 
 
 def _encode_category_values(df: pd.DataFrame, column: str) -> tuple[pd.Series, dict[int, str]]:

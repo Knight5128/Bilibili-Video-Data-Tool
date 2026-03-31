@@ -45,11 +45,12 @@ from bili_pipeline.datahub.author_refinement import (
     build_session_expanded_author_list,
     build_refinement_comparison_figure,
     crawl_author_metadata_with_guardrails,
+    parse_priority_retention_rules,
     prepare_author_refinement_session,
     record_author_refinement_part,
     write_author_refinement_summary,
     save_remaining_author_csv,
-    stratified_sample_by_followers,
+    sample_authors_with_priority_rules,
 )
 from bili_pipeline.datahub.discover_ops import (
     BVID_TO_UIDS_OUTPUT_DIR,
@@ -290,18 +291,38 @@ def _render_author_refinement_visualization_panel(
             format_func=lambda item: {option.column: option.label for option in AUTHOR_CATEGORY_OPTIONS}.get(item, item),
             key=f"{key_prefix}_overlay_columns",
         )
+        enable_priority_rules = st.checkbox(
+            "启用高粉作者分区间保留比例",
+            value=False,
+            key=f"{key_prefix}_enable_priority_rules",
+        )
+        priority_rules_text = st.text_area(
+            "高粉作者分区间规则（每行：最低粉丝数,保留比例）",
+            value="5000000,1.0\n2000000,0.8\n1000000,0.5",
+            height=90,
+            key=f"{key_prefix}_priority_rules_text",
+        )
         st.form_submit_button("应用可视化参数")
 
-    refined_full_df, sampled_df, bin_summary_df = stratified_sample_by_followers(
+    priority_rules = []
+    if enable_priority_rules:
+        try:
+            priority_rules = parse_priority_retention_rules(priority_rules_text)
+        except ValueError as exc:
+            st.error(f"高粉作者分区间规则格式错误：{exc}")
+            priority_rules = []
+    refined_full_df, sampled_df, bin_summary_df, priority_summary_df = sample_authors_with_priority_rules(
         expanded_df,
         sample_ratio=float(ratio),
+        priority_rules=priority_rules,
         random_state=int(random_seed),
     )
 
-    metric_col_a, metric_col_b, metric_col_c = st.columns(3)
+    metric_col_a, metric_col_b, metric_col_c, metric_col_d = st.columns(4)
     metric_col_a.metric("扩充后作者数", len(expanded_df))
     metric_col_b.metric("目标保留数", int(len(expanded_df) * float(ratio)))
     metric_col_c.metric("实际保留数", len(sampled_df))
+    metric_col_d.metric("高粉规则保留数", int(priority_summary_df["保留作者数"].sum()) if not priority_summary_df.empty else 0)
 
     category_label_lookup = {item.column: item.label for item in AUTHOR_CATEGORY_OPTIONS}
     distribution_figure, mapping_summary = build_author_distribution_figure(
@@ -324,6 +345,10 @@ def _render_author_refinement_visualization_panel(
                 )
         if mapping_rows:
             st.dataframe(pd.DataFrame(mapping_rows), width="stretch", hide_index=True)
+
+    if not priority_summary_df.empty:
+        st.caption("高粉作者分区间保留结果")
+        st.dataframe(priority_summary_df, width="stretch", hide_index=True)
 
     st.plotly_chart(
         build_refinement_comparison_figure(expanded_df, sampled_df, use_log_x=use_log_x),
@@ -1203,17 +1228,26 @@ with tab_author_refinement:
                 visual_saved_path = APP_DIR / ".local" / "author_refinement_visual_preview.csv"
                 export_dataframe(visual_df, visual_saved_path)
                 st.session_state["author_refinement_visual_path"] = str(visual_saved_path)
+                st.session_state["author_refinement_visual_source_name"] = visual_upload.name
                 st.success("扩充后的作者列表已加载，可直接查看可视化结果。")
 
         visual_df = _load_saved_dataframe(st.session_state.get("author_refinement_visual_path", ""))
         if isinstance(visual_df, pd.DataFrame) and not visual_df.empty:
             with st.expander("查看扩充后作者列表预览", expanded=False):
                 st.dataframe(visual_df.head(200), width="stretch", hide_index=True)
-            _render_author_refinement_visualization_panel(
+            _refined_full_df, sampled_df, _bin_summary_df = _render_author_refinement_visualization_panel(
                 expanded_df=visual_df,
                 key_prefix="author_refinement_visual_only",
                 default_ratio=0.3,
                 default_seed=42,
+            )
+            source_name = Path(st.session_state.get("author_refinement_visual_source_name", "expanded_authors.csv")).stem
+            sampled_csv = sampled_df.to_csv(index=False, encoding="utf-8-sig")
+            st.download_button(
+                "导出精简作者列表",
+                data=sampled_csv,
+                file_name=f"{source_name}_refined_sampled.csv",
+                mime="text/csv",
             )
 
 with tab_merge:
