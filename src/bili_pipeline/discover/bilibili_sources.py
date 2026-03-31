@@ -7,7 +7,7 @@ from urllib.request import Request, urlopen
 import random
 import time
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Callable
 
 from bilibili_api import hot, video_zone
@@ -33,10 +33,22 @@ async def _get_json_response(url: str, headers: dict[str, str] | None = None) ->
     return await asyncio.to_thread(_fetch_json_response, url, headers)
 
 
+def _as_utc(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
 def _from_timestamp(value: int | float | None) -> datetime | None:
     if value is None:
         return None
-    return datetime.fromtimestamp(value)
+    return datetime.fromtimestamp(value, tz=timezone.utc)
 
 
 def _parse_datetime(value) -> datetime | None:
@@ -47,7 +59,7 @@ def _parse_datetime(value) -> datetime | None:
     if isinstance(value, str):
         for fmt in ("%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"):
             try:
-                return datetime.strptime(value, fmt)
+                return _as_utc(datetime.strptime(value, fmt))
             except ValueError:
                 continue
     return None
@@ -269,7 +281,7 @@ class BilibiliHotSource(SeedSource):
     retry_backoff_seconds: float = 3.0
 
     def fetch(self) -> list[CandidateVideo]:
-        discovered_at = datetime.now()
+        discovered_at = _utcnow()
         if not self.fetch_all_pages:
             payload = _run_async_with_retry(
                 lambda: hot.get_hot_videos(pn=self.pn, ps=self.ps),
@@ -309,7 +321,7 @@ class BilibiliWeeklyHotSource(SeedSource):
     retry_backoff_seconds: float = 3.0
 
     def fetch(self) -> list[CandidateVideo]:
-        discovered_at = datetime.now()
+        discovered_at = _utcnow()
         payload = _run_async_with_retry(
             lambda: hot.get_weekly_hot_videos(week=self.week),
             request_interval_seconds=self.request_interval_seconds,
@@ -327,7 +339,7 @@ class BilibiliZoneTop10Source(SeedSource):
     day: int = 7
 
     def fetch(self) -> list[CandidateVideo]:
-        discovered_at = datetime.now()
+        discovered_at = _utcnow()
         payload = _run_async(video_zone.get_zone_top10(tid=self.tid, day=self.day))
         source_ref = f"partition_top10:tid={self.tid}:day={self.day}"
         return [_parse_zone_item(item, source_ref, discovered_at, fallback_tid=self.tid) for item in payload]
@@ -344,7 +356,7 @@ class BilibiliRankboardSource:
     retry_backoff_seconds: float = 3.0
 
     def fetch(self) -> list[RankboardEntry]:
-        discovered_at = datetime.now()
+        discovered_at = _utcnow()
         payload = _run_async_with_retry(
             lambda: _get_json_response(
                 "https://api.bilibili.com/x/web-interface/ranking/v2?"
@@ -397,7 +409,7 @@ class BilibiliZoneNewVideosSource(SeedSource):
     retry_backoff_seconds: float = 3.0
 
     def fetch(self) -> list[CandidateVideo]:
-        discovered_at = datetime.now()
+        discovered_at = _utcnow()
         payload = _run_async_with_retry(
             lambda: video_zone.get_zone_new_videos(tid=self.tid, page_num=self.page_num, page_size=self.page_size),
             request_interval_seconds=self.request_interval_seconds,
@@ -422,7 +434,8 @@ class BilibiliZoneRecentVideosSource(SeedSource):
     retry_backoff_seconds: float = 3.0
 
     def fetch(self) -> list[CandidateVideo]:
-        discovered_at = datetime.now()
+        discovered_at = _utcnow()
+        since_utc = _as_utc(self.since)
         source_ref = f"partition_recent:tid={self.tid}:since={self.since.date().isoformat()}"
         candidates: list[CandidateVideo] = []
 
@@ -445,7 +458,7 @@ class BilibiliZoneRecentVideosSource(SeedSource):
             stop_paging = False
             for item in items:
                 candidate = _parse_seed_item(item, "partition", source_ref, discovered_at)
-                if candidate.pubdate is not None and candidate.pubdate < self.since:
+                if candidate.pubdate is not None and since_utc is not None and candidate.pubdate < since_utc:
                     stop_paging = True
                     continue
                 candidates.append(candidate)
@@ -471,10 +484,11 @@ class BilibiliUserRecentVideoSource(AuthorVideoSource):
         since: datetime,
         until: datetime | None = None,
     ) -> list[CandidateVideo]:
-        discovered_at = datetime.now()
+        discovered_at = _utcnow()
         user = User(owner_mid)
         candidates: list[CandidateVideo] = []
-        upper_bound = until or datetime.max
+        since_utc = _as_utc(since)
+        upper_bound = _as_utc(until) or datetime.max.replace(tzinfo=timezone.utc)
 
         for page_num in range(1, self.max_pages + 1):
             payload = _run_async_with_retry(
@@ -493,7 +507,7 @@ class BilibiliUserRecentVideoSource(AuthorVideoSource):
                 candidate = _parse_user_video(item, f"owner:{owner_mid}", discovered_at)
                 if candidate.pubdate is None:
                     continue
-                if candidate.pubdate < since:
+                if since_utc is not None and candidate.pubdate < since_utc:
                     stop_paging = True
                     continue
                 if candidate.pubdate > upper_bound:

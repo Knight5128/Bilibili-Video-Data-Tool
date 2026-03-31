@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 import unittest
 from unittest.mock import AsyncMock, patch
 
@@ -261,6 +261,40 @@ class BilibiliSourceAdaptersTest(unittest.TestCase):
             until=datetime.fromtimestamp(1772000000),
         )
         self.assertEqual(["BV_in_window"], [item.bvid for item in items])
+
+    @patch("bili_pipeline.discover.bilibili_sources.User.get_videos", new_callable=AsyncMock)
+    def test_user_recent_videos_accepts_timezone_aware_window(self, mock_get_videos: AsyncMock) -> None:
+        mock_get_videos.side_effect = [
+            {
+                "list": {
+                    "vlist": [
+                        {
+                            "bvid": "BV_aware_ok",
+                            "typeid": 17,
+                            "created": 1771000000,
+                            "length": "09:00",
+                            "mid": 789,
+                            "play": 100,
+                            "favorites": 10,
+                        }
+                    ]
+                }
+            },
+            {
+                "list": {
+                    "vlist": []
+                }
+            }
+        ]
+
+        items = BilibiliUserRecentVideoSource(page_size=2, max_pages=3).fetch_recent_videos(
+            owner_mid=789,
+            since=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            until=datetime(2026, 12, 31, tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(["BV_aware_ok"], [item.bvid for item in items])
+        self.assertEqual(timezone.utc, items[0].pubdate.tzinfo)
 
     @patch("bili_pipeline.discover.bilibili_sources.Video.get_info", new_callable=AsyncMock)
     def test_resolve_owner_mids_from_bvids_collects_unique_authors(
