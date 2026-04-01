@@ -61,6 +61,26 @@ def _pick_latest_flooring_csv(directory: Path, prefix: str) -> Path | None:
     return max(candidates, key=lambda path: (path.stat().st_mtime, path.name))
 
 
+def _normalize_selected_flooring_csvs(
+    full_site_floorings_dir: Path,
+    selected_flooring_csvs: Sequence[str] | None,
+) -> list[Path]:
+    selected_names = [str(item).strip() for item in (selected_flooring_csvs or []) if str(item).strip()]
+    if not selected_names:
+        return []
+
+    flooring_root = full_site_floorings_dir.resolve()
+    selected_paths: list[Path] = []
+    for selected_name in list(dict.fromkeys(selected_names)):
+        candidate = (full_site_floorings_dir / selected_name).resolve()
+        if candidate.parent != flooring_root:
+            raise ValueError(f"full_site_floorings 文件名不合法：{selected_name}")
+        if not candidate.is_file():
+            raise ValueError(f"未找到 full_site_floorings 文件：{selected_name}")
+        selected_paths.append(candidate)
+    return selected_paths
+
+
 def _normalize_selected_uid_task_dirs(
     uid_expansions_dir: Path,
     selected_uid_task_dirs: Sequence[str] | None,
@@ -83,6 +103,7 @@ def _normalize_selected_uid_task_dirs(
 def discover_manual_batch_source_csvs(
     video_pool_root: Path | str | None = None,
     *,
+    selected_flooring_csvs: Sequence[str] | None = None,
     selected_uid_task_dirs: Sequence[str] | None = None,
 ) -> list[Path]:
     root_dir = Path(video_pool_root or DEFAULT_VIDEO_POOL_OUTPUT_DIR)
@@ -91,12 +112,17 @@ def discover_manual_batch_source_csvs(
 
     source_paths: list[Path] = []
     if full_site_floorings_dir.exists():
-        latest_daily_hot = _pick_latest_flooring_csv(full_site_floorings_dir, "daily_hot")
-        latest_rankboard = _pick_latest_flooring_csv(full_site_floorings_dir, "rankboard")
-        if latest_daily_hot is not None:
-            source_paths.append(latest_daily_hot)
-        if latest_rankboard is not None:
-            source_paths.append(latest_rankboard)
+        if selected_flooring_csvs is None:
+            latest_daily_hot = _pick_latest_flooring_csv(full_site_floorings_dir, "daily_hot")
+            latest_rankboard = _pick_latest_flooring_csv(full_site_floorings_dir, "rankboard")
+            if latest_daily_hot is not None:
+                source_paths.append(latest_daily_hot)
+            if latest_rankboard is not None:
+                source_paths.append(latest_rankboard)
+        else:
+            source_paths.extend(_normalize_selected_flooring_csvs(full_site_floorings_dir, selected_flooring_csvs))
+    elif selected_flooring_csvs:
+        raise ValueError("未找到 full_site_floorings 目录。")
     if uid_expansions_dir.exists() and selected_uid_task_dirs is not None:
         selected_dirs = _normalize_selected_uid_task_dirs(uid_expansions_dir, selected_uid_task_dirs)
         source_paths.extend(
@@ -115,7 +141,7 @@ def discover_manual_batch_source_csvs(
 
 def _load_candidate_dataframe(source_paths: list[Path], *, video_pool_root: Path) -> pd.DataFrame:
     frames: list[pd.DataFrame] = []
-    for source_path in source_paths:
+    for source_index, source_path in enumerate(source_paths):
         frame = pd.read_csv(source_path)
         if "bvid" not in frame.columns:
             continue
@@ -129,10 +155,8 @@ def _load_candidate_dataframe(source_paths: list[Path], *, video_pool_root: Path
         enriched["source_group"] = "uid_expansions" if f"/{UID_EXPANSION_DIRNAME}/" in f"/{relative_path}/" else "full_site_floorings"
         if enriched["source_group"].eq("uid_expansions").all():
             source_priority = 0
-        elif source_path.name.startswith("daily_hot-"):
-            source_priority = 1
         else:
-            source_priority = 2
+            source_priority = 1000 + int(source_index)
         enriched["_source_priority"] = source_priority
         frames.append(enriched)
     if not frames:
@@ -203,6 +227,7 @@ def run_manual_realtime_batch_crawl(
     chunk_size_mb: int = 4,
     video_pool_root: Path | str | None = None,
     manual_crawls_root_dir: Path | str | None = None,
+    selected_flooring_csvs: Sequence[str] | None = None,
     selected_uid_task_dirs: Sequence[str] | None = None,
     started_at: datetime | None = None,
 ) -> ManualBatchCrawlResult:
@@ -210,8 +235,11 @@ def run_manual_realtime_batch_crawl(
         raise ValueError("缺少可用的 GCP 配置。请先完成 DataHub 中的 BigQuery / GCS 设置。")
     if int(stream_data_time_window_hours) <= 0:
         raise ValueError("STREAM_DATA_TIME_WINDOW 必须是大于 0 的小时数。")
-    if not [str(item).strip() for item in (selected_uid_task_dirs or []) if str(item).strip()]:
-        raise ValueError("请至少选择一个 uid_expansion 任务目录。")
+    explicit_flooring_names = [str(item).strip() for item in (selected_flooring_csvs or []) if str(item).strip()]
+    explicit_uid_task_dirs = [str(item).strip() for item in (selected_uid_task_dirs or []) if str(item).strip()]
+    explicit_selection_mode = selected_flooring_csvs is not None or selected_uid_task_dirs is not None
+    if explicit_selection_mode and not explicit_flooring_names and not explicit_uid_task_dirs:
+        raise ValueError("请至少选择一个 full_site_floorings 视频列表或一个 uid_expansion 任务目录。")
 
     task_started_at = started_at or datetime.now()
     video_pool_root_path = Path(video_pool_root or DEFAULT_VIDEO_POOL_OUTPUT_DIR)
@@ -234,13 +262,22 @@ def run_manual_realtime_batch_crawl(
         logs.append(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}")
 
     try:
+        if explicit_selection_mode:
+            _log(
+                "[INFO] 本轮将使用用户显式选择的视频列表来源："
+                f"full_site_floorings={len(explicit_flooring_names)} 个，"
+                f"uid_expansion 任务目录={len(explicit_uid_task_dirs)} 个。"
+            )
+        else:
+            _log("[INFO] 未显式提供来源列表，沿用兼容模式：自动选择最新 daily_hot 与 rankboard。")
         source_paths = discover_manual_batch_source_csvs(
             video_pool_root_path,
+            selected_flooring_csvs=selected_flooring_csvs,
             selected_uid_task_dirs=selected_uid_task_dirs,
         )
         _log(f"[INFO] 已发现 {len(source_paths)} 个可用于手动批量抓取的视频列表 CSV。")
-        if len(source_paths) < 2:
-            _log("[WARN] 未发现最新 daily_hot / rankboard 文件，无法启动手动批量抓取。")
+        if not source_paths:
+            _log("[WARN] 未发现任何有效的视频列表 CSV，无法启动手动批量抓取。")
             wrapper_log_path = save_timestamped_task_log("manual_crawl_prepare", logs, log_dir=session_dir / "logs")
             result = ManualBatchCrawlResult(
                 status="failed",
@@ -253,27 +290,7 @@ def run_manual_realtime_batch_crawl(
                 skipped_outside_window_count=0,
                 stream_data_time_window_hours=int(stream_data_time_window_hours),
                 wrapper_log_path=wrapper_log_path.as_posix() if wrapper_log_path is not None else None,
-                error="缺少最新 daily_hot 或 rankboard 视频列表文件。",
-                started_at=task_started_at,
-                finished_at=datetime.now(),
-            )
-            _write_manual_state(session_dir, result.to_dict())
-            raise ValueError(result.error)
-        if len(source_paths) == 2:
-            _log("[WARN] 选中的 uid_expansion 任务目录下没有有效的 videolist_part_*.csv。")
-            wrapper_log_path = save_timestamped_task_log("manual_crawl_prepare", logs, log_dir=session_dir / "logs")
-            result = ManualBatchCrawlResult(
-                status="failed",
-                session_dir=session_dir.as_posix(),
-                state_path=state_path.as_posix(),
-                source_csv_count=len(source_paths),
-                candidate_bvid_count=0,
-                filtered_bvid_count=0,
-                skipped_missing_pubdate_count=0,
-                skipped_outside_window_count=0,
-                stream_data_time_window_hours=int(stream_data_time_window_hours),
-                wrapper_log_path=wrapper_log_path.as_posix() if wrapper_log_path is not None else None,
-                error="选中的 uid_expansion 任务目录下没有有效的 videolist_part_*.csv。",
+                error="未找到任何有效的视频列表 CSV。",
                 started_at=task_started_at,
                 finished_at=datetime.now(),
             )

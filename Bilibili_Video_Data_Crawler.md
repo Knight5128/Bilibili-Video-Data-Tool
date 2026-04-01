@@ -6,7 +6,7 @@
 
 - **单 bvid 全流程抓取**：对一个 `bvid` 依次执行元数据、统计快照、最热评论快照和媒体数据抓取，并输出阶段级摘要，同时将本次测试日志写入 `outputs/video_data/test_crawls/single_bvid_<date>_<time>/`；日志文件开头与结尾会额外写入 `[TIMESTAMP][BEGIN]` / `[TIMESTAMP][END]`，标记本次记录的精确起止时间。
 - **增强元数据抓取**：在 `Meta` 阶段除基础标题、简介、标签外，还补充抓取分区、封面、动态文案、分辨率、权限对象、上传用户资料、粉丝/关注关系和空间概览统计等信息。
-- **CSV 批量抓取**：上传包含 `bvid` 列的 CSV 文件后，系统会在 `outputs/video_data/batch_crawls/batch_crawl_<date>_<time>/` 下集中保存该批任务的剩余 CSV、状态文件与日志；当连续失败条数达到侧边栏阈值时，会自动暂停当前子任务，并导出剔除已成功条目的 `remaining_bvids_part_n.csv` 供后续续跑。子任务日志与最终汇总日志同样都会带有 `[TIMESTAMP][BEGIN]` / `[TIMESTAMP][END]` 起止标记。在 `Bilibili DataHub` 中，这一批量抓取已拆分为“评论/互动量实时数据”和“元数据/媒体一次性数据”两类开关，可独立选择。同一入口下的 **手动批量抓取-动态数据** 标签会让用户直接选择 `outputs/video_pool/uid_expansions/` 下的一个或多个任务目录，并自动附加 `outputs/video_pool/full_site_floorings/` 下最新生成的 `daily_hot` 与 `rankboard` 视频列表；系统会先按追踪窗口裁剪并去重，再在 `outputs/video_data/manual_crawls/manual_crawl_stat_comment_<date>_<time>/` 中留存 `filtered_video_list.csv` 后，继续执行实时评论/互动量抓取。
+- **CSV 批量抓取**：上传包含 `bvid` 列的 CSV 文件后，系统会在 `outputs/video_data/batch_crawls/batch_crawl_<date>_<time>/` 下集中保存该批任务的剩余 CSV、状态文件与日志；当连续失败条数达到侧边栏阈值时，会自动暂停当前子任务，并导出剔除已成功条目的 `remaining_bvids_part_n.csv` 供后续续跑。子任务日志与最终汇总日志同样都会带有 `[TIMESTAMP][BEGIN]` / `[TIMESTAMP][END]` 起止标记。在 `Bilibili DataHub` 中，这一批量抓取已拆分为“评论/互动量实时数据”和“元数据/媒体一次性数据”两类开关，可独立选择。同一入口下的 **手动批量抓取-动态数据** 标签会让用户直接多选 `outputs/video_pool/full_site_floorings/` 下的一个或多个现成视频列表 CSV，并可选叠加 `outputs/video_pool/uid_expansions/` 下的一个或多个任务目录；系统会先合并来源、按追踪窗口裁剪并去重，再在 `outputs/video_data/manual_crawls/manual_crawl_stat_comment_<date>_<time>/` 中留存 `filtered_video_list.csv` 后，继续执行实时评论/互动量抓取。
 - **四类接口单独调试**：在前端分别调用 Meta、Stat、Comment、Media 四类接口，便于调试和小规模实验；每次调用都会将调试日志写入 `outputs/video_data/test_crawls/<meta/stat/comment/media>_api_<date>_<time>/`，并在日志首尾自动补充 `[TIMESTAMP][BEGIN]` / `[TIMESTAMP][END]`。
 - **Google 云端双层存储**：视频元数据、评论快照、统计快照、批量运行记录，以及媒体对象的 `object_key / bucket / endpoint / hash / size` 等信息统一写入 BigQuery；视频与音频媒体文件通过下载直链分块读取后直接上传到 GCS。
 - **媒体流式上传到 GCS**：媒体抓取阶段以流式方式从 B 站下载音视频，并同步写入 GCS Bucket，适合后续在 Google Colab、Vertex AI 或其他 Google 生态工具中直接读取。
@@ -23,7 +23,7 @@
 - **方法验证**：对少量视频快速测试不同评论条数、并发度、媒体分块大小、最大分辨率和媒体存储方式等参数。
 - **批量数据准备（旧版 CSV 路径）**：对 `Bilibili_Video_Pool_Builder` 导出的 `video_pool` CSV 进行顺序补抓，适合旧版或一次性全流程补抓。
 - **断点续跑**：当批量抓取因连续失败阈值而暂停后，可直接把 `remaining_bvids_part_n.csv` 再上传到“CSV 批量抓取”中继续执行，系统会自动复用第一次任务的会话目录并继续输出 `part_(n+1)` 文件。
-- **DataHub 实时补抓**：若只想补抓评论/互动量实时数据，建议使用 `Bilibili DataHub` 中的 `手动批量抓取-动态数据`；该页基于用户所选 `uid_expansion` 任务目录与最新 `daily_hot` / `rankboard` 视频列表运行，并在新建的 `manual_crawl_stat_comment_*` 任务目录中先留存本轮待抓 CSV。
+- **DataHub 实时补抓**：若只想补抓评论/互动量实时数据，建议使用 `Bilibili DataHub` 中的 `手动批量抓取-动态数据`；该页基于用户所选 `full_site_floorings` 视频列表 CSV 与可选的 `uid_expansion` 任务目录运行，并在新建的 `manual_crawl_stat_comment_*` 任务目录中先留存本轮待抓 CSV。
 - **云端训练准备**：将媒体文件直接沉淀到 GCS，并在 BigQuery 中维护结构化索引与样本描述，便于后续在 Google Colab Notebook 中直接读取与训练。
 
 ### 当前使用方式（简要）
@@ -52,7 +52,7 @@ streamlit run bvd-crawler.py
   - **右侧字段定义速查面板**：项目启动时即完成初始化并固定在页面右侧，可随时展开 / 收起；页面上下滚动时面板位置保持不变，支持按数据模块筛选字段，也可继续按模块展开查看完整定义。
 
 - 在 `Bilibili DataHub` 中，上述能力主要分散到 `数据抓取调试`、`手动批量抓取-动态数据`、`手动批量抓取-媒体/元数据` 与 `BigQuery / GCS 数据查看` 等标签页中：
-  - `手动批量抓取-动态数据`：仅抓取评论/互动量实时数据；用户在页内多选 `uid_expansion` 任务目录后，系统会自动附加最新 `daily_hot` / `rankboard`，按追踪窗口裁剪并去重，将结果先保存到 `outputs/video_data/manual_crawls/manual_crawl_stat_comment_<date>_<time>/filtered_video_list.csv`，再启动实时抓取。
+  - `手动批量抓取-动态数据`：仅抓取评论/互动量实时数据；用户在页内多选 `full_site_floorings` 视频列表 CSV，并可选叠加 `uid_expansion` 任务目录，系统会合并来源后按追踪窗口裁剪并去重，将结果先保存到 `outputs/video_data/manual_crawls/manual_crawl_stat_comment_<date>_<time>/filtered_video_list.csv`，再启动实时抓取。
   - `手动批量抓取-媒体/元数据`：面向元数据与媒体补抓。
   - `数据抓取调试` 与 `BigQuery / GCS 数据查看`：继续承接旧入口中的调试、查看与导出能力。
 

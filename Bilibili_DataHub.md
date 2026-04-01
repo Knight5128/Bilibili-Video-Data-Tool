@@ -9,7 +9,7 @@
 - **作者数据洞察与精简**：可上传作者列表并抓取 `MetaResult` 级作者字段（如昵称、签名、性别、等级、认证状态、会员类型、粉丝数、关注数、公开视频数），支持在连续风控报错达到阈值后自动暂停、导出 `remaining_authors_part_n.csv` 供后续续跑；抓取任务结束时只落盘累计扩充结果，后续需由用户手动上传完整作者清单并点击按钮，才会生成完整汇总、可视化图表与分层精简结果。
 - **CSV/XLSX 文件拼接及去重**：可对多个本地导出结果统一排序、拼接，并按指定键去重。
 - **数据抓取调试**：继续支持单 `bvid` 全流程抓取、四类接口调试，以及 BigQuery / GCS 数据查看与媒体文件回读导出。
-- **手动批量抓取-动态数据**：在本页上传并维护一份仅作用于该标签的本地作者 CSV（须含 `owner_mid`）。每次运行会即时抓取热门 400、当前全分区实时排行榜，以及作者在「追踪窗口」内的近期稿件；按发布时间窗口过滤后，与根目录持久化的主待抓队列合并、去重，再只抓取评论/互动量等实时数据并上传至 BigQuery。**不再**扫描 `outputs/video_pool/` 下历史导出作为本页输入。
+- **手动批量抓取-动态数据**：在本页直接多选 `outputs/video_pool/full_site_floorings/` 下的一个或多个现成视频列表 CSV，并可选叠加一个或多个 `uid_expansion` 任务目录中的 `videolist_part_*.csv`；系统会将这些来源合并后按「追踪窗口」筛选、去重，再只抓取评论/互动量等实时数据并上传至 BigQuery。
 - **手动批量抓取-媒体/元数据**：支持两种补抓模式。模式 A 会基于当前 BigQuery Dataset 中“已存在动态数据、但尚未同时具备 `videos` 元数据记录与 `assets` 中视频轨/音频轨记录”的视频，维护待补清单并按清单抓取；模式 B 支持用户手动上传一个或多个包含 `bvid` 列的文件，先拼接去重、再剔除当前 Dataset 中已完成媒体/元数据的视频后抓取。
 - **本地自动批量抓取**：在前端中可手动触发一轮“最新排行榜视频列表 + 作者源最新视频列表 + 实时评论/互动量抓取”；同样的逻辑也可通过统一脚本入口执行。
 - **待补元数据/媒体清单**：自动批量抓取阶段发现的新视频会同步进入 `tracker_meta_media_queue` 对应的待补队列；后续既可在“自动批量抓取”页直接消化，也可在“手动批量抓取-媒体/元数据”页按 Dataset 缺口或手动上传清单集中补抓。
@@ -53,7 +53,7 @@ python scripts/scheduled_discovery_daemon.py --tracking_ups_path tracking_ups_v1
   - **文件拼接及去重**：拼接多个 CSV/XLSX 并按指定键去重。
   - **数据抓取调试**：单视频全流程、四类接口调试。
   - **自动批量抓取**：作者列表上传、手动触发一轮自动批量抓取、查看运行状态、消化待补元数据/媒体队列。
-  - **手动批量抓取-动态数据**：维护页内作者 CSV 与根待抓队列；每轮即时发现热门/排行榜/作者新稿，合并窗口内清单后抓取实时互动量 / 评论数据。
+  - **手动批量抓取-动态数据**：手动选择 `full_site_floorings` 视频列表 CSV，并可选叠加 `uid_expansion` 任务目录；系统合并窗口内清单后抓取实时互动量 / 评论数据。
   - **手动批量抓取-媒体/元数据**：维护待补媒体/元数据清单，或基于手动上传清单去重后补抓视频元数据与媒体文件。
   - **BigQuery / GCS 数据查看**：查看结构化数据和媒体资产，并导出媒体文件。
   - **快捷跳转**：打开视频页或作者主页。
@@ -245,7 +245,7 @@ streamlit run bilibili-datahub.py
 1. 在 `数据抓取调试` 里找一个 `bvid`，执行一次 `Meta` 或 `单 bvid 全流程`。
 2. 到 `BigQuery / GCS 数据查看` 里查看这个 `bvid` 是否已经能查到结构化记录。
 3. 到 `自动批量抓取` 页上传一个只包含 `owner_mid` 列的小 CSV，手动触发一轮自动批量抓取，确认 `tracker_*` 控制表和 `meta_media_queue` 已开始写入。
-4. 到 `手动批量抓取-动态数据` 页先上传作者 CSV，再执行一轮任务，确认 `outputs/video_data/manual_crawls/` 下已更新根状态文件（`realtime_watchlist_*.csv/json`），并出现新的 `manual_crawl_<时间戳>/` 会话目录（内含筛选清单、快照与 `logs/`）。
+4. 到 `手动批量抓取-动态数据` 页先选择一个或多个 `full_site_floorings` 视频列表 CSV，并按需补充 `uid_expansion` 任务目录，再执行一轮任务，确认 `outputs/video_data/manual_crawls/` 下已生成新的 `manual_crawl_stat_comment_<时间戳>/` 会话目录（内含筛选清单与 `logs/`）。
 5. 到 `手动批量抓取-媒体/元数据` 页先执行一次 `同步待补媒体/元数据视频清单`，再视需要触发模式 A 或模式 B，确认对应任务目录和清单文件已经生成。
 6. 到 `作者数据洞察&精简` 页上传一个作者 CSV，确认 `outputs/author_refinements/author_refinement_<date>_<time>/` 下已生成扩充作者表、精简版作者表、HTML 图表与日志。
 
@@ -302,8 +302,8 @@ $env:BILI_BUVID3 = "your-buvid3"
 - `google.auth` 或 `google.cloud` 相关报错：通常是虚拟环境未正确安装依赖，重新激活 `.venv` 后执行 `pip install -e .` 或 `uv sync`。
 - `权限不足`：检查 Service Account 是否已经拿到 `roles/bigquery.dataEditor`、`roles/bigquery.jobUser`、`roles/storage.objectAdmin`。
 - `自动批量抓取脚本能跑但前端查不到数据`：确认脚本读取到的是同一份 `.local/bilibili-datahub.gcp.config.json`，且没有在不同目录下启动。
-- `手动批量抓取-动态数据` 报错或清单为空：确认已上传作者 CSV 且能解析出有效 `owner_mid`；适当放宽「追踪窗口（小时）」或检查根待抓队列 `realtime_watchlist_current.csv` 是否在窗口内被裁空。
-- `手动批量抓取-动态数据任务中断后想排查`：查看本轮会话目录 `outputs/video_data/manual_crawls/manual_crawl_<时间戳>/` 下的 `manual_crawl_state.json`、`filtered_video_list.csv`、各阶段快照 CSV 与 `logs/`；根目录下的 `realtime_watchlist_state.json` 记录最近一次运行摘要与会话路径。
+- `手动批量抓取-动态数据` 报错或清单为空：确认至少选择了一个 `full_site_floorings` 视频列表 CSV 或一个 `uid_expansion` 任务目录；适当放宽「追踪窗口（小时）」，并检查所选 CSV 是否包含有效 `bvid` / `pubdate`。
+- `手动批量抓取-动态数据任务中断后想排查`：查看本轮会话目录 `outputs/video_data/manual_crawls/manual_crawl_stat_comment_<时间戳>/` 下的 `manual_crawl_state.json`、`filtered_video_list.csv` 与 `logs/`；若批量子任务中断，也可继续查看同目录下保留的剩余 CSV。
 - `手动批量抓取-媒体/元数据` 看不到待补条目：先确认当前侧边栏填写的是目标 BigQuery Dataset；模式 A 只会纳入已进入 `video_stat_snapshots` 或 `topn_comment_snapshots`、但尚未同时具备 `videos` 与 `assets(video+audio)` 的视频。
 - `手动批量抓取-媒体/元数据` 在风控后暂停：查看对应任务目录下的 `manual_crawl_media_state.json`、`batch_crawl_state.json`、`remaining_bvids_part_n.csv` 与 `logs/`；模式 A 会在任务结束后刷新根目录 waitlist，模式 B 会把剩余清单保留在当前任务目录中。
 
@@ -323,15 +323,10 @@ $env:BILI_BUVID3 = "your-buvid3"
 ### 手动批量抓取-动态数据说明
 
 - 本页只抓取**实时数据**（评论快照、互动量快照），不处理元数据与媒体。
-- **输入**：页内维护的本地作者清单（`owner_mid`），与 `cloud_tracker` / `video_pool` 历史 CSV **无关**。
-- **每轮流程（概要）**：读取作者清单 → 抓取热门 400 与当前全分区排行榜 → 抓取各作者在「追踪窗口」内的近期稿 → 按本轮启动时刻与窗口过滤发布时间 → 加载根目录主待抓队列并剔除超窗条目 → 合并去重 → 生成本轮抓取清单并调用与批量实时模式相同的入库逻辑。
+- **输入**：用户在页内显式选择的 `full_site_floorings` 视频列表 CSV，以及可选的 `uid_expansion` 任务目录；系统会读取所选任务目录下的 `videolist_part_*.csv`。不再在本页维护作者 CSV，也不再自动附加最新 `daily_hot` / `rankboard`。
+- **每轮流程（概要）**：读取所选 `full_site_floorings` 视频列表 CSV → 读取所选 `uid_expansion` 任务目录中的 `videolist_part_*.csv` → 合并候选视频 → 按本轮启动时刻与「追踪窗口」过滤发布时间 → 去重 → 生成本轮抓取清单并调用与批量实时模式相同的入库逻辑。
 - **窗口裁剪说明**：无有效 `pubdate` 的条目不会进入或留在当前有效 watchlist 中。
-- **根目录持久化**（均在 `outputs/video_data/manual_crawls/`）：
-  - `realtime_watchlist_authors.csv`：当前作者清单；
-  - `realtime_watchlist_authors_state.json`：作者清单元数据（路径、数量、上传/最近使用时间等）；
-  - `realtime_watchlist_current.csv`：主待抓队列（跨轮累计，按窗口持续裁剪）；
-  - `realtime_watchlist_state.json`：主队列与最近一轮运行的状态摘要。
-- **每轮会话目录** `manual_crawl_<时间戳>/` 中除 `filtered_video_list.csv`、`manual_crawl_state.json`、`logs/` 外，通常还包括发现阶段快照，例如：`hot_rankboard_candidates.csv`、`author_recent_candidates.csv`、`merged_candidates_before_prune.csv`、`realtime_watchlist_snapshot_after_run.csv`。
+- **每轮会话目录** `manual_crawl_stat_comment_<时间戳>/` 中会保存 `filtered_video_list.csv`、`manual_crawl_state.json` 与 `logs/`；若底层批量任务部分失败，同目录下还会保留剩余 CSV 供继续执行。
 - **风控睡眠说明**：发现阶段若识别为风控错误，会按当前设置持续睡眠后重试，直到成功或被用户手动中断；非风控错误则直接中止本轮任务。
 
 ### 手动批量抓取-媒体/元数据说明

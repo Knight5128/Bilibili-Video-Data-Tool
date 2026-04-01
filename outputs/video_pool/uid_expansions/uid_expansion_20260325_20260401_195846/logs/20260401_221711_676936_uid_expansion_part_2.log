@@ -1,0 +1,10 @@
+[TIMESTAMP][BEGIN] 2026-04-01T22:09:20
+[INFO]: 识别到已有 uid_expansion 会话：outputs/video_pool/uid_expansions/uid_expansion_20260325_20260401_195846，本次将保存为 part_2。
+[INFO]: 历史任务增量检查完成：0 个作者命中过往 original_uids，17 个作者按全局 start_date 抓取；命中历史的作者将从其最近一次任务开始日（含当天）继续抓取。
+[INFO]: 开始处理第 1/1 批作者，共 17 个。
+[WARN]: 作者 4351252 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[WARN]: 作者 522653994 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 1/1 批完成，新增 218 条视频，累计 218 条。
+[WARN]: 本批有 2 个作者抓取失败。
+[INFO]: 全局 videolist 去重检查完成：历史任务中已有 2878 个唯一 bvid，本次过滤掉 0 条重复视频。
+[TIMESTAMP][END] 2026-04-01T22:17:11

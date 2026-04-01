@@ -67,7 +67,7 @@ from bili_pipeline.models import CrawlTaskMode, GCPStorageConfig
 
 
 class ManualBatchRunnerTest(unittest.TestCase):
-    def test_discover_manual_batch_source_csvs_matches_expected_patterns(self) -> None:
+    def test_discover_manual_batch_source_csvs_matches_explicit_selected_sources(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             full_site_floorings_dir = root / "full_site_floorings"
@@ -77,18 +77,20 @@ class ManualBatchRunnerTest(unittest.TestCase):
 
             (full_site_floorings_dir / "daily_hot-20260329_120000.csv").write_text("bvid\nBV1\n", encoding="utf-8-sig")
             (full_site_floorings_dir / "rankboard-20260329_120000.csv").write_text("bvid\nBV3\n", encoding="utf-8-sig")
+            (full_site_floorings_dir / "weekly_pick-20260329_120000.csv").write_text("bvid\nBV4\n", encoding="utf-8-sig")
             (full_site_floorings_dir / "daily_hot_authors.csv").write_text("owner_mid\n1\n", encoding="utf-8-sig")
             (uid_expansions_dir / "videolist_part_1.csv").write_text("bvid\nBV2\n", encoding="utf-8-sig")
             (uid_expansions_dir / "remaining_uids_part_1.csv").write_text("owner_mid\n2\n", encoding="utf-8-sig")
 
             source_paths = discover_manual_batch_source_csvs(
                 root,
+                selected_flooring_csvs=["weekly_pick-20260329_120000.csv", "rankboard-20260329_120000.csv"],
                 selected_uid_task_dirs=["uid_expansion_20260315_20260329_120000"],
             )
 
             self.assertEqual(
                 [
-                    "full_site_floorings/daily_hot-20260329_120000.csv",
+                    "full_site_floorings/weekly_pick-20260329_120000.csv",
                     "full_site_floorings/rankboard-20260329_120000.csv",
                     "uid_expansions/uid_expansion_20260315_20260329_120000/videolist_part_1.csv",
                 ],
@@ -113,19 +115,19 @@ class ManualBatchRunnerTest(unittest.TestCase):
 
             source_paths = discover_manual_batch_source_csvs(
                 root,
+                selected_flooring_csvs=["rankboard-20260329_120000.csv"],
                 selected_uid_task_dirs=["uid_expansion_selected"],
             )
 
             self.assertEqual(
                 [
-                    "full_site_floorings/daily_hot-20260329_120000.csv",
                     "full_site_floorings/rankboard-20260329_120000.csv",
                     "uid_expansions/uid_expansion_selected/videolist_part_1.csv",
                 ],
                 [path.relative_to(root).as_posix() for path in source_paths],
             )
 
-    def test_discover_manual_batch_source_csvs_uses_latest_flooring_files(self) -> None:
+    def test_discover_manual_batch_source_csvs_uses_latest_flooring_files_in_legacy_mode(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             root = Path(tmp_dir)
             full_site_floorings_dir = root / "full_site_floorings"
@@ -242,6 +244,7 @@ class ManualBatchRunnerTest(unittest.TestCase):
                 consecutive_failure_limit=10,
                 video_pool_root=root,
                 manual_crawls_root_dir=manual_root,
+                selected_flooring_csvs=["daily_hot-20260329_120000.csv", "rankboard-20260329_120000.csv"],
                 selected_uid_task_dirs=["uid_expansion_20260315_20260329_120000"],
                 started_at=datetime(2026, 3, 29, 12, 0, 0),
             )
@@ -308,6 +311,7 @@ class ManualBatchRunnerTest(unittest.TestCase):
                 consecutive_failure_limit=10,
                 video_pool_root=root,
                 manual_crawls_root_dir=manual_root,
+                selected_flooring_csvs=["daily_hot-20260329_120000.csv", "rankboard-20260329_120000.csv"],
                 selected_uid_task_dirs=["uid_expansion_selected"],
                 started_at=datetime(2026, 3, 29, 12, 0, 0),
             )
@@ -353,6 +357,7 @@ class ManualBatchRunnerTest(unittest.TestCase):
                 consecutive_failure_limit=10,
                 video_pool_root=root,
                 manual_crawls_root_dir=manual_root,
+                selected_flooring_csvs=["daily_hot-20260329_120000.csv", "rankboard-20260329_120000.csv"],
                 selected_uid_task_dirs=["uid_expansion_selected"],
                 started_at=datetime(2026, 3, 29, 12, 0, 0),
             )
@@ -403,6 +408,7 @@ class ManualBatchRunnerTest(unittest.TestCase):
                 consecutive_failure_limit=10,
                 video_pool_root=root,
                 manual_crawls_root_dir=manual_root,
+                selected_flooring_csvs=["daily_hot-20260329_120000.csv", "rankboard-20260329_120000.csv"],
                 selected_uid_task_dirs=["uid_expansion_selected"],
                 started_at=datetime(2026, 3, 29, 12, 0, 0),
             )
@@ -410,6 +416,73 @@ class ManualBatchRunnerTest(unittest.TestCase):
             self.assertEqual("partial", result.status)
             self.assertTrue(Path(result.crawl_report.remaining_csv_path).is_file())
             self.assertEqual(Path(result.session_dir), Path(result.crawl_report.remaining_csv_path).parent)
+
+    @patch("bili_pipeline.datahub.manual_batch_runner.crawl_bvid_list_from_csv")
+    def test_run_manual_realtime_batch_crawl_supports_flooring_only_selection(self, mock_batch: Mock) -> None:
+        mock_batch.return_value = SimpleNamespace(
+            success_count=1,
+            failed_count=0,
+            remaining_count=0,
+            completed_all=True,
+            to_dict=lambda: {
+                "success_count": 1,
+                "failed_count": 0,
+                "remaining_count": 0,
+                "completed_all": True,
+            },
+        )
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir) / "video_pool"
+            manual_root = Path(tmp_dir) / "video_data" / "manual_crawls"
+            floorings_dir = root / "full_site_floorings"
+            floorings_dir.mkdir(parents=True)
+
+            (floorings_dir / "custom_flooring-20260329_120000.csv").write_text(
+                "bvid,pubdate,title\nBV_ONLY,2026-03-28T12:00:00,flooring-only\n",
+                encoding="utf-8-sig",
+            )
+
+            result = run_manual_realtime_batch_crawl(
+                gcp_config=GCPStorageConfig(project_id="p", bigquery_dataset="d", gcs_bucket_name="b"),
+                stream_data_time_window_hours=72,
+                parallelism=1,
+                comment_limit=10,
+                consecutive_failure_limit=10,
+                video_pool_root=root,
+                manual_crawls_root_dir=manual_root,
+                selected_flooring_csvs=["custom_flooring-20260329_120000.csv"],
+                selected_uid_task_dirs=[],
+                started_at=datetime(2026, 3, 29, 12, 0, 0),
+            )
+
+            self.assertEqual("completed", result.status)
+            self.assertEqual(1, result.filtered_bvid_count)
+            _, kwargs = mock_batch.call_args
+            self.assertEqual("filtered_video_list.csv", Path(kwargs["source_csv_name"]).name)
+
+    def test_run_manual_realtime_batch_crawl_rejects_empty_explicit_source_selection(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir) / "video_pool"
+            manual_root = Path(tmp_dir) / "video_data" / "manual_crawls"
+            (root / "full_site_floorings").mkdir(parents=True)
+            (root / "uid_expansions").mkdir(parents=True)
+
+            with self.assertRaises(ValueError) as ctx:
+                run_manual_realtime_batch_crawl(
+                    gcp_config=GCPStorageConfig(project_id="p", bigquery_dataset="d", gcs_bucket_name="b"),
+                    stream_data_time_window_hours=72,
+                    parallelism=1,
+                    comment_limit=10,
+                    consecutive_failure_limit=10,
+                    video_pool_root=root,
+                    manual_crawls_root_dir=manual_root,
+                    selected_flooring_csvs=[],
+                    selected_uid_task_dirs=[],
+                    started_at=datetime(2026, 3, 29, 12, 0, 0),
+                )
+
+            self.assertIn("至少选择", str(ctx.exception))
 
 
 if __name__ == "__main__":

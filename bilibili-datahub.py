@@ -410,18 +410,20 @@ def _list_uid_expansion_task_dirs(video_pool_root: Path) -> list[Path]:
     )
 
 
-def _pick_latest_manual_batch_flooring_csv(video_pool_root: Path, prefix: str) -> Path | None:
+def _list_manual_batch_flooring_csvs(video_pool_root: Path) -> list[Path]:
     flooring_dir = video_pool_root / "full_site_floorings"
     if not flooring_dir.exists():
-        return None
+        return []
     candidates = [
         path
-        for path in flooring_dir.glob(f"{prefix}-*.csv")
+        for path in flooring_dir.glob("*.csv")
         if path.is_file() and not path.name.endswith("_authors.csv")
     ]
-    if not candidates:
-        return None
-    return max(candidates, key=lambda path: (path.stat().st_mtime, path.name))
+    return sorted(
+        candidates,
+        key=lambda path: (path.stat().st_mtime, path.name),
+        reverse=True,
+    )
 
 
 def _build_default_log_dir(prefix: str, started_at: datetime) -> Path:
@@ -1361,42 +1363,48 @@ with tab_manual_batch:
     if not active_gcp_config.is_enabled():
         st.warning("手动批量抓取-动态数据依赖 GCP 配置；请先完成侧边栏中的 BigQuery / GCS 设置。")
     st.caption(
-        "本页不再维护本地作者清单。请直接选择一个或多个 `uid_expansions` 任务目录，"
-        "系统会自动附加 `full_site_floorings` 下最新的 `daily_hot` 与 `rankboard` 视频列表，"
+        "本页不再维护本地作者清单。请直接选择 `full_site_floorings` 下的一个或多个视频列表 CSV，"
+        "以及可选的一个或多个 `uid_expansions` 任务目录，"
         "完成追踪窗口裁剪与去重后，先在新的 `manual_crawl_stat_comment_*` 任务目录中留存待抓 CSV，再直接抓取评论/互动量数据。"
     )
 
     video_pool_root = _manual_stat_comment_video_pool_root()
     manual_crawls_dir = _manual_stat_comment_crawls_root()
     uid_task_dirs = _list_uid_expansion_task_dirs(video_pool_root)
-    latest_daily_hot = _pick_latest_manual_batch_flooring_csv(video_pool_root, "daily_hot")
-    latest_rankboard = _pick_latest_manual_batch_flooring_csv(video_pool_root, "rankboard")
+    flooring_csvs = _list_manual_batch_flooring_csvs(video_pool_root)
 
     st.markdown("**输入来源**")
+    st.caption(f"`full_site_floorings` 根目录：`{display_path(video_pool_root / 'full_site_floorings', APP_DIR)}`")
     st.caption(f"`uid_expansions` 根目录：`{display_path(video_pool_root / 'uid_expansions', APP_DIR)}`")
     st.caption(f"`manual_crawls` 输出目录：`{display_path(manual_crawls_dir, APP_DIR)}`")
+    if flooring_csvs:
+        st.caption(f"当前发现 {len(flooring_csvs)} 个可选 `full_site_floorings` 视频列表 CSV。")
+    else:
+        st.warning("尚未发现任何可选的 `full_site_floorings` 视频列表 CSV。")
     if uid_task_dirs:
         st.caption(f"当前发现 {len(uid_task_dirs)} 个可选 `uid_expansion` 任务目录。")
     else:
         st.warning("尚未发现任何 `uid_expansions` 任务目录。")
 
-    st.markdown("**自动附加的 full_site_floorings 文件**")
-    if latest_daily_hot is None:
-        st.error("未发现可用的最新 `daily_hot-*.csv`。")
-    else:
-        st.caption(f"最新 `daily_hot`：`{display_path(latest_daily_hot, APP_DIR)}`")
-    if latest_rankboard is None:
-        st.error("未发现可用的最新 `rankboard-*.csv`。")
-    else:
-        st.caption(f"最新 `rankboard`：`{display_path(latest_rankboard, APP_DIR)}`")
+    st.markdown("**可选的 full_site_floorings 文件**")
+    if flooring_csvs:
+        preview_names = [display_path(path, APP_DIR) for path in flooring_csvs[:8]]
+        st.caption("最近可选文件示例：" + "；".join(f"`{item}`" for item in preview_names))
 
     with st.form("realtime_watchlist_run_form"):
+        selected_flooring_csvs = st.multiselect(
+            "选择一个或多个 full_site_floorings 视频列表 CSV",
+            options=[path.name for path in flooring_csvs],
+            default=[],
+            key="manual_stat_comment_selected_flooring_csvs",
+            help="系统会读取所选 CSV 中的 `bvid` 列，并与所选 uid_expansion 任务目录中的 `videolist_part_*.csv` 合并后统一筛窗、去重。",
+        )
         selected_uid_task_dirs = st.multiselect(
-            "选择一个或多个 uid_expansion 任务目录",
+            "可选：选择一个或多个 uid_expansion 任务目录",
             options=[path.name for path in uid_task_dirs],
             default=[],
             key="manual_stat_comment_selected_uid_dirs",
-            help="系统会读取所选任务目录下的 `videolist_part_*.csv`，并自动附加最新 `daily_hot` 与 `rankboard`。",
+            help="系统会读取所选任务目录下的 `videolist_part_*.csv`，并与上方所选 full_site_floorings 视频列表合并。",
         )
         time_window_hours = st.number_input(
             "追踪窗口（小时）",
@@ -1432,6 +1440,7 @@ with tab_manual_batch:
                 credential=active_credential,
                 video_pool_root=video_pool_root,
                 manual_crawls_root_dir=manual_crawls_dir,
+                selected_flooring_csvs=selected_flooring_csvs,
                 selected_uid_task_dirs=selected_uid_task_dirs,
             )
         except ValueError as exc:
