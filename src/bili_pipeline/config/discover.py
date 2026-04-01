@@ -1,7 +1,25 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+
+def _normalize_datetimes(*values: datetime | None) -> tuple[datetime | None, ...]:
+    present_values = [value for value in values if value is not None]
+    if not present_values:
+        return values
+    if not any(value.tzinfo is not None for value in present_values):
+        return values
+
+    normalized: list[datetime | None] = []
+    for value in values:
+        if value is None:
+            normalized.append(None)
+        elif value.tzinfo is None:
+            normalized.append(value.replace(tzinfo=timezone.utc))
+        else:
+            normalized.append(value.astimezone(timezone.utc))
+    return tuple(normalized)
 
 
 @dataclass(slots=True)
@@ -35,6 +53,7 @@ class DiscoverConfig:
         current_time = now or datetime.now()
         start = self.start_date or (current_time - timedelta(days=self.lookback_days))
         end = self.end_date or current_time
+        start, end = _normalize_datetimes(start, end)
         if start > end:
             raise ValueError("start_date 不能晚于 end_date。")
         return start, end
@@ -43,4 +62,5 @@ class DiscoverConfig:
         if pubdate is None:
             return True
         start, end = self.resolve_time_window(now)
+        start, pubdate, end = _normalize_datetimes(start, pubdate, end)
         return start <= pubdate <= end

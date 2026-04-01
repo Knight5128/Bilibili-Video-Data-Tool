@@ -1,0 +1,12 @@
+[TIMESTAMP][BEGIN] 2026-04-01T15:13:47
+[2026-04-01 15:02:08] [INFO] 已发现 4 个可用于手动批量抓取的视频列表 CSV。
+[2026-04-01 15:02:09] [INFO] 去重后共得到 2878 个唯一 bvid 候选。
+[2026-04-01 15:02:09] [INFO] 发布时间窗口筛选完成：保留 2670 条，缺少 pubdate 跳过 0 条，超出窗口跳过 208 条。
+[2026-04-01 15:02:09] [INFO] 已保存筛选后的视频列表：D:/Schoolworks/Thesis/bilibili-data/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260401_150208/filtered_video_list.csv
+[2026-04-01 15:02:09] [INFO] 开始执行手动批量抓取（仅实时互动量 / 评论数据）。
+[2026-04-01 15:13:47] [ERROR] 手动批量抓取失败：400 GET https://bigquery.googleapis.com/bigquery/v2/projects/bilibili-m2s2vp-research/queries/b554cd8f-4444-4bff-95c1-5f8c437a902d?maxResults=0&location=asia-east1&prettyPrint=false: UPDATE or DELETE statement over table bilibili-m2s2vp-research.bili_video_stream_data_test_2.crawl_runs would affect rows in the streaming buffer, which is not supported
+
+Location: asia-east1
+Job ID: b554cd8f-4444-4bff-95c1-5f8c437a902d
+
+[TIMESTAMP][END] 2026-04-01T15:13:47

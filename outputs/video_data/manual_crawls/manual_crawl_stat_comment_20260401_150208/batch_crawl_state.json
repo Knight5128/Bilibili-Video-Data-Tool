@@ -1,0 +1,28 @@
+{
+  "session_dir": "D:\\Schoolworks\\Thesis\\bilibili-data\\outputs\\video_data\\manual_crawls\\manual_crawl_stat_comment_20260401_150208",
+  "parts": [
+    {
+      "part_number": 1,
+      "source_csv_name": "filtered_video_list.csv",
+      "task_mode": "realtime_only",
+      "subtask_started_at": "2026-04-01T15:02:09.843399",
+      "subtask_finished_at": "2026-04-01T15:13:45.452095",
+      "input_bvid_count": 2670,
+      "processed_count": 28,
+      "success_count": 18,
+      "failed_count": 10,
+      "remaining_count": 2652,
+      "consecutive_failure_limit": 10,
+      "stopped_due_to_consecutive_failures": true,
+      "stop_reason": "检测到连续 10 条视频抓取失败，已按阈值 10 暂停当前 CSV 批量抓取流程。",
+      "log_file": "logs/batch_crawl_part_1_20260401_151345.log",
+      "remaining_file": "remaining_bvids_part_1.csv"
+    }
+  ],
+  "session_started_at": "2026-04-01T15:02:09.843399",
+  "session_completed_at": "",
+  "original_csv_name": "filtered_video_list.csv",
+  "task_mode": "realtime_only",
+  "original_bvid_count": 2670,
+  "completed_all": false
+}

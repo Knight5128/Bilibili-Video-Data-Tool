@@ -1,0 +1,20 @@
+[TIMESTAMP][BEGIN] 2026-04-01T15:12:00
+[2026-04-01 15:12:16] 开始执行 CSV 批量抓取子任务 part_1。
+[2026-04-01 15:12:16] 子任务开始时间：2026-04-01T15:12:00.847105
+[2026-04-01 15:12:16] 输入文件：filtered_video_list.csv
+[2026-04-01 15:12:16] 输入唯一 bvid 数量：17458
+[2026-04-01 15:12:16] 为严格按 CSV 顺序判断连续失败阈值，本次任务自动将并发度从 2 调整为 1。
+[2026-04-01 15:13:52] [ERROR] bvid=BV1MU95BsEPX 抓取失败：comment: cannot schedule new futures after interpreter shutdown
+[2026-04-01 15:13:52] [ERROR] bvid=BV14U95BsEah 抓取失败：stat: cannot schedule new futures after interpreter shutdown | comment: cannot schedule new futures after interpreter shutdown
+[2026-04-01 15:13:52] [ERROR] bvid=BV1xX95BQEx8 抓取失败：stat: cannot schedule new futures after interpreter shutdown | comment: cannot schedule new futures after interpreter shutdown
+[2026-04-01 15:13:52] [ERROR] bvid=BV1KX95BQEzJ 抓取失败：stat: cannot schedule new futures after interpreter shutdown | comment: cannot schedule new futures after interpreter shutdown
+[2026-04-01 15:13:52] [ERROR] bvid=BV1Vi95BYEvT 抓取失败：stat: cannot schedule new futures after interpreter shutdown | comment: cannot schedule new futures after interpreter shutdown
+[2026-04-01 15:13:53] [ERROR] bvid=BV15Y95BvE3X 抓取失败：stat: cannot schedule new futures after interpreter shutdown | comment: cannot schedule new futures after interpreter shutdown
+[2026-04-01 15:13:53] [ERROR] bvid=BV1LY95BvEfc 抓取失败：stat: cannot schedule new futures after interpreter shutdown | comment: cannot schedule new futures after interpreter shutdown
+[2026-04-01 15:13:53] [ERROR] bvid=BV1ZqXWBfE6e 抓取失败：stat: cannot schedule new futures after interpreter shutdown | comment: cannot schedule new futures after interpreter shutdown
+[2026-04-01 15:13:53] [ERROR] bvid=BV1Vz95BhEYn 抓取失败：stat: cannot schedule new futures after interpreter shutdown | comment: cannot schedule new futures after interpreter shutdown
+[2026-04-01 15:13:53] [ERROR] bvid=BV1Gr95BFEjd 抓取失败：stat: cannot schedule new futures after interpreter shutdown | comment: cannot schedule new futures after interpreter shutdown
+[2026-04-01 15:13:53] [STOP] 检测到连续 10 条视频抓取失败，已按阈值 10 暂停当前 CSV 批量抓取流程。
+[2026-04-01 15:13:53] [INFO] 已导出剔除成功条目后的剩余 CSV：D:\Schoolworks\Thesis\bilibili-data\outputs\video_data\manual_crawls\manual_crawl_stat_comment_20260401_151044\remaining_bvids_part_1.csv
+[2026-04-01 15:13:53] 子任务结束时间：2026-04-01T15:13:53.427385
+[TIMESTAMP][END] 2026-04-01T15:13:53

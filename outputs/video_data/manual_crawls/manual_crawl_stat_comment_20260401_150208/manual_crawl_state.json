@@ -1,0 +1,17 @@
+{
+  "status": "failed",
+  "session_dir": "D:/Schoolworks/Thesis/bilibili-data/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260401_150208",
+  "state_path": "D:/Schoolworks/Thesis/bilibili-data/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260401_150208/manual_crawl_state.json",
+  "source_csv_count": 0,
+  "candidate_bvid_count": 0,
+  "filtered_bvid_count": 0,
+  "skipped_missing_pubdate_count": 0,
+  "skipped_outside_window_count": 0,
+  "stream_data_time_window_hours": 168,
+  "filtered_csv_path": null,
+  "wrapper_log_path": "D:/Schoolworks/Thesis/bilibili-data/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260401_150208/logs/20260401_151347_515379_manual_crawl_prepare.log",
+  "crawl_report": null,
+  "error": "400 GET https://bigquery.googleapis.com/bigquery/v2/projects/bilibili-m2s2vp-research/queries/b554cd8f-4444-4bff-95c1-5f8c437a902d?maxResults=0&location=asia-east1&prettyPrint=false: UPDATE or DELETE statement over table bilibili-m2s2vp-research.bili_video_stream_data_test_2.crawl_runs would affect rows in the streaming buffer, which is not supported\n\nLocation: asia-east1\nJob ID: b554cd8f-4444-4bff-95c1-5f8c437a902d\n",
+  "started_at": "2026-04-01T15:02:08.912467",
+  "finished_at": "2026-04-01T15:13:47.516378"
+}

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import unittest
 
 from bili_pipeline.config import DiscoverConfig
@@ -369,6 +369,38 @@ class VideoPoolBuilderTest(unittest.TestCase):
         self.assertEqual(["BV_seed_1"], [entry.bvid for entry in result.entries])
         self.assertEqual(["popular", "weekly_hot:week=1"], result.entries[0].source_refs)
         self.assertEqual("weekly_hot", result.entries[0].source_type)
+
+    def test_build_from_seed_candidates_accepts_aware_pubdate_with_naive_window(self) -> None:
+        aware_pubdate = datetime(2026, 3, 10, 12, 0, 0, tzinfo=timezone.utc)
+        hot = StaticSeedSource(
+            [
+                CandidateVideo(
+                    bvid="BV_aware_seed",
+                    source_type="hot",
+                    source_ref="popular",
+                    discovered_at=aware_pubdate,
+                    owner_mid=101,
+                    tid=17,
+                    pubdate=aware_pubdate,
+                    duration_seconds=180,
+                )
+            ]
+        )
+
+        builder = VideoPoolBuilder(
+            config=DiscoverConfig(
+                start_date=datetime(2026, 3, 1, 0, 0, 0),
+                end_date=datetime(2026, 3, 11, 12, 0, 0),
+                enable_author_backfill=False,
+            ),
+            hot_sources=[hot],
+            partition_sources=[],
+            author_source=StaticAuthorVideoSource({}),
+        )
+
+        result = builder.build_from_seed_candidates(hot.fetch(), now=self.now)
+
+        self.assertEqual(["BV_aware_seed"], [entry.bvid for entry in result.entries])
 
 
 if __name__ == "__main__":

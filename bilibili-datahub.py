@@ -81,20 +81,9 @@ from bili_pipeline.datahub.discover_ops import (
     write_uid_expansion_summary,
 )
 from bili_pipeline.datahub.local_cycle_runner import DataHubLocalCycleRunner
-from bili_pipeline.datahub.realtime_watchlist_runner import (
-    LocalAuthorsPersistedState,
-    RealtimeWatchlistRunResult,
-    load_local_author_list,
-    load_local_authors_state,
-    realtime_watchlist_authors_state_path,
-    load_watchlist_state,
-    realtime_watchlist_authors_csv_path,
-    realtime_watchlist_current_csv_path,
-    realtime_watchlist_manual_crawls_dir,
-    realtime_watchlist_state_json_path,
-    run_realtime_watchlist_cycle,
-    save_local_author_list,
-    save_local_authors_state,
+from bili_pipeline.datahub.manual_batch_runner import (
+    MANUAL_CRAWLS_OUTPUT_DIR,
+    run_manual_realtime_batch_crawl,
 )
 from bili_pipeline.datahub.manual_media_runner import (
     MANUAL_MEDIA_CRAWLS_OUTPUT_DIR,
@@ -402,130 +391,37 @@ def _build_local_runner_cached(
     )
 
 
-def _realtime_watchlist_video_data_root() -> Path:
-    return Path(DEFAULT_VIDEO_DATA_OUTPUT_DIR).resolve()
+def _manual_stat_comment_video_pool_root() -> Path:
+    return Path(DEFAULT_VIDEO_POOL_OUTPUT_DIR).resolve()
 
 
-class _RealtimeWatchlistRunPreflightError(ValueError):
-    pass
+def _manual_stat_comment_crawls_root() -> Path:
+    return Path(MANUAL_CRAWLS_OUTPUT_DIR).resolve()
 
 
-class _MissingLocalAuthorCsvError(_RealtimeWatchlistRunPreflightError):
-    pass
-
-
-class _InvalidLocalAuthorCsvError(_RealtimeWatchlistRunPreflightError):
-    pass
-
-
-class _InvalidRootWatchlistStateError(_RealtimeWatchlistRunPreflightError):
-    pass
-
-
-def _probe_root_watchlist_csv_readable(csv_path: Path) -> None:
-    if not csv_path.is_file():
-        return
-    try:
-        pd.read_csv(csv_path, encoding="utf-8-sig", nrows=0)
-    except Exception as exc:  # noqa: BLE001
-        raise ValueError(f"根待抓队列 CSV 已损坏或无法读取：{exc}") from exc
-
-
-def _load_realtime_watchlist_author_state_status(
-    video_data_root: Path,
-) -> tuple[LocalAuthorsPersistedState | None, str | None]:
-    try:
-        return load_local_authors_state(video_data_root=video_data_root), None
-    except ValueError as exc:
-        return None, f"本地作者清单状态 JSON 损坏或格式无效：{exc}"
-
-
-def _load_realtime_watchlist_root_state_status(
-    *,
-    video_data_root: Path,
-    watchlist_csv_path: Path,
-    watchlist_state_path: Path,
-) -> tuple[object | None, str | None]:
-    watchlist_state = None
-    watchlist_state_error: str | None = None
-    if watchlist_state_path.is_file():
-        try:
-            watchlist_state = load_watchlist_state(video_data_root=video_data_root)
-        except ValueError as exc:
-            watchlist_state_error = f"根待抓队列状态 JSON 损坏或格式无效：{exc}"
-    try:
-        _probe_root_watchlist_csv_readable(watchlist_csv_path)
-    except ValueError as exc:
-        watchlist_state_error = watchlist_state_error or str(exc)
-    return watchlist_state, watchlist_state_error
-
-
-def _validate_realtime_watchlist_run_inputs(
-    *,
-    video_data_root: Path,
-    authors_csv_path: Path,
-    watchlist_csv_path: Path,
-    watchlist_state_path: Path,
-) -> None:
-    if not authors_csv_path.is_file():
-        raise _MissingLocalAuthorCsvError("请先在本页上传并保存包含 owner_mid 列的 CSV。")
-    try:
-        load_local_author_list(video_data_root=video_data_root)
-    except FileNotFoundError as exc:
-        raise _MissingLocalAuthorCsvError("请先在本页上传并保存包含 owner_mid 列的 CSV。") from exc
-    except ValueError as exc:
-        raise _InvalidLocalAuthorCsvError(f"本地作者清单无效：{exc}") from exc
-    if watchlist_state_path.is_file():
-        try:
-            load_watchlist_state(video_data_root=video_data_root)
-        except ValueError as exc:
-            raise _InvalidRootWatchlistStateError(f"根待抓队列状态 JSON 损坏或格式无效：{exc}") from exc
-    try:
-        _probe_root_watchlist_csv_readable(watchlist_csv_path)
-    except ValueError as exc:
-        raise _InvalidRootWatchlistStateError(str(exc)) from exc
-
-
-def _realtime_watchlist_run_result_to_dict(result: RealtimeWatchlistRunResult) -> dict[str, object]:
-    out: dict[str, object] = {
-        "status": result.status,
-        "filtered_bvid_count": result.filtered_bvid_count,
-        "history_input_count": result.history_input_count,
-        "history_active_count": result.history_active_count,
-        "author_failed_owner_count": result.author_failed_owner_count,
-        "author_failed_owner_count_note": "当前实现对风控错误会持续睡眠重试；非风控错误会直接终止本轮任务，因此该计数当前通常为 0，不表示已放弃作者数。",
-        "hot_raw_count": result.hot_raw_count,
-        "hot_window_count": result.hot_window_count,
-        "rank_raw_count": result.rank_raw_count,
-        "rank_window_count": result.rank_window_count,
-        "author_raw_count": result.author_raw_count,
-        "author_window_count": result.author_window_count,
-        "merge_pre_dedupe_count": result.merge_pre_dedupe_count,
-        "merge_post_count": result.merge_post_count,
-        "filtered_csv_path": result.filtered_csv_path,
-        "session_dir": result.session_dir,
-        "root_watchlist_csv_path": result.root_watchlist_csv_path,
-        "crawl_report": result.crawl_report.to_dict() if result.crawl_report is not None else None,
-    }
-    return out
-
-
-def _touch_local_authors_last_used(video_data_root: Path) -> None:
-    prev = load_local_authors_state(video_data_root=video_data_root)
-    if prev is None:
-        return
-    now_iso = datetime.now(timezone.utc).isoformat()
-    save_local_authors_state(
-        LocalAuthorsPersistedState(
-            status=prev.status,
-            authors_csv_path=prev.authors_csv_path,
-            source_filename=prev.source_filename,
-            author_count=prev.author_count,
-            uploaded_at=prev.uploaded_at,
-            last_used_at=now_iso,
-        ),
-        video_data_root=video_data_root,
+def _list_uid_expansion_task_dirs(video_pool_root: Path) -> list[Path]:
+    uid_root = video_pool_root / "uid_expansions"
+    if not uid_root.exists():
+        return []
+    return sorted(
+        [path for path in uid_root.iterdir() if path.is_dir()],
+        key=lambda path: (path.stat().st_mtime, path.name),
+        reverse=True,
     )
+
+
+def _pick_latest_manual_batch_flooring_csv(video_pool_root: Path, prefix: str) -> Path | None:
+    flooring_dir = video_pool_root / "full_site_floorings"
+    if not flooring_dir.exists():
+        return None
+    candidates = [
+        path
+        for path in flooring_dir.glob(f"{prefix}-*.csv")
+        if path.is_file() and not path.name.endswith("_authors.csv")
+    ]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda path: (path.stat().st_mtime, path.name))
 
 
 def _build_default_log_dir(prefix: str, started_at: datetime) -> Path:
@@ -1465,95 +1361,50 @@ with tab_manual_batch:
     if not active_gcp_config.is_enabled():
         st.warning("手动批量抓取-动态数据依赖 GCP 配置；请先完成侧边栏中的 BigQuery / GCS 设置。")
     st.caption(
-        "本页使用本地上传的作者清单（含 owner_mid 列）与持久化待抓队列：每轮合并热门、排行榜与作者近窗口新稿，"
-        "按追踪窗口裁剪后写入本轮快照并仅抓取实时互动量 / 评论数据（不读取 cloud_tracker 作者源，也不扫描 video_pool 导出 CSV）。"
+        "本页不再维护本地作者清单。请直接选择一个或多个 `uid_expansions` 任务目录，"
+        "系统会自动附加 `full_site_floorings` 下最新的 `daily_hot` 与 `rankboard` 视频列表，"
+        "完成追踪窗口裁剪与去重后，先在新的 `manual_crawl_stat_comment_*` 任务目录中留存待抓 CSV，再直接抓取评论/互动量数据。"
     )
 
-    vd_root = _realtime_watchlist_video_data_root()
-    manual_crawls_dir = realtime_watchlist_manual_crawls_dir(vd_root)
-    authors_csv_path = realtime_watchlist_authors_csv_path(vd_root)
-    authors_state_path = realtime_watchlist_authors_state_path(vd_root)
-    watchlist_csv_path = realtime_watchlist_current_csv_path(vd_root)
-    watchlist_state_path = realtime_watchlist_state_json_path(vd_root)
+    video_pool_root = _manual_stat_comment_video_pool_root()
+    manual_crawls_dir = _manual_stat_comment_crawls_root()
+    uid_task_dirs = _list_uid_expansion_task_dirs(video_pool_root)
+    latest_daily_hot = _pick_latest_manual_batch_flooring_csv(video_pool_root, "daily_hot")
+    latest_rankboard = _pick_latest_manual_batch_flooring_csv(video_pool_root, "rankboard")
 
-    st.markdown("**本地作者清单**")
-    st.caption(f"持久化目录：`{display_path(manual_crawls_dir, APP_DIR)}`")
-    if not authors_csv_path.is_file():
-        st.error("尚未上传本地作者清单：请上传包含 owner_mid 列的 CSV 并点击替换保存。")
+    st.markdown("**输入来源**")
+    st.caption(f"`uid_expansions` 根目录：`{display_path(video_pool_root / 'uid_expansions', APP_DIR)}`")
+    st.caption(f"`manual_crawls` 输出目录：`{display_path(manual_crawls_dir, APP_DIR)}`")
+    if uid_task_dirs:
+        st.caption(f"当前发现 {len(uid_task_dirs)} 个可选 `uid_expansion` 任务目录。")
     else:
-        st.caption(f"当前作者清单 CSV：`{display_path(authors_csv_path, APP_DIR)}`")
-    authors_state, authors_state_error = _load_realtime_watchlist_author_state_status(vd_root)
-    if authors_state_error:
-        st.error(authors_state_error)
-    if authors_state is not None:
-        st.caption(
-            f"作者数 {authors_state.author_count}；"
-            f"上传时间 {authors_state.uploaded_at or '（无）'}；"
-            f"上次用于运行 {authors_state.last_used_at or '（尚未运行）'}"
-        )
-    elif authors_csv_path.is_file() and not authors_state_path.is_file():
-        st.warning("未找到作者清单状态文件；上传替换后将写入 realtime_watchlist_authors_state.json。")
+        st.warning("尚未发现任何 `uid_expansions` 任务目录。")
 
-    st.markdown("**根待抓队列状态**")
-    watchlist_state, watchlist_state_error = _load_realtime_watchlist_root_state_status(
-        video_data_root=vd_root,
-        watchlist_csv_path=watchlist_csv_path,
-        watchlist_state_path=watchlist_state_path,
-    )
-    if watchlist_state_error:
-        st.error(f"根待抓队列状态异常：{watchlist_state_error}")
-    st.caption(f"根待抓队列 CSV：`{display_path(watchlist_csv_path, APP_DIR)}`")
-    if watchlist_state is not None:
-        st.caption(
-            f"当前队列视频数 {watchlist_state.current_bvid_count}；"
-            f"最近会话目录 {watchlist_state.last_run_session_dir or '（无）'}"
-        )
-    elif not watchlist_state_path.is_file() and not watchlist_state_error:
-        st.caption("尚未建立根待抓队列状态（完成一轮成功运行后将写入 realtime_watchlist_state.json）。")
-
-    with st.form("realtime_watchlist_author_upload_form"):
-        author_upload = st.file_uploader(
-            "上传或替换本地作者清单（需含 owner_mid 列）",
-            type=["csv"],
-            accept_multiple_files=False,
-            key="realtime_watchlist_author_upload",
-        )
-        trigger_author_upload = st.form_submit_button("上传 / 替换本地作者清单", width="stretch")
-    if trigger_author_upload:
-        if author_upload is None:
-            st.warning("请先选择 CSV 文件。")
-        else:
-            try:
-                frame = read_uploaded_dataframe(author_upload)
-                rows = frame.to_dict(orient="records")
-                saved = save_local_author_list(rows, video_data_root=vd_root)
-                now_iso = datetime.now(timezone.utc).isoformat()
-                save_local_authors_state(
-                    LocalAuthorsPersistedState(
-                        status="ready",
-                        authors_csv_path=str(Path(saved.authors_csv_path).resolve()),
-                        source_filename=author_upload.name,
-                        author_count=saved.author_count,
-                        uploaded_at=now_iso,
-                        last_used_at=None,
-                    ),
-                    video_data_root=vd_root,
-                )
-            except ValueError as exc:
-                st.error(f"本地作者清单无效：{exc}")
-            except Exception as exc:  # noqa: BLE001
-                st.error(f"上传作者清单失败：{exc}")
-            else:
-                st.success(f"已保存 {saved.author_count} 位作者到本地清单。")
+    st.markdown("**自动附加的 full_site_floorings 文件**")
+    if latest_daily_hot is None:
+        st.error("未发现可用的最新 `daily_hot-*.csv`。")
+    else:
+        st.caption(f"最新 `daily_hot`：`{display_path(latest_daily_hot, APP_DIR)}`")
+    if latest_rankboard is None:
+        st.error("未发现可用的最新 `rankboard-*.csv`。")
+    else:
+        st.caption(f"最新 `rankboard`：`{display_path(latest_rankboard, APP_DIR)}`")
 
     with st.form("realtime_watchlist_run_form"):
+        selected_uid_task_dirs = st.multiselect(
+            "选择一个或多个 uid_expansion 任务目录",
+            options=[path.name for path in uid_task_dirs],
+            default=[],
+            key="manual_stat_comment_selected_uid_dirs",
+            help="系统会读取所选任务目录下的 `videolist_part_*.csv`，并自动附加最新 `daily_hot` 与 `rankboard`。",
+        )
         time_window_hours = st.number_input(
             "追踪窗口（小时）",
             min_value=1,
             max_value=24 * 365,
             value=168,
             step=1,
-            key="realtime_watchlist_time_window_hours",
+            key="manual_stat_comment_time_window_hours",
         )
         parallelism = st.number_input(
             "并发度",
@@ -1563,52 +1414,31 @@ with tab_manual_batch:
             step=1,
             key="manual_batch_parallelism",
         )
-        sleep_minutes = st.number_input(
-            "睡眠时长（分钟）",
-            min_value=1.0,
-            max_value=240.0,
-            value=5.0,
-            step=1.0,
-            key="realtime_watchlist_sleep_minutes",
-        )
         trigger_manual_batch = st.form_submit_button("开始手动批量抓取-动态数据", width="stretch")
 
     if trigger_manual_batch:
         try:
             if not active_gcp_config.is_enabled():
                 raise ValueError("请先完成 GCP 配置。")
-            _validate_realtime_watchlist_run_inputs(
-                video_data_root=vd_root,
-                authors_csv_path=authors_csv_path,
-                watchlist_csv_path=watchlist_csv_path,
-                watchlist_state_path=watchlist_state_path,
-            )
-            result = run_realtime_watchlist_cycle(
-                video_data_root=vd_root,
-                time_window_hours=int(time_window_hours),
+            result = run_manual_realtime_batch_crawl(
+                gcp_config=active_gcp_config,
+                stream_data_time_window_hours=int(time_window_hours),
                 parallelism=int(parallelism),
-                sleep_minutes=float(sleep_minutes),
-                enable_media=False,
                 comment_limit=int(comment_limit_default),
                 consecutive_failure_limit=int(consecutive_failure_limit),
-                gcp_config=active_gcp_config,
                 max_height=int(max_height),
                 chunk_size_mb=int(chunk_size_mb),
                 media_strategy=active_media_strategy,
                 credential=active_credential,
+                video_pool_root=video_pool_root,
+                manual_crawls_root_dir=manual_crawls_dir,
+                selected_uid_task_dirs=selected_uid_task_dirs,
             )
-        except _MissingLocalAuthorCsvError as exc:
-            st.error(f"缺少本地作者清单：{exc}")
-        except _InvalidLocalAuthorCsvError as exc:
-            st.error(str(exc))
-        except _InvalidRootWatchlistStateError as exc:
-            st.error(f"根待抓队列或状态文件损坏：{exc}")
         except ValueError as exc:
             st.error(f"手动批量抓取-动态数据失败：{exc}")
         except Exception as exc:  # noqa: BLE001
             st.error(f"手动批量抓取-动态数据失败：{exc}")
         else:
-            _touch_local_authors_last_used(vd_root)
             crawl = result.crawl_report
             if result.status == "skipped":
                 st.info("本轮合并后没有待抓视频，已跳过实时抓取。")
@@ -1618,7 +1448,7 @@ with tab_manual_batch:
                 st.success("手动批量抓取-动态数据完成。")
             else:
                 st.warning("手动批量抓取-动态数据已结束，但仍有部分视频失败并已保留剩余清单。")
-            _show_json("手动批量抓取-动态数据运行报告", _realtime_watchlist_run_result_to_dict(result))
+            _show_json("手动批量抓取-动态数据运行报告", result.to_dict())
 
 with tab_manual_media:
     st.subheader("手动批量抓取-媒体/元数据")

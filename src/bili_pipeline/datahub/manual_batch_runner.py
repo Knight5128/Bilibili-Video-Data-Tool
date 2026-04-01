@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 import pandas as pd
 
@@ -19,6 +19,7 @@ DEFAULT_STREAM_DATA_TIME_WINDOW_HOURS = 14 * 24
 MANUAL_CRAWLS_OUTPUT_DIR = DEFAULT_VIDEO_DATA_OUTPUT_DIR / "manual_crawls"
 MANUAL_CRAWL_STATE_FILENAME = "manual_crawl_state.json"
 MANUAL_CRAWL_FILTERED_FILENAME = "filtered_video_list.csv"
+MANUAL_CRAWL_STAT_COMMENT_PREFIX = "manual_crawl_stat_comment_"
 
 
 def _timestamp_token(value: datetime) -> str:
@@ -49,27 +50,63 @@ def _write_manual_state(session_dir: Path, payload: dict[str, Any]) -> Path:
     return state_path
 
 
-def discover_manual_batch_source_csvs(video_pool_root: Path | str | None = None) -> list[Path]:
+def _pick_latest_flooring_csv(directory: Path, prefix: str) -> Path | None:
+    candidates = [
+        path
+        for path in directory.glob(f"{prefix}-*.csv")
+        if path.is_file() and not path.name.endswith("_authors.csv")
+    ]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda path: (path.stat().st_mtime, path.name))
+
+
+def _normalize_selected_uid_task_dirs(
+    uid_expansions_dir: Path,
+    selected_uid_task_dirs: Sequence[str] | None,
+) -> list[Path]:
+    selected_names = [str(item).strip() for item in (selected_uid_task_dirs or []) if str(item).strip()]
+    if not selected_names:
+        return []
+
+    selected_dirs: list[Path] = []
+    for selected_name in list(dict.fromkeys(selected_names)):
+        candidate = (uid_expansions_dir / selected_name).resolve()
+        if candidate.parent != uid_expansions_dir.resolve():
+            raise ValueError(f"uid_expansion 任务目录不合法：{selected_name}")
+        if not candidate.is_dir():
+            raise ValueError(f"未找到 uid_expansion 任务目录：{selected_name}")
+        selected_dirs.append(candidate)
+    return selected_dirs
+
+
+def discover_manual_batch_source_csvs(
+    video_pool_root: Path | str | None = None,
+    *,
+    selected_uid_task_dirs: Sequence[str] | None = None,
+) -> list[Path]:
     root_dir = Path(video_pool_root or DEFAULT_VIDEO_POOL_OUTPUT_DIR)
     full_site_floorings_dir = root_dir / "full_site_floorings"
     uid_expansions_dir = root_dir / UID_EXPANSION_DIRNAME
 
     source_paths: list[Path] = []
     if full_site_floorings_dir.exists():
+        latest_daily_hot = _pick_latest_flooring_csv(full_site_floorings_dir, "daily_hot")
+        latest_rankboard = _pick_latest_flooring_csv(full_site_floorings_dir, "rankboard")
+        if latest_daily_hot is not None:
+            source_paths.append(latest_daily_hot)
+        if latest_rankboard is not None:
+            source_paths.append(latest_rankboard)
+    if uid_expansions_dir.exists() and selected_uid_task_dirs is not None:
+        selected_dirs = _normalize_selected_uid_task_dirs(uid_expansions_dir, selected_uid_task_dirs)
         source_paths.extend(
             sorted(
                 (
                     path
-                    for path in full_site_floorings_dir.glob("*.csv")
-                    if path.is_file() and not path.name.endswith("_authors.csv")
+                    for session_dir in selected_dirs
+                    for path in session_dir.glob("videolist_part_*.csv")
+                    if path.is_file()
                 ),
-                key=lambda path: path.name,
-            )
-        )
-    if uid_expansions_dir.exists():
-        source_paths.extend(
-            sorted(
-                (path for path in uid_expansions_dir.rglob("videolist*.csv") if path.is_file()),
                 key=lambda path: str(path.relative_to(root_dir)).replace("\\", "/"),
             )
         )
@@ -90,6 +127,13 @@ def _load_candidate_dataframe(source_paths: list[Path], *, video_pool_root: Path
         relative_path = source_path.relative_to(video_pool_root).as_posix()
         enriched["source_csv_path"] = relative_path
         enriched["source_group"] = "uid_expansions" if f"/{UID_EXPANSION_DIRNAME}/" in f"/{relative_path}/" else "full_site_floorings"
+        if enriched["source_group"].eq("uid_expansions").all():
+            source_priority = 0
+        elif source_path.name.startswith("daily_hot-"):
+            source_priority = 1
+        else:
+            source_priority = 2
+        enriched["_source_priority"] = source_priority
         frames.append(enriched)
     if not frames:
         return pd.DataFrame(columns=["bvid", "pubdate", "source_csv_path", "source_group"])
@@ -100,8 +144,8 @@ def _load_candidate_dataframe(source_paths: list[Path], *, video_pool_root: Path
         lambda value: value.timestamp() if not pd.isna(value) else float("-inf")
     )
     combined = combined.sort_values(
-        by=["_pubdate_sort", "source_csv_path"],
-        ascending=[False, True],
+        by=["_pubdate_sort", "_source_priority", "source_csv_path"],
+        ascending=[False, True, True],
         kind="stable",
     )
     deduplicated = combined.drop_duplicates(subset=["bvid"], keep="first").reset_index(drop=True)
@@ -159,17 +203,20 @@ def run_manual_realtime_batch_crawl(
     chunk_size_mb: int = 4,
     video_pool_root: Path | str | None = None,
     manual_crawls_root_dir: Path | str | None = None,
+    selected_uid_task_dirs: Sequence[str] | None = None,
     started_at: datetime | None = None,
 ) -> ManualBatchCrawlResult:
     if not gcp_config.is_enabled():
         raise ValueError("缺少可用的 GCP 配置。请先完成 DataHub 中的 BigQuery / GCS 设置。")
     if int(stream_data_time_window_hours) <= 0:
         raise ValueError("STREAM_DATA_TIME_WINDOW 必须是大于 0 的小时数。")
+    if not [str(item).strip() for item in (selected_uid_task_dirs or []) if str(item).strip()]:
+        raise ValueError("请至少选择一个 uid_expansion 任务目录。")
 
     task_started_at = started_at or datetime.now()
     video_pool_root_path = Path(video_pool_root or DEFAULT_VIDEO_POOL_OUTPUT_DIR)
     manual_crawls_root = Path(manual_crawls_root_dir or MANUAL_CRAWLS_OUTPUT_DIR)
-    session_dir = manual_crawls_root / f"manual_crawl_{_timestamp_token(task_started_at)}"
+    session_dir = manual_crawls_root / f"{MANUAL_CRAWL_STAT_COMMENT_PREFIX}{_timestamp_token(task_started_at)}"
     session_dir.mkdir(parents=True, exist_ok=True)
 
     logs: list[str] = []
@@ -187,27 +234,51 @@ def run_manual_realtime_batch_crawl(
         logs.append(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}")
 
     try:
-        source_paths = discover_manual_batch_source_csvs(video_pool_root_path)
+        source_paths = discover_manual_batch_source_csvs(
+            video_pool_root_path,
+            selected_uid_task_dirs=selected_uid_task_dirs,
+        )
         _log(f"[INFO] 已发现 {len(source_paths)} 个可用于手动批量抓取的视频列表 CSV。")
-        if not source_paths:
-            _log("[WARN] 未发现符合约定的 full_site_floorings / uid_expansions 视频列表文件。")
+        if len(source_paths) < 2:
+            _log("[WARN] 未发现最新 daily_hot / rankboard 文件，无法启动手动批量抓取。")
             wrapper_log_path = save_timestamped_task_log("manual_crawl_prepare", logs, log_dir=session_dir / "logs")
             result = ManualBatchCrawlResult(
-                status="skipped",
+                status="failed",
                 session_dir=session_dir.as_posix(),
                 state_path=state_path.as_posix(),
-                source_csv_count=0,
+                source_csv_count=len(source_paths),
                 candidate_bvid_count=0,
                 filtered_bvid_count=0,
                 skipped_missing_pubdate_count=0,
                 skipped_outside_window_count=0,
                 stream_data_time_window_hours=int(stream_data_time_window_hours),
                 wrapper_log_path=wrapper_log_path.as_posix() if wrapper_log_path is not None else None,
+                error="缺少最新 daily_hot 或 rankboard 视频列表文件。",
                 started_at=task_started_at,
                 finished_at=datetime.now(),
             )
             _write_manual_state(session_dir, result.to_dict())
-            return result
+            raise ValueError(result.error)
+        if len(source_paths) == 2:
+            _log("[WARN] 选中的 uid_expansion 任务目录下没有有效的 videolist_part_*.csv。")
+            wrapper_log_path = save_timestamped_task_log("manual_crawl_prepare", logs, log_dir=session_dir / "logs")
+            result = ManualBatchCrawlResult(
+                status="failed",
+                session_dir=session_dir.as_posix(),
+                state_path=state_path.as_posix(),
+                source_csv_count=len(source_paths),
+                candidate_bvid_count=0,
+                filtered_bvid_count=0,
+                skipped_missing_pubdate_count=0,
+                skipped_outside_window_count=0,
+                stream_data_time_window_hours=int(stream_data_time_window_hours),
+                wrapper_log_path=wrapper_log_path.as_posix() if wrapper_log_path is not None else None,
+                error="选中的 uid_expansion 任务目录下没有有效的 videolist_part_*.csv。",
+                started_at=task_started_at,
+                finished_at=datetime.now(),
+            )
+            _write_manual_state(session_dir, result.to_dict())
+            raise ValueError(result.error)
 
         candidate_df = _load_candidate_dataframe(source_paths, video_pool_root=video_pool_root_path)
         candidate_count = int(len(candidate_df))
