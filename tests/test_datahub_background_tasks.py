@@ -64,6 +64,7 @@ from bili_pipeline.datahub.background_tasks import (
     background_task_is_running,
     create_background_task_dir,
     finalize_background_task_status,
+    is_background_task_process_running,
     load_registered_background_task_status,
     load_background_task_status,
     load_cookie_text,
@@ -112,6 +113,10 @@ class DataHubBackgroundTasksTest(unittest.TestCase):
             )
             self.assertTrue(registry_path.exists())
             self.assertIn("manual_media", registry_path.name)
+
+    @patch("bili_pipeline.datahub.background_tasks.os.kill", side_effect=SystemError("kill failed"))
+    def test_is_background_task_process_running_returns_false_when_os_kill_raises_systemerror(self, _mock_kill) -> None:
+        self.assertFalse(is_background_task_process_running(22288))
 
     @patch("bili_pipeline.datahub.background_tasks.is_background_task_process_running", return_value=False)
     def test_load_registered_background_task_status_marks_dead_running_task_failed(self, _mock_running) -> None:

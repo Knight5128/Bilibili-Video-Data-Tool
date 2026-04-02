@@ -316,6 +316,8 @@ def is_background_task_process_running(pid: Any | None) -> bool:
         return False
     except PermissionError:
         return True
+    except SystemError:
+        return False
     except OSError:
         return False
     return True
