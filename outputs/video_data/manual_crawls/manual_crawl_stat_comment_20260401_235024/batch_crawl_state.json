@@ -1,0 +1,29 @@
+{
+  "session_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\manual_crawls\\manual_crawl_stat_comment_20260401_235024",
+  "parts": [
+    {
+      "part_number": 1,
+      "source_csv_name": "batch_input_1.csv",
+      "task_mode": "realtime_only",
+      "subtask_started_at": "2026-04-01T23:50:27.648232",
+      "subtask_finished_at": "2026-04-02T00:07:02.575361",
+      "input_bvid_count": 100,
+      "processed_count": 100,
+      "success_count": 100,
+      "failed_count": 0,
+      "remaining_count": 0,
+      "consecutive_failure_limit": 10,
+      "stopped_due_to_consecutive_failures": false,
+      "stop_reason": "当前 batch_crawl 已完成，所有视频均已成功抓取。",
+      "log_file": "logs/batch_crawl_part_1_20260402_000702.log",
+      "remaining_file": ""
+    }
+  ],
+  "session_started_at": "2026-04-01T23:50:27.648232",
+  "session_completed_at": "2026-04-02T00:07:02.575361",
+  "original_csv_name": "batch_input_1.csv",
+  "task_mode": "realtime_only",
+  "original_bvid_count": 100,
+  "completed_all": true,
+  "session_summary_log": "batch_crawl_summary_20260402_000702.log"
+}

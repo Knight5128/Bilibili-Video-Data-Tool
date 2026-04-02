@@ -1,0 +1,20 @@
+{
+  "status": "failed",
+  "session_dir": "D:/Schoolworks/Thesis/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260402_003812",
+  "state_path": "D:/Schoolworks/Thesis/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260402_003812/manual_crawl_state.json",
+  "source_csv_count": 0,
+  "candidate_bvid_count": 0,
+  "filtered_bvid_count": 0,
+  "skipped_missing_pubdate_count": 0,
+  "skipped_outside_window_count": 0,
+  "stream_data_time_window_hours": 168,
+  "filtered_csv_path": null,
+  "wrapper_log_path": "D:/Schoolworks/Thesis/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260402_003812/logs/20260402_011548_086150_manual_crawl_prepare.log",
+  "crawl_report": null,
+  "crawl_reports": [],
+  "task_count": 0,
+  "cookie_refresh_count": 0,
+  "error": "400 GET https://bigquery.googleapis.com/bigquery/v2/projects/bilibili-m2s2vp-research/queries/50235af0-9929-45cc-9d2d-11245c8afe5b?maxResults=0&location=asia-east1&prettyPrint=false: UPDATE or DELETE statement over table bilibili-m2s2vp-research.bili_video_stream_data_test_2.crawl_runs would affect rows in the streaming buffer, which is not supported\n\nLocation: asia-east1\nJob ID: 50235af0-9929-45cc-9d2d-11245c8afe5b\n",
+  "started_at": "2026-04-02T00:38:12.562975",
+  "finished_at": "2026-04-02T01:15:48.086702"
+}

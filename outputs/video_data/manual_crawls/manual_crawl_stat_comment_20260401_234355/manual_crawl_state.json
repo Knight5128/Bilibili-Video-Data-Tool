@@ -1,0 +1,10 @@
+{
+  "status": "crawling",
+  "session_dir": "D:/Schoolworks/Thesis/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260401_234355",
+  "started_at": "2026-04-01T23:43:55",
+  "stream_data_time_window_hours": 168,
+  "source_csv_count": 7,
+  "candidate_bvid_count": 4829,
+  "filtered_bvid_count": 4192,
+  "filtered_csv_path": "D:/Schoolworks/Thesis/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260401_234355/filtered_video_list.csv"
+}

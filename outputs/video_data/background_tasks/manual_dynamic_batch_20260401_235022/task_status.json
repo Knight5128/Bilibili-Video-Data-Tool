@@ -1,0 +1,12 @@
+{
+  "status": "failed",
+  "task_kind": "manual_dynamic_batch",
+  "scope": "manual_dynamic_batch",
+  "task_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\background_tasks\\manual_dynamic_batch_20260401_235022",
+  "pid": 30920,
+  "finished_at": "2026-04-02T00:07:04.050183",
+  "error": {
+    "type": "BadRequest",
+    "message": "400 GET https://bigquery.googleapis.com/bigquery/v2/projects/bilibili-m2s2vp-research/queries/f6f416b8-0f84-409e-aa2e-5b6358f82524?maxResults=0&location=asia-east1&prettyPrint=false: UPDATE or DELETE statement over table bilibili-m2s2vp-research.bili_video_stream_data_test_2.crawl_runs would affect rows in the streaming buffer, which is not supported\n\nLocation: asia-east1\nJob ID: f6f416b8-0f84-409e-aa2e-5b6358f82524\n"
+  }
+}

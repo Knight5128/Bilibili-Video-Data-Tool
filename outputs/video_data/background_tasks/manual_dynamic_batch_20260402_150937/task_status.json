@@ -1,0 +1,8 @@
+{
+  "status": "running",
+  "task_kind": "manual_dynamic_batch",
+  "scope": "manual_dynamic_batch",
+  "task_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\background_tasks\\manual_dynamic_batch_20260402_150937",
+  "pid": 22288,
+  "started_at": "2026-04-02T15:09:39.041398"
+}

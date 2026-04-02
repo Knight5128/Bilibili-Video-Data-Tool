@@ -1,0 +1,52 @@
+D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.20) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+Traceback (most recent call last):
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\scripts\datahub_background_worker.py", line 186, in <module>
+    raise SystemExit(main())
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\scripts\datahub_background_worker.py", line 154, in main
+    result = _run_task(task_dir, config)
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\scripts\datahub_background_worker.py", line 71, in _run_task
+    result = run_manual_realtime_batch_crawl(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\src\bili_pipeline\datahub\manual_batch_runner.py", line 421, in run_manual_realtime_batch_crawl
+    batched_outcome = run_batched_crawl_from_csv(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\src\bili_pipeline\datahub\background_tasks.py", line 221, in run_batched_crawl_from_csv
+    report = crawl_fn(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\src\bili_pipeline\crawl_api.py", line 723, in crawl_bvid_list_from_csv
+    store.finalize_run(run_id, total_bvids=len(bvids), success_count=success_count, failed_count=failed_count)
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\src\bili_pipeline\storage\gcp_store.py", line 593, in finalize_run
+    self._query(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\src\bili_pipeline\storage\gcp_store.py", line 364, in _query
+    return list(self.client.query(sql, job_config=job_config).result())
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\bigquery\job\query.py", line 1773, in result
+    while not is_job_done():
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_base.py", line 216, in _retry_error_helper
+    raise final_exc from source_exc
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_unary.py", line 147, in retry_target
+    result = target()
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\bigquery\job\query.py", line 1742, in is_job_done
+    self._reload_query_results(retry=retry, **reload_query_results_kwargs)
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\bigquery\job\query.py", line 1534, in _reload_query_results
+    self._query_results = self._client._get_query_results(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\bigquery\client.py", line 2113, in _get_query_results
+    resource = self._call_api(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\bigquery\client.py", line 861, in _call_api
+    return call()
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_base.py", line 216, in _retry_error_helper
+    raise final_exc from source_exc
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_unary.py", line 147, in retry_target
+    result = target()
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\_http\__init__.py", line 494, in api_request
+    raise exceptions.from_http_response(response)
+google.api_core.exceptions.BadRequest: 400 GET https://bigquery.googleapis.com/bigquery/v2/projects/bilibili-m2s2vp-research/queries/f6f416b8-0f84-409e-aa2e-5b6358f82524?maxResults=0&location=asia-east1&prettyPrint=false: UPDATE or DELETE statement over table bilibili-m2s2vp-research.bili_video_stream_data_test_2.crawl_runs would affect rows in the streaming buffer, which is not supported
+
+Location: asia-east1
+Job ID: f6f416b8-0f84-409e-aa2e-5b6358f82524
+
