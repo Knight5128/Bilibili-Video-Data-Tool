@@ -1,8 +1,21 @@
 {
-  "status": "running",
+  "status": "completed",
   "task_kind": "manual_dynamic_batch",
   "scope": "manual_dynamic_batch",
-  "task_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\background_tasks\\manual_dynamic_batch_20260402_150937",
+  "task_dir": "d:\\Schoolworks\\Thesis\\bilibili-data\\outputs\\video_data\\background_tasks\\manual_dynamic_batch_20260402_150937",
   "pid": 22288,
-  "started_at": "2026-04-02T15:09:39.041398"
+  "started_at": "2026-04-02T15:09:39.041398",
+  "finished_at": "2026-04-03T00:16:42.151262",
+  "last_progress_at": "2026-04-03T00:16:42.151262",
+  "stale": true,
+  "result": {
+    "status": "completed",
+    "session_dir": "d:\\Schoolworks\\Thesis\\bilibili-data\\outputs\\video_data\\manual_crawls\\manual_crawl_stat_comment_20260402_150939",
+    "session_completed_at": "2026-04-02T18:46:10.969419",
+    "recovered_from_stale": true
+  },
+  "recovery": {
+    "type": "RecoveredFromBatchState",
+    "message": "Recovered completed status from batch crawl state after worker exited without final status."
+  }
 }

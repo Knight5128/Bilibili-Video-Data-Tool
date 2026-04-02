@@ -15,7 +15,9 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from bili_pipeline.datahub.background_tasks import (  # noqa: E402
+    finalize_background_task_status,
     load_background_task_config,
+    load_background_task_status,
     load_credential_from_cookie_file,
     register_active_background_task,
     update_background_task_status,
@@ -148,38 +150,47 @@ def main() -> int:
             "task_dir": str(task_dir),
             "pid": os.getpid(),
             "started_at": _now(),
+            "last_progress_at": _now(),
         },
     )
+    result: dict | None = None
     try:
         result = _run_task(task_dir, config)
     except Exception as exc:  # noqa: BLE001
-        update_background_task_status(
+        finalize_background_task_status(
             task_dir,
-            {
-                "status": "failed",
-                "task_kind": config.get("task_kind"),
-                "scope": scope,
-                "task_dir": str(task_dir),
-                "pid": os.getpid(),
-                "finished_at": _now(),
-                "error": {"type": exc.__class__.__name__, "message": str(exc)},
-            },
+            scope=scope,
+            task_kind=str(config.get("task_kind") or "").strip() or None,
+            pid=os.getpid(),
+            status="failed",
+            error={"type": exc.__class__.__name__, "message": str(exc)},
         )
         raise
     else:
-        update_background_task_status(
+        finalize_background_task_status(
             task_dir,
-            {
-                "status": "completed",
-                "task_kind": config.get("task_kind"),
-                "scope": scope,
-                "task_dir": str(task_dir),
-                "pid": os.getpid(),
-                "finished_at": _now(),
-                "result": result,
-            },
+            scope=scope,
+            task_kind=str(config.get("task_kind") or "").strip() or None,
+            pid=os.getpid(),
+            status="completed",
+            result=result,
         )
         return 0
+    finally:
+        current_status = str(load_background_task_status(task_dir).get("status") or "").strip().lower()
+        if current_status in {"queued", "running"}:
+            finalize_background_task_status(
+                task_dir,
+                scope=scope,
+                task_kind=str(config.get("task_kind") or "").strip() or None,
+                pid=os.getpid(),
+                status="failed",
+                error={
+                    "type": "UncleanWorkerExit",
+                    "message": "Background task exited before a final status was written.",
+                },
+                stale=True,
+            )
 
 
 if __name__ == "__main__":

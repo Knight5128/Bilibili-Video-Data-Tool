@@ -57,9 +57,8 @@ from bili_pipeline.datahub.background_tasks import (
     background_task_is_running,
     create_background_task_dir,
     launch_background_worker,
-    load_active_background_task,
-    load_background_task_status,
     load_cookie_text,
+    load_registered_background_task_status,
     register_active_background_task,
     save_cookie_text,
     update_background_task_status,
@@ -447,13 +446,7 @@ def _build_default_log_dir(prefix: str, started_at: datetime) -> Path:
 
 
 def _load_registered_background_task(scope: str) -> tuple[dict[str, object] | None, dict[str, object] | None]:
-    registry_payload = load_active_background_task(scope, registry_root=BACKGROUND_TASKS_ROOT)
-    if not registry_payload or not registry_payload.get("task_dir"):
-        return None, None
-    task_dir = Path(str(registry_payload["task_dir"]))
-    if not task_dir.exists():
-        return registry_payload, None
-    return registry_payload, load_background_task_status(task_dir)
+    return load_registered_background_task_status(scope, registry_root=BACKGROUND_TASKS_ROOT)
 
 
 def _render_background_task_status(scope: str, title: str) -> None:

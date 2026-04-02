@@ -89,6 +89,193 @@ def load_background_task_config(task_dir: Path | str) -> dict[str, Any]:
     return json.loads(target.read_text(encoding="utf-8"))
 
 
+def _load_json_if_exists(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _parse_iso_datetime(raw_value: Any) -> datetime | None:
+    text = str(raw_value or "").strip()
+    if not text:
+        return None
+    normalized = text.replace("Z", "+00:00")
+    try:
+        return datetime.fromisoformat(normalized)
+    except ValueError:
+        return None
+
+
+def _iter_manual_crawls_roots(task_dir: Path) -> list[Path]:
+    config = _load_json_if_exists(task_dir / CONFIG_FILENAME)
+    payload = dict(config.get("payload") or {})
+    manual_crawls_root_text = str(payload.get("manual_crawls_root_dir") or "").strip()
+    candidate_roots: list[Path] = []
+    if manual_crawls_root_text:
+        candidate_roots.append(Path(manual_crawls_root_text))
+    fallback_root = task_dir.parent.parent / "manual_crawls"
+    if fallback_root not in candidate_roots:
+        candidate_roots.append(fallback_root)
+    return candidate_roots
+
+
+def _find_manual_dynamic_session_dir(task_dir: Path) -> Path | None:
+    candidate_roots = _iter_manual_crawls_roots(task_dir)
+    task_status = load_background_task_status(task_dir)
+    task_started_at = _parse_iso_datetime(task_status.get("started_at"))
+    best_match: tuple[float, Path] | None = None
+    for manual_crawls_root in candidate_roots:
+        if not manual_crawls_root.exists():
+            continue
+        for session_dir in manual_crawls_root.glob("manual_crawl_stat_comment_*"):
+            if not session_dir.is_dir():
+                continue
+            session_state = _load_json_if_exists(session_dir / "manual_crawl_state.json")
+            if not session_state:
+                continue
+            session_started_at = _parse_iso_datetime(session_state.get("started_at"))
+            if task_started_at is None or session_started_at is None:
+                continue
+            delta_seconds = abs((session_started_at - task_started_at).total_seconds())
+            if delta_seconds > 300:
+                continue
+            score = (delta_seconds, session_dir)
+            if best_match is None or score[0] < best_match[0]:
+                best_match = score
+    return best_match[1] if best_match is not None else None
+
+
+def _find_manual_media_session_dir(task_dir: Path, *, prefix: str, mode: str) -> Path | None:
+    candidate_roots = _iter_manual_crawls_roots(task_dir)
+    task_status = load_background_task_status(task_dir)
+    task_started_at = _parse_iso_datetime(task_status.get("started_at"))
+    best_match: tuple[datetime, float, Path] | None = None
+    for manual_crawls_root in candidate_roots:
+        if not manual_crawls_root.exists():
+            continue
+        for session_dir in manual_crawls_root.glob(f"{prefix}_*"):
+            if not session_dir.is_dir():
+                continue
+            session_state = _load_json_if_exists(session_dir / "manual_crawl_media_state.json")
+            if not session_state or str(session_state.get("mode") or "").strip().upper() != mode.upper():
+                continue
+            session_started_at = _parse_iso_datetime(session_state.get("started_at"))
+            if task_started_at is None or session_started_at is None:
+                continue
+            delta_seconds = abs((session_started_at - task_started_at).total_seconds())
+            if delta_seconds > 300:
+                continue
+            finished_at = _parse_iso_datetime(session_state.get("finished_at")) or session_started_at
+            score = (finished_at, -delta_seconds, session_dir)
+            if best_match is None or score[0] > best_match[0] or (score[0] == best_match[0] and score[1] > best_match[1]):
+                best_match = score
+    return best_match[2] if best_match is not None else None
+
+
+def _recover_manual_dynamic_task_result(task_dir: Path) -> tuple[str, dict[str, Any], dict[str, Any]] | None:
+    session_dir = _find_manual_dynamic_session_dir(task_dir)
+    if session_dir is None:
+        return None
+    manual_state = _load_json_if_exists(session_dir / "manual_crawl_state.json")
+    batch_state = _load_json_if_exists(session_dir / "batch_crawl_state.json")
+    if bool(batch_state.get("completed_all")):
+        return (
+            "completed",
+            {
+                "status": "completed",
+                "session_dir": str(session_dir),
+                "session_completed_at": batch_state.get("session_completed_at"),
+                "recovered_from_stale": True,
+            },
+            {
+                "type": "RecoveredFromBatchState",
+                "message": "Recovered completed status from batch crawl state after worker exited without final status.",
+            },
+        )
+    if batch_state.get("session_completed_at"):
+        return (
+            "partial",
+            {
+                "status": "partial",
+                "session_dir": str(session_dir),
+                "session_completed_at": batch_state.get("session_completed_at"),
+                "recovered_from_stale": True,
+            },
+            {
+                "type": "RecoveredPartialFromBatchState",
+                "message": "Recovered partial status from batch crawl state after worker exited without final status.",
+            },
+        )
+    state_status = str(manual_state.get("status") or "").strip().lower()
+    if state_status in {"completed", "partial", "skipped", "failed"}:
+        return (
+            state_status,
+            {
+                "status": state_status,
+                "session_dir": str(session_dir),
+                "recovered_from_stale": True,
+            },
+            {
+                "type": "RecoveredFromManualState",
+                "message": "Recovered task status from manual crawl state after worker exited without final status.",
+            },
+        )
+    return None
+
+
+def _recover_stale_background_task_result(task_dir: Path, task_kind: str) -> tuple[str, dict[str, Any], dict[str, Any]] | None:
+    if task_kind == "manual_dynamic_batch":
+        return _recover_manual_dynamic_task_result(task_dir)
+    if task_kind == "manual_media_mode_a":
+        session_dir = _find_manual_media_session_dir(task_dir, prefix="manual_crawl_media_mode_A", mode="A")
+        if session_dir is None:
+            return None
+        state = _load_json_if_exists(session_dir / "manual_crawl_media_state.json")
+        status = str(state.get("status") or "").strip().lower()
+        if status in {"completed", "partial", "skipped", "failed"}:
+            return (
+                status,
+                {
+                    "status": status,
+                    "mode": "A",
+                    "session_dir": str(session_dir),
+                    "finished_at": state.get("finished_at"),
+                    "recovered_from_stale": True,
+                },
+                {
+                    "type": "RecoveredFromManualMediaState",
+                    "message": "Recovered media Mode A status from manual media state after worker exited without final status.",
+                },
+            )
+        return None
+    if task_kind == "manual_media_mode_b":
+        session_dir = _find_manual_media_session_dir(task_dir, prefix="manual_crawl_media_mode_B", mode="B")
+        if session_dir is None:
+            return None
+        state = _load_json_if_exists(session_dir / "manual_crawl_media_state.json")
+        status = str(state.get("status") or "").strip().lower()
+        if status in {"completed", "partial", "skipped", "failed"}:
+            return (
+                status,
+                {
+                    "status": status,
+                    "mode": "B",
+                    "session_dir": str(session_dir),
+                    "finished_at": state.get("finished_at"),
+                    "recovered_from_stale": True,
+                },
+                {
+                    "type": "RecoveredFromManualMediaState",
+                    "message": "Recovered media Mode B status from manual media state after worker exited without final status.",
+                },
+            )
+        return None
+    return None
+
+
 def register_active_background_task(
     scope: str,
     *,
@@ -116,14 +303,135 @@ def load_active_background_task(scope: str, *, registry_root: Path | str | None 
     return json.loads(target.read_text(encoding="utf-8"))
 
 
+def is_background_task_process_running(pid: Any | None) -> bool:
+    try:
+        process_id = int(pid)
+    except (TypeError, ValueError):
+        return False
+    if process_id <= 0:
+        return False
+    try:
+        os.kill(process_id, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+    return True
+
+
+def finalize_background_task_status(
+    task_dir: Path | str,
+    *,
+    scope: str,
+    task_kind: str | None,
+    pid: int | None,
+    status: str,
+    result: Any | None = None,
+    error: dict[str, Any] | None = None,
+    recovery: dict[str, Any] | None = None,
+    stale: bool = False,
+) -> Path:
+    existing = load_background_task_status(task_dir)
+    finished_at = datetime.now().isoformat()
+    payload: dict[str, Any] = dict(existing)
+    payload.update(
+        {
+            "status": status,
+            "scope": scope,
+            "task_kind": task_kind or existing.get("task_kind"),
+            "task_dir": str(Path(task_dir)),
+            "pid": int(pid) if pid is not None else existing.get("pid"),
+            "finished_at": finished_at,
+            "last_progress_at": finished_at,
+        }
+    )
+    payload.pop("result", None)
+    payload.pop("error", None)
+    payload.pop("recovery", None)
+    if result is not None:
+        payload["result"] = result
+    if error is not None:
+        payload["error"] = error
+    if recovery is not None:
+        payload["recovery"] = recovery
+    if stale:
+        payload["stale"] = True
+    elif "stale" in payload:
+        payload.pop("stale", None)
+    return update_background_task_status(task_dir, payload)
+
+
+def load_registered_background_task_status(
+    scope: str,
+    *,
+    registry_root: Path | str | None = None,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    root = Path(registry_root or DEFAULT_BACKGROUND_TASKS_ROOT)
+    registry_payload = load_active_background_task(scope, registry_root=root)
+    if not registry_payload or not registry_payload.get("task_dir"):
+        return registry_payload, None
+    task_dir = Path(str(registry_payload["task_dir"]))
+    if not task_dir.exists():
+        fallback_task_dir = root / task_dir.name
+        if not fallback_task_dir.exists():
+            return registry_payload, None
+        task_dir = fallback_task_dir
+        register_active_background_task(
+            scope,
+            task_dir=task_dir,
+            registry_root=root,
+            pid=registry_payload.get("pid"),
+        )
+        registry_payload = load_active_background_task(scope, registry_root=root)
+    status_payload = load_background_task_status(task_dir)
+    if not status_payload:
+        return registry_payload, None
+    status = str(status_payload.get("status") or "").strip().lower()
+    pid = status_payload.get("pid", registry_payload.get("pid"))
+    task_kind = str(status_payload.get("task_kind") or registry_payload.get("task_kind") or "").strip()
+    stale_recoverable_failure = (
+        status == "failed"
+        and bool(status_payload.get("stale"))
+        and str((status_payload.get("error") or {}).get("type") or "").strip() in {"TaskProcessMissing", "UncleanWorkerExit"}
+    )
+    if (status in {"queued", "running"} or stale_recoverable_failure) and not is_background_task_process_running(pid):
+        recovered = _recover_stale_background_task_result(task_dir, task_kind)
+        if recovered is not None:
+            recovered_status, recovered_result, recovered_recovery = recovered
+            finalize_background_task_status(
+                task_dir,
+                scope=scope,
+                task_kind=task_kind or None,
+                pid=int(pid) if pid is not None else None,
+                status=recovered_status,
+                result=recovered_result,
+                recovery=recovered_recovery,
+                stale=True,
+            )
+            return registry_payload, load_background_task_status(task_dir)
+        finalize_background_task_status(
+            task_dir,
+            scope=scope,
+            task_kind=task_kind or None,
+            pid=int(pid) if pid is not None else None,
+            status="failed",
+            error={
+                "type": "TaskProcessMissing",
+                "message": "Background task process is no longer running; marking stale task as failed.",
+            },
+            stale=True,
+        )
+        status_payload = load_background_task_status(task_dir)
+    return registry_payload, status_payload
+
+
 def background_task_is_running(scope: str, *, registry_root: Path | str | None = None) -> bool:
-    payload = load_active_background_task(scope, registry_root=registry_root)
-    if not payload:
+    _, status_payload = load_registered_background_task_status(scope, registry_root=registry_root)
+    if not status_payload:
         return False
-    task_dir = payload.get("task_dir")
-    if not task_dir:
-        return False
-    status = load_background_task_status(task_dir).get("status")
+    status = status_payload.get("status")
     return status in {"queued", "running"}
 
 

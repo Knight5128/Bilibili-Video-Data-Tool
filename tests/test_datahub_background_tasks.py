@@ -7,6 +7,7 @@ import types
 import unittest
 from datetime import datetime
 from pathlib import Path
+from unittest.mock import patch
 
 
 def _install_google_stubs() -> None:
@@ -60,13 +61,17 @@ def _install_google_stubs() -> None:
 _install_google_stubs()
 
 from bili_pipeline.datahub.background_tasks import (
+    background_task_is_running,
     create_background_task_dir,
+    finalize_background_task_status,
+    load_registered_background_task_status,
     load_background_task_status,
     load_cookie_text,
     register_active_background_task,
     run_batched_crawl_from_csv,
     save_cookie_text,
     update_background_task_status,
+    write_background_task_config,
 )
 from bili_pipeline.models import BatchCrawlReport, CrawlTaskMode
 
@@ -107,6 +112,405 @@ class DataHubBackgroundTasksTest(unittest.TestCase):
             )
             self.assertTrue(registry_path.exists())
             self.assertIn("manual_media", registry_path.name)
+
+    @patch("bili_pipeline.datahub.background_tasks.is_background_task_process_running", return_value=False)
+    def test_load_registered_background_task_status_marks_dead_running_task_failed(self, _mock_running) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            task_dir = create_background_task_dir(
+                "manual_dynamic_batch",
+                root_dir=root,
+                started_at=datetime(2026, 4, 1, 12, 0, 0),
+            )
+            register_active_background_task(
+                "manual_dynamic_batch",
+                task_dir=task_dir,
+                registry_root=root,
+                pid=22288,
+            )
+            update_background_task_status(
+                task_dir,
+                {
+                    "status": "running",
+                    "scope": "manual_dynamic_batch",
+                    "task_kind": "manual_dynamic_batch",
+                    "task_dir": str(task_dir),
+                    "pid": 22288,
+                    "started_at": "2026-04-01T12:00:00",
+                },
+            )
+
+            registry_payload, status_payload = load_registered_background_task_status(
+                "manual_dynamic_batch",
+                registry_root=root,
+            )
+
+            self.assertIsNotNone(registry_payload)
+            self.assertEqual("failed", status_payload["status"])
+            self.assertTrue(status_payload["stale"])
+            self.assertEqual("TaskProcessMissing", status_payload["error"]["type"])
+            self.assertIn("no longer running", status_payload["error"]["message"])
+            self.assertFalse(background_task_is_running("manual_dynamic_batch", registry_root=root))
+            persisted = load_background_task_status(task_dir)
+            self.assertEqual("failed", persisted["status"])
+            self.assertTrue(persisted["stale"])
+            self.assertIn("finished_at", persisted)
+
+    @patch("bili_pipeline.datahub.background_tasks.is_background_task_process_running", return_value=False)
+    def test_load_registered_background_task_status_falls_back_to_local_task_dir_name(self, _mock_running) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            task_dir = create_background_task_dir(
+                "manual_dynamic_batch",
+                root_dir=root,
+                started_at=datetime(2026, 4, 1, 13, 0, 0),
+            )
+            register_active_background_task(
+                "manual_dynamic_batch",
+                task_dir=Path("D:/legacy/Bilibili-Datahub/outputs/video_data/background_tasks") / task_dir.name,
+                registry_root=root,
+                pid=22288,
+            )
+            update_background_task_status(
+                task_dir,
+                {
+                    "status": "running",
+                    "scope": "manual_dynamic_batch",
+                    "task_kind": "manual_dynamic_batch",
+                    "task_dir": "D:/legacy/Bilibili-Datahub/outputs/video_data/background_tasks/" + task_dir.name,
+                    "pid": 22288,
+                    "started_at": "2026-04-01T13:00:00",
+                },
+            )
+
+            registry_payload, status_payload = load_registered_background_task_status(
+                "manual_dynamic_batch",
+                registry_root=root,
+            )
+
+            self.assertIsNotNone(registry_payload)
+            self.assertEqual(str(task_dir), registry_payload["task_dir"])
+            self.assertEqual("failed", status_payload["status"])
+            self.assertEqual(str(task_dir), status_payload["task_dir"])
+
+    @patch("bili_pipeline.datahub.background_tasks.is_background_task_process_running", return_value=False)
+    def test_load_registered_background_task_status_recovers_completed_dynamic_task_from_batch_state(
+        self,
+        _mock_running,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            task_dir = create_background_task_dir(
+                "manual_dynamic_batch",
+                root_dir=root,
+                started_at=datetime(2026, 4, 1, 12, 0, 0),
+            )
+            manual_crawls_root = root / "manual_crawls"
+            session_dir = manual_crawls_root / "manual_crawl_stat_comment_20260401_120001"
+            session_dir.mkdir(parents=True, exist_ok=True)
+            (session_dir / "manual_crawl_state.json").write_text(
+                """{
+  "status": "crawling",
+  "session_dir": "D:/legacy/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260401_120001",
+  "started_at": "2026-04-01T12:00:00"
+}
+""",
+                encoding="utf-8",
+            )
+            (session_dir / "batch_crawl_state.json").write_text(
+                """{
+  "session_dir": "D:/legacy/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260401_120001",
+  "session_completed_at": "2026-04-01T13:45:00",
+  "completed_all": true
+}
+""",
+                encoding="utf-8",
+            )
+            write_background_task_config(
+                task_dir,
+                {
+                    "scope": "manual_dynamic_batch",
+                    "task_kind": "manual_dynamic_batch",
+                    "task_dir": str(task_dir),
+                    "payload": {
+                        "manual_crawls_root_dir": str(manual_crawls_root),
+                    },
+                },
+            )
+            register_active_background_task(
+                "manual_dynamic_batch",
+                task_dir=task_dir,
+                registry_root=root,
+                pid=22288,
+            )
+            update_background_task_status(
+                task_dir,
+                {
+                    "status": "running",
+                    "scope": "manual_dynamic_batch",
+                    "task_kind": "manual_dynamic_batch",
+                    "task_dir": str(task_dir),
+                    "pid": 22288,
+                    "started_at": "2026-04-01T12:00:00",
+                },
+            )
+
+            _, status_payload = load_registered_background_task_status(
+                "manual_dynamic_batch",
+                registry_root=root,
+            )
+
+            self.assertEqual("completed", status_payload["status"])
+            self.assertTrue(status_payload["stale"])
+            self.assertEqual("RecoveredFromBatchState", status_payload["recovery"]["type"])
+            self.assertEqual("completed", status_payload["result"]["status"])
+            self.assertEqual(str(session_dir), status_payload["result"]["session_dir"])
+
+    @patch("bili_pipeline.datahub.background_tasks.is_background_task_process_running", return_value=False)
+    def test_load_registered_background_task_status_recovers_completed_dynamic_task_with_legacy_manual_crawls_root(
+        self,
+        _mock_running,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir) / "background_tasks"
+            root.mkdir(parents=True, exist_ok=True)
+            task_dir = create_background_task_dir(
+                "manual_dynamic_batch",
+                root_dir=root,
+                started_at=datetime(2026, 4, 1, 14, 0, 0),
+            )
+            manual_crawls_root = root.parent / "manual_crawls"
+            session_dir = manual_crawls_root / "manual_crawl_stat_comment_20260401_140001"
+            session_dir.mkdir(parents=True, exist_ok=True)
+            (session_dir / "manual_crawl_state.json").write_text(
+                """{
+  "status": "crawling",
+  "session_dir": "D:/legacy/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260401_140001",
+  "started_at": "2026-04-01T14:00:00"
+}
+""",
+                encoding="utf-8",
+            )
+            (session_dir / "batch_crawl_state.json").write_text(
+                """{
+  "session_dir": "D:/legacy/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260401_140001",
+  "session_completed_at": "2026-04-01T14:45:00",
+  "completed_all": true
+}
+""",
+                encoding="utf-8",
+            )
+            write_background_task_config(
+                task_dir,
+                {
+                    "scope": "manual_dynamic_batch",
+                    "task_kind": "manual_dynamic_batch",
+                    "task_dir": str(task_dir),
+                    "payload": {
+                        "manual_crawls_root_dir": "D:/legacy/Bilibili-Datahub/outputs/video_data/manual_crawls",
+                    },
+                },
+            )
+            register_active_background_task(
+                "manual_dynamic_batch",
+                task_dir=task_dir,
+                registry_root=root,
+                pid=22288,
+            )
+            update_background_task_status(
+                task_dir,
+                {
+                    "status": "failed",
+                    "scope": "manual_dynamic_batch",
+                    "task_kind": "manual_dynamic_batch",
+                    "task_dir": str(task_dir),
+                    "pid": 22288,
+                    "started_at": "2026-04-01T14:00:00",
+                    "stale": True,
+                    "error": {
+                        "type": "TaskProcessMissing",
+                        "message": "Background task process is no longer running; marking stale task as failed.",
+                    },
+                },
+            )
+
+            _, status_payload = load_registered_background_task_status(
+                "manual_dynamic_batch",
+                registry_root=root,
+            )
+
+            self.assertEqual("completed", status_payload["status"])
+            self.assertEqual(str(session_dir), status_payload["result"]["session_dir"])
+
+    def test_finalize_background_task_status_writes_completed_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            task_dir = create_background_task_dir(
+                "manual_media_mode_a",
+                root_dir=Path(tmp_dir),
+                started_at=datetime(2026, 4, 1, 12, 0, 0),
+            )
+
+            status_path = finalize_background_task_status(
+                task_dir,
+                scope="manual_media",
+                task_kind="manual_media_mode_a",
+                pid=12345,
+                status="completed",
+                result={"status": "completed", "task_count": 3},
+            )
+
+            self.assertTrue(status_path.exists())
+            payload = load_background_task_status(task_dir)
+            self.assertEqual("completed", payload["status"])
+            self.assertEqual({"status": "completed", "task_count": 3}, payload["result"])
+            self.assertEqual(12345, payload["pid"])
+            self.assertIn("finished_at", payload)
+            self.assertIn("last_progress_at", payload)
+
+    @patch("bili_pipeline.datahub.background_tasks.is_background_task_process_running", return_value=False)
+    def test_load_registered_background_task_status_recovers_completed_media_mode_a_task(self, _mock_running) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir) / "background_tasks"
+            root.mkdir(parents=True, exist_ok=True)
+            task_dir = create_background_task_dir(
+                "manual_media_mode_a",
+                root_dir=root,
+                started_at=datetime(2026, 4, 1, 15, 0, 0),
+            )
+            manual_crawls_root = root.parent / "manual_crawls"
+            session_dir = manual_crawls_root / "manual_crawl_media_mode_A_20260401_150000"
+            session_dir.mkdir(parents=True, exist_ok=True)
+            (session_dir / "manual_crawl_media_state.json").write_text(
+                """{
+  "mode": "A",
+  "status": "completed",
+  "session_dir": "D:/legacy/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_media_mode_A_20260401_150000",
+  "state_path": "D:/legacy/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_media_mode_A_20260401_150000/manual_crawl_media_state.json",
+  "input_bvid_count": 5,
+  "submitted_bvid_count": 5,
+  "task_count": 2,
+  "sleep_count": 1,
+  "cookie_refresh_count": 0,
+  "started_at": "2026-04-01T15:00:00",
+  "finished_at": "2026-04-01T15:20:00"
+}
+""",
+                encoding="utf-8",
+            )
+            write_background_task_config(
+                task_dir,
+                {
+                    "scope": "manual_media",
+                    "task_kind": "manual_media_mode_a",
+                    "task_dir": str(task_dir),
+                    "payload": {
+                        "manual_crawls_root_dir": "D:/legacy/Bilibili-Datahub/outputs/video_data/manual_crawls",
+                    },
+                },
+            )
+            register_active_background_task(
+                "manual_media",
+                task_dir=task_dir,
+                registry_root=root,
+                pid=22288,
+            )
+            update_background_task_status(
+                task_dir,
+                {
+                    "status": "running",
+                    "scope": "manual_media",
+                    "task_kind": "manual_media_mode_a",
+                    "task_dir": str(task_dir),
+                    "pid": 22288,
+                    "started_at": "2026-04-01T15:00:00",
+                },
+            )
+
+            _, status_payload = load_registered_background_task_status(
+                "manual_media",
+                registry_root=root,
+            )
+
+            self.assertEqual("completed", status_payload["status"])
+            self.assertTrue(status_payload["stale"])
+            self.assertEqual("RecoveredFromManualMediaState", status_payload["recovery"]["type"])
+            self.assertEqual("A", status_payload["result"]["mode"])
+            self.assertEqual(str(session_dir), status_payload["result"]["session_dir"])
+
+    @patch("bili_pipeline.datahub.background_tasks.is_background_task_process_running", return_value=False)
+    def test_load_registered_background_task_status_recovers_partial_media_mode_b_task(self, _mock_running) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir) / "background_tasks"
+            root.mkdir(parents=True, exist_ok=True)
+            task_dir = create_background_task_dir(
+                "manual_media_mode_b",
+                root_dir=root,
+                started_at=datetime(2026, 4, 1, 16, 0, 0),
+            )
+            manual_crawls_root = root.parent / "manual_crawls"
+            session_dir = manual_crawls_root / "manual_crawl_media_mode_B_20260401_160000"
+            session_dir.mkdir(parents=True, exist_ok=True)
+            (session_dir / "manual_crawl_media_state.json").write_text(
+                """{
+  "mode": "B",
+  "status": "partial",
+  "session_dir": "D:/legacy/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_media_mode_B_20260401_160000",
+  "state_path": "D:/legacy/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_media_mode_B_20260401_160000/manual_crawl_media_state.json",
+  "input_bvid_count": 10,
+  "submitted_bvid_count": 8,
+  "task_count": 1,
+  "sleep_count": 0,
+  "cookie_refresh_count": 0,
+  "started_at": "2026-04-01T16:00:00",
+  "finished_at": "2026-04-01T16:10:00",
+  "stop_category": "risk"
+}
+""",
+                encoding="utf-8",
+            )
+            write_background_task_config(
+                task_dir,
+                {
+                    "scope": "manual_media",
+                    "task_kind": "manual_media_mode_b",
+                    "task_dir": str(task_dir),
+                    "payload": {
+                        "manual_crawls_root_dir": "D:/legacy/Bilibili-Datahub/outputs/video_data/manual_crawls",
+                    },
+                },
+            )
+            register_active_background_task(
+                "manual_media",
+                task_dir=task_dir,
+                registry_root=root,
+                pid=22289,
+            )
+            update_background_task_status(
+                task_dir,
+                {
+                    "status": "failed",
+                    "scope": "manual_media",
+                    "task_kind": "manual_media_mode_b",
+                    "task_dir": str(task_dir),
+                    "pid": 22289,
+                    "started_at": "2026-04-01T16:00:00",
+                    "stale": True,
+                    "error": {
+                        "type": "TaskProcessMissing",
+                        "message": "Background task process is no longer running; marking stale task as failed.",
+                    },
+                },
+            )
+
+            _, status_payload = load_registered_background_task_status(
+                "manual_media",
+                registry_root=root,
+            )
+
+            self.assertEqual("partial", status_payload["status"])
+            self.assertEqual("RecoveredFromManualMediaState", status_payload["recovery"]["type"])
+            self.assertEqual("B", status_payload["result"]["mode"])
+            self.assertEqual("partial", status_payload["result"]["status"])
 
     def test_run_batched_crawl_from_csv_refreshes_cookie_per_batch_and_remaining_retry(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
