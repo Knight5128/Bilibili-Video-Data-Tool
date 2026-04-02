@@ -1,0 +1,36 @@
+{
+  "session_dir": "outputs/video_pool/uid_expansions/uid_expansion_20260325_20260402_124915",
+  "task_started_at": "2026-04-02T12:49:15",
+  "requested_window_start_at": "2026-03-25T00:00:00",
+  "requested_window_end_at": "2026-04-02T12:49:15",
+  "effective_window_start_at": "2026-04-01T00:00:00",
+  "effective_window_end_at": "2026-04-02T12:49:15",
+  "actual_window_start_at": "2026-04-01T00:00:00+00:00",
+  "actual_window_end_at": "2026-04-02T06:08:59+00:00",
+  "original_uid_count": 509,
+  "history_reused_owner_count": 509,
+  "parts": [
+    {
+      "part_number": 1,
+      "run_started_at": "2026-04-02T12:49:15",
+      "run_finished_at": "2026-04-02T15:00:45",
+      "input_owner_count": 509,
+      "successful_owner_count": 487,
+      "failed_owner_count": 22,
+      "remaining_owner_count": 22,
+      "video_count": 314,
+      "processed_batches": 26,
+      "total_batches": 26,
+      "stopped_due_to_full_failed_batch": false,
+      "stopped_batch_index": null,
+      "effective_window_start_at": "2026-04-01T00:00:00",
+      "effective_window_end_at": "2026-04-02T12:49:15",
+      "actual_window_start_at": "2026-04-01T00:00:00+00:00",
+      "actual_window_end_at": "2026-04-02T06:08:59+00:00",
+      "video_file": "videolist_part_1.csv",
+      "remaining_file": "remaining_uids_part_1.csv",
+      "log_file": "logs/20260402_150045_251125_uid_expansion_part_1.log"
+    }
+  ],
+  "updated_at": "2026-04-02T15:00:45"
+}

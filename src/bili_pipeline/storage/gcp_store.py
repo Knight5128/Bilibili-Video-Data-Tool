@@ -333,6 +333,8 @@ class BigQueryCrawlerStore:
         self.dataset_name = config.bigquery_dataset.strip()
         self.client = bigquery.Client(project=self.project_id, credentials=credentials)
         self._lock = threading.Lock()
+        self._pending_runs: dict[str, dict[str, Any]] = {}
+        self._pending_assets: dict[str, dict[str, Any]] = {}
         self._ensure_dataset_and_tables()
 
     def _dataset_ref(self) -> bigquery.DatasetReference:
@@ -340,6 +342,12 @@ class BigQueryCrawlerStore:
 
     def _table_id(self, table_name: str) -> str:
         return f"{self.project_id}.{self.dataset_name}.{table_name}"
+
+    def _ensure_runtime_state(self) -> None:
+        if not hasattr(self, "_pending_runs"):
+            self._pending_runs = {}
+        if not hasattr(self, "_pending_assets"):
+            self._pending_assets = {}
 
     def _ensure_dataset_and_tables(self) -> None:
         with self._lock:
@@ -374,10 +382,6 @@ class BigQueryCrawlerStore:
         return row
 
     def save_video_meta(self, result: MetaResult) -> None:
-        self._query(
-            f"DELETE FROM `{self._table_id('videos')}` WHERE bvid = @bvid",
-            [bigquery.ScalarQueryParameter("bvid", "STRING", result.bvid)],
-        )
         self._insert_row(
             "videos",
             {
@@ -485,43 +489,23 @@ class BigQueryCrawlerStore:
         upload_session_id: str,
         raw_payload: dict[str, Any] | None = None,
     ) -> str:
+        self._ensure_runtime_state()
         asset_id = uuid.uuid4().hex
-        self._query(
-            f"""
-            DELETE FROM `{self._table_id('assets')}`
-            WHERE bvid = @bvid
-              AND asset_type = @asset_type
-              AND (cid = @cid OR (cid IS NULL AND @cid IS NULL))
-            """,
-            [
-                bigquery.ScalarQueryParameter("bvid", "STRING", bvid),
-                bigquery.ScalarQueryParameter("asset_type", "STRING", asset_type),
-                bigquery.ScalarQueryParameter("cid", "INT64", cid),
-            ],
-        )
-        self._insert_row(
-            "assets",
-            {
-                "asset_id": asset_id,
-                "bvid": bvid,
-                "cid": cid,
-                "asset_type": asset_type,
-                "storage_backend": storage_backend,
-                "object_key": object_key,
-                "bucket_name": bucket_name,
-                "storage_endpoint": storage_endpoint,
-                "object_url": object_url,
-                "format_selected": format_selected,
-                "mime_type": mime_type,
-                "file_size": 0,
-                "sha256": "",
-                "etag": "",
-                "chunk_count": 0,
-                "upload_session_id": upload_session_id,
-                "raw_payload_json": _json_dumps(raw_payload or {}),
-                "uploaded_at": _timestamp_now(),
-            },
-        )
+        self._pending_assets[asset_id] = {
+            "asset_id": asset_id,
+            "bvid": bvid,
+            "cid": cid,
+            "asset_type": asset_type,
+            "storage_backend": storage_backend,
+            "object_key": object_key,
+            "bucket_name": bucket_name,
+            "storage_endpoint": storage_endpoint,
+            "object_url": object_url,
+            "format_selected": format_selected,
+            "mime_type": mime_type,
+            "upload_session_id": upload_session_id,
+            "raw_payload_json": _json_dumps(raw_payload or {}),
+        }
         return asset_id
 
     def finalize_media_asset(
@@ -533,44 +517,30 @@ class BigQueryCrawlerStore:
         chunk_count: int,
         etag: str = "",
     ) -> None:
-        self._query(
-            f"""
-            UPDATE `{self._table_id('assets')}`
-            SET file_size = @file_size,
-                sha256 = @sha256,
-                etag = @etag,
-                chunk_count = @chunk_count,
-                uploaded_at = @uploaded_at
-            WHERE asset_id = @asset_id
-            """,
-            [
-                bigquery.ScalarQueryParameter("file_size", "INT64", file_size),
-                bigquery.ScalarQueryParameter("sha256", "STRING", sha256),
-                bigquery.ScalarQueryParameter("etag", "STRING", etag),
-                bigquery.ScalarQueryParameter("chunk_count", "INT64", chunk_count),
-                bigquery.ScalarQueryParameter("uploaded_at", "STRING", _timestamp_now()),
-                bigquery.ScalarQueryParameter("asset_id", "STRING", asset_id),
-            ],
+        self._ensure_runtime_state()
+        pending = self._pending_assets.pop(asset_id, None)
+        if pending is None:
+            raise KeyError(f"Unknown pending asset_id: {asset_id}")
+        self._insert_row(
+            "assets",
+            {
+                **pending,
+                "file_size": file_size,
+                "sha256": sha256,
+                "etag": etag,
+                "chunk_count": chunk_count,
+                "uploaded_at": _timestamp_now(),
+            },
         )
 
     def save_run_start(self, run_id: str, mode: str, notes: dict[str, Any]) -> None:
-        self._query(
-            f"DELETE FROM `{self._table_id('crawl_runs')}` WHERE run_id = @run_id",
-            [bigquery.ScalarQueryParameter("run_id", "STRING", run_id)],
-        )
-        self._insert_row(
-            "crawl_runs",
-            {
-                "run_id": run_id,
-                "mode": mode,
-                "started_at": _timestamp_now(),
-                "finished_at": None,
-                "total_bvids": 0,
-                "success_count": 0,
-                "failed_count": 0,
-                "notes_json": _json_dumps(notes),
-            },
-        )
+        self._ensure_runtime_state()
+        self._pending_runs[run_id] = {
+            "run_id": run_id,
+            "mode": mode,
+            "started_at": _timestamp_now(),
+            "notes_json": _json_dumps(notes),
+        }
 
     def save_run_item(self, run_id: str, summary: FullCrawlSummary) -> None:
         self._insert_row(
@@ -590,22 +560,22 @@ class BigQueryCrawlerStore:
         )
 
     def finalize_run(self, run_id: str, *, total_bvids: int, success_count: int, failed_count: int) -> None:
-        self._query(
-            f"""
-            UPDATE `{self._table_id('crawl_runs')}`
-            SET finished_at = @finished_at,
-                total_bvids = @total_bvids,
-                success_count = @success_count,
-                failed_count = @failed_count
-            WHERE run_id = @run_id
-            """,
-            [
-                bigquery.ScalarQueryParameter("finished_at", "STRING", _timestamp_now()),
-                bigquery.ScalarQueryParameter("total_bvids", "INT64", total_bvids),
-                bigquery.ScalarQueryParameter("success_count", "INT64", success_count),
-                bigquery.ScalarQueryParameter("failed_count", "INT64", failed_count),
-                bigquery.ScalarQueryParameter("run_id", "STRING", run_id),
-            ],
+        self._ensure_runtime_state()
+        pending = self._pending_runs.pop(run_id, None) or {
+            "run_id": run_id,
+            "mode": "unknown",
+            "started_at": _timestamp_now(),
+            "notes_json": _json_dumps({}),
+        }
+        self._insert_row(
+            "crawl_runs",
+            {
+                **pending,
+                "finished_at": _timestamp_now(),
+                "total_bvids": total_bvids,
+                "success_count": success_count,
+                "failed_count": failed_count,
+            },
         )
 
     def export_manual_media_waitlist_rows(self) -> list[dict[str, Any]]:
@@ -627,7 +597,7 @@ class BigQueryCrawlerStore:
                 GROUP BY bvid
             ),
             completed_bvids AS (
-                SELECT v.bvid
+                SELECT DISTINCT v.bvid
                 FROM `{self._table_id('videos')}` AS v
                 INNER JOIN (
                     SELECT bvid
@@ -663,7 +633,7 @@ class BigQueryCrawlerStore:
                 FROM UNNEST(@bvids) AS bvid
             ),
             completed_bvids AS (
-                SELECT input_bvids.bvid
+                SELECT DISTINCT input_bvids.bvid
                 FROM input_bvids
                 INNER JOIN `{self._table_id('videos')}` AS v
                 ON v.bvid = input_bvids.bvid
@@ -690,8 +660,16 @@ class BigQueryCrawlerStore:
             SELECT bvid, cid, asset_type, storage_backend, object_key, bucket_name,
                    storage_endpoint, object_url, format_selected, mime_type,
                    file_size, sha256, etag, chunk_count, upload_session_id, uploaded_at
-            FROM `{self._table_id('assets')}`
-            WHERE bvid = @bvid
+            FROM (
+                SELECT *,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY bvid, cid, asset_type
+                           ORDER BY uploaded_at DESC, asset_id DESC
+                       ) AS row_num
+                FROM `{self._table_id('assets')}`
+                WHERE bvid = @bvid
+            )
+            WHERE row_num = 1
             ORDER BY asset_type
             """,
             [bigquery.ScalarQueryParameter("bvid", "STRING", bvid)],
@@ -700,7 +678,13 @@ class BigQueryCrawlerStore:
 
     def fetch_video_row(self, bvid: str) -> dict[str, Any] | None:
         rows = self._query(
-            f"SELECT * FROM `{self._table_id('videos')}` WHERE bvid = @bvid LIMIT 1",
+            f"""
+            SELECT *
+            FROM `{self._table_id('videos')}`
+            WHERE bvid = @bvid
+            ORDER BY updated_at DESC
+            LIMIT 1
+            """,
             [bigquery.ScalarQueryParameter("bvid", "STRING", bvid)],
         )
         if not rows:
