@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import sys
+import threading
 from datetime import datetime
 from pathlib import Path
 
@@ -44,6 +45,30 @@ def _build_media_strategy(gcp_config: GCPStorageConfig, payload: dict) -> MediaD
 
 def _build_cookie_provider(cookie_path: str):
     return lambda: load_credential_from_cookie_file(cookie_path)
+
+
+def _heartbeat_background_task(task_dir: Path, *, scope: str, task_kind: str | None, pid: int, stop_event: threading.Event) -> None:
+    while not stop_event.wait(15):
+        status_payload = load_background_task_status(task_dir)
+        status = str(status_payload.get("status") or "").strip().lower()
+        if status not in {"queued", "running"}:
+            return
+        heartbeat_at = _now()
+        next_payload = dict(status_payload)
+        next_payload.update(
+            {
+                "status": status or "running",
+                "scope": scope,
+                "task_kind": task_kind or status_payload.get("task_kind"),
+                "task_dir": str(task_dir),
+                "pid": pid,
+                "last_progress_at": heartbeat_at,
+            }
+        )
+        if "started_at" not in next_payload:
+            next_payload["started_at"] = heartbeat_at
+        register_active_background_task(scope, task_dir=task_dir, pid=pid)
+        update_background_task_status(task_dir, next_payload)
 
 
 def _read_uploaded_frames(file_paths: list[str]) -> list[pd.DataFrame]:
@@ -154,9 +179,24 @@ def main() -> int:
         },
     )
     result: dict | None = None
+    heartbeat_stop_event = threading.Event()
+    heartbeat_thread = threading.Thread(
+        target=_heartbeat_background_task,
+        args=(task_dir,),
+        kwargs={
+            "scope": scope,
+            "task_kind": str(config.get("task_kind") or "").strip() or None,
+            "pid": os.getpid(),
+            "stop_event": heartbeat_stop_event,
+        },
+        daemon=True,
+    )
+    heartbeat_thread.start()
     try:
         result = _run_task(task_dir, config)
     except Exception as exc:  # noqa: BLE001
+        heartbeat_stop_event.set()
+        heartbeat_thread.join(timeout=1)
         finalize_background_task_status(
             task_dir,
             scope=scope,
@@ -167,6 +207,8 @@ def main() -> int:
         )
         raise
     else:
+        heartbeat_stop_event.set()
+        heartbeat_thread.join(timeout=1)
         finalize_background_task_status(
             task_dir,
             scope=scope,
@@ -177,6 +219,8 @@ def main() -> int:
         )
         return 0
     finally:
+        heartbeat_stop_event.set()
+        heartbeat_thread.join(timeout=1)
         current_status = str(load_background_task_status(task_dir).get("status") or "").strip().lower()
         if current_status in {"queued", "running"}:
             finalize_background_task_status(

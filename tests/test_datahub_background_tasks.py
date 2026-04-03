@@ -5,7 +5,7 @@ import sys
 import tempfile
 import types
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
@@ -61,6 +61,7 @@ def _install_google_stubs() -> None:
 _install_google_stubs()
 
 from bili_pipeline.datahub.background_tasks import (
+    BACKGROUND_TASK_MISSING_PROCESS_GRACE_SECONDS,
     background_task_is_running,
     create_background_task_dir,
     finalize_background_task_status,
@@ -161,6 +162,84 @@ class DataHubBackgroundTasksTest(unittest.TestCase):
             self.assertEqual("failed", persisted["status"])
             self.assertTrue(persisted["stale"])
             self.assertIn("finished_at", persisted)
+
+    @patch("bili_pipeline.datahub.background_tasks.is_background_task_process_running", return_value=False)
+    def test_load_registered_background_task_status_keeps_recent_heartbeat_running(self, _mock_running) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            task_dir = create_background_task_dir(
+                "manual_dynamic_batch",
+                root_dir=root,
+                started_at=datetime(2026, 4, 1, 12, 0, 0),
+            )
+            register_active_background_task(
+                "manual_dynamic_batch",
+                task_dir=task_dir,
+                registry_root=root,
+                pid=22288,
+            )
+            recent_heartbeat = (datetime.now() - timedelta(seconds=15)).isoformat()
+            update_background_task_status(
+                task_dir,
+                {
+                    "status": "running",
+                    "scope": "manual_dynamic_batch",
+                    "task_kind": "manual_dynamic_batch",
+                    "task_dir": str(task_dir),
+                    "pid": 22288,
+                    "started_at": "2026-04-01T12:00:00",
+                    "last_progress_at": recent_heartbeat,
+                },
+            )
+
+            _, status_payload = load_registered_background_task_status(
+                "manual_dynamic_batch",
+                registry_root=root,
+            )
+
+            self.assertEqual("running", status_payload["status"])
+            self.assertEqual(recent_heartbeat, status_payload["last_progress_at"])
+            self.assertNotIn("stale", status_payload)
+
+    @patch("bili_pipeline.datahub.background_tasks.is_background_task_process_running", return_value=False)
+    def test_load_registered_background_task_status_marks_missing_process_failed_after_grace_period(self, _mock_running) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            task_dir = create_background_task_dir(
+                "manual_dynamic_batch",
+                root_dir=root,
+                started_at=datetime(2026, 4, 1, 12, 0, 0),
+            )
+            register_active_background_task(
+                "manual_dynamic_batch",
+                task_dir=task_dir,
+                registry_root=root,
+                pid=22288,
+            )
+            stale_heartbeat = (
+                datetime.now() - timedelta(seconds=BACKGROUND_TASK_MISSING_PROCESS_GRACE_SECONDS + 15)
+            ).isoformat()
+            update_background_task_status(
+                task_dir,
+                {
+                    "status": "running",
+                    "scope": "manual_dynamic_batch",
+                    "task_kind": "manual_dynamic_batch",
+                    "task_dir": str(task_dir),
+                    "pid": 22288,
+                    "started_at": "2026-04-01T12:00:00",
+                    "last_progress_at": stale_heartbeat,
+                },
+            )
+
+            _, status_payload = load_registered_background_task_status(
+                "manual_dynamic_batch",
+                registry_root=root,
+            )
+
+            self.assertEqual("failed", status_payload["status"])
+            self.assertTrue(status_payload["stale"])
+            self.assertEqual("TaskProcessMissing", status_payload["error"]["type"])
 
     @patch("bili_pipeline.datahub.background_tasks.is_background_task_process_running", return_value=False)
     def test_load_registered_background_task_status_falls_back_to_local_task_dir_name(self, _mock_running) -> None:

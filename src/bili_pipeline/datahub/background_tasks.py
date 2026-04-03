@@ -20,6 +20,7 @@ DEFAULT_COOKIE_PATH = Path(".local") / "bilibili-datahub.cookie.txt"
 STATUS_FILENAME = "task_status.json"
 CONFIG_FILENAME = "task_config.json"
 RESULT_FILENAME = "task_result.json"
+BACKGROUND_TASK_MISSING_PROCESS_GRACE_SECONDS = 90
 
 
 @dataclass(slots=True)
@@ -181,6 +182,17 @@ def _parse_iso_datetime(raw_value: Any) -> datetime | None:
         return datetime.fromisoformat(normalized)
     except ValueError:
         return None
+
+
+def _background_task_maybe_stale(status_payload: dict[str, Any]) -> bool:
+    last_seen_at = (
+        _parse_iso_datetime(status_payload.get("last_progress_at"))
+        or _parse_iso_datetime(status_payload.get("started_at"))
+        or _parse_iso_datetime(status_payload.get("created_at"))
+    )
+    if last_seen_at is None:
+        return True
+    return (datetime.now() - last_seen_at).total_seconds() >= BACKGROUND_TASK_MISSING_PROCESS_GRACE_SECONDS
 
 
 def _iter_manual_crawls_roots(task_dir: Path) -> list[Path]:
@@ -473,7 +485,11 @@ def load_registered_background_task_status(
         and bool(status_payload.get("stale"))
         and str((status_payload.get("error") or {}).get("type") or "").strip() in {"TaskProcessMissing", "UncleanWorkerExit"}
     )
-    if (status in {"queued", "running"} or stale_recoverable_failure) and not is_background_task_process_running(pid):
+    if (
+        (status in {"queued", "running"} or stale_recoverable_failure)
+        and not is_background_task_process_running(pid)
+        and _background_task_maybe_stale(status_payload)
+    ):
         recovered = _recover_stale_background_task_result(task_dir, task_kind)
         if recovered is not None:
             recovered_status, recovered_result, recovered_recovery = recovered
@@ -564,8 +580,10 @@ def launch_background_worker(task_dir: Path | str) -> int:
         process = subprocess.Popen(  # noqa: S603
             command,
             cwd=str(project_root),
+            stdin=subprocess.DEVNULL,
             stdout=stdout_handle,
             stderr=stderr_handle,
+            close_fds=True,
             creationflags=creationflags,
         )
     return int(process.pid)

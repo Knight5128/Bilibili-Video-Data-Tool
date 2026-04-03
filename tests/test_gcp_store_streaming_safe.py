@@ -213,6 +213,44 @@ class GcpStoreStreamingSafeTest(unittest.TestCase):
         self.assertEqual("BV_META", row["bvid"])
         self.assertTrue(row["updated_at"])
 
+    def test_insert_row_retries_transient_transport_error(self) -> None:
+        store = self._build_store()
+        store._insert_retry_attempts = 2
+        store._insert_retry_backoff_seconds = 0
+
+        class RetryError(Exception):
+            pass
+
+        class _FlakyClient:
+            def __init__(self, errors):
+                self.errors = list(errors)
+                self.calls = 0
+
+            def insert_rows_json(self, table_id: str, rows: list[dict[str, object]]) -> list[object]:
+                self.calls += 1
+                outcome = self.errors.pop(0)
+                if isinstance(outcome, Exception):
+                    raise outcome
+                return outcome
+
+        first_client = _FlakyClient([RetryError("Timeout of 600.0s exceeded; EOF occurred in violation of protocol")])
+        second_client = _FlakyClient([[]])
+        resets: list[str] = []
+
+        store.client = first_client
+
+        def reset_client() -> None:
+            resets.append("reset")
+            store.client = second_client
+
+        store._reset_bigquery_client = reset_client  # type: ignore[method-assign]
+
+        store._insert_row("crawl_runs", {"run_id": "run-1"})
+
+        self.assertEqual(1, first_client.calls)
+        self.assertEqual(1, second_client.calls)
+        self.assertEqual(["reset"], resets)
+
     def test_fetch_video_row_orders_latest_first(self) -> None:
         store = self._build_store()
         captured: dict[str, object] = {}

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import threading
+import time
 import types
 import uuid
 from dataclasses import dataclass
@@ -51,6 +52,30 @@ from bili_pipeline.models import (
 )
 
 _BIGQUERY_SCOPES = ("https://www.googleapis.com/auth/cloud-platform",)
+_RETRYABLE_BIGQUERY_INSERT_EXCEPTION_NAMES = {
+    "RetryError",
+    "ConnectionError",
+    "ConnectionResetError",
+    "ReadTimeout",
+    "Timeout",
+    "SSLError",
+    "MaxRetryError",
+    "ProtocolError",
+    "ServiceUnavailable",
+    "TooManyRequests",
+    "InternalServerError",
+    "BadGateway",
+    "GatewayTimeout",
+}
+_RETRYABLE_BIGQUERY_INSERT_MESSAGE_FRAGMENTS = (
+    "eof occurred in violation of protocol",
+    "max retries exceeded",
+    "connection aborted",
+    "connection reset",
+    "temporarily unavailable",
+    "timed out",
+    "timeout of",
+)
 
 
 def _ensure_google_cloud_dependencies() -> None:
@@ -72,6 +97,20 @@ def _json_loads(value: Any) -> Any:
 
 def _timestamp_now() -> str:
     return datetime.now().isoformat()
+
+
+def _is_retryable_bigquery_insert_exception(exc: Exception) -> bool:
+    current: BaseException | None = exc
+    checked = 0
+    while current is not None and checked < 6:
+        if current.__class__.__name__ in _RETRYABLE_BIGQUERY_INSERT_EXCEPTION_NAMES:
+            return True
+        message = str(current).strip().lower()
+        if any(fragment in message for fragment in _RETRYABLE_BIGQUERY_INSERT_MESSAGE_FRAGMENTS):
+            return True
+        current = current.__cause__ or current.__context__
+        checked += 1
+    return False
 
 
 def _build_credentials(config: GCPStorageConfig) -> tuple[Any | None, str | None]:
@@ -327,18 +366,27 @@ class BigQueryCrawlerStore:
             raise ValueError("GCP storage configuration is incomplete.")
         credentials, project_id = _build_credentials(config)
         self.config = config
+        self._credentials = credentials
         self.project_id = project_id or config.project_id.strip()
         if not self.project_id:
             raise ValueError("Unable to resolve Google Cloud project ID.")
         self.dataset_name = config.bigquery_dataset.strip()
-        self.client = bigquery.Client(project=self.project_id, credentials=credentials)
+        self.client = self._build_bigquery_client()
         self._lock = threading.Lock()
         self._pending_runs: dict[str, dict[str, Any]] = {}
         self._pending_assets: dict[str, dict[str, Any]] = {}
+        self._insert_retry_attempts = 2
+        self._insert_retry_backoff_seconds = 5
         self._ensure_dataset_and_tables()
 
     def _dataset_ref(self) -> bigquery.DatasetReference:
         return bigquery.DatasetReference(self.project_id, self.dataset_name)
+
+    def _build_bigquery_client(self):
+        return bigquery.Client(project=self.project_id, credentials=self._credentials)
+
+    def _reset_bigquery_client(self) -> None:
+        self.client = self._build_bigquery_client()
 
     def _table_id(self, table_name: str) -> str:
         return f"{self.project_id}.{self.dataset_name}.{table_name}"
@@ -372,9 +420,21 @@ class BigQueryCrawlerStore:
         return list(self.client.query(sql, job_config=job_config).result())
 
     def _insert_row(self, table_name: str, row: dict[str, Any]) -> None:
-        errors = self.client.insert_rows_json(self._table_id(table_name), [row])
-        if errors:
-            raise RuntimeError(f"Failed to insert row into {table_name}: {errors}")
+        max_attempts = max(1, int(getattr(self, "_insert_retry_attempts", 1) or 1))
+        backoff_seconds = max(0, int(getattr(self, "_insert_retry_backoff_seconds", 0) or 0))
+        for attempt in range(1, max_attempts + 1):
+            try:
+                errors = self.client.insert_rows_json(self._table_id(table_name), [row])
+            except Exception as exc:
+                if attempt >= max_attempts or not _is_retryable_bigquery_insert_exception(exc):
+                    raise
+                self._reset_bigquery_client()
+                if backoff_seconds > 0:
+                    time.sleep(backoff_seconds * attempt)
+                continue
+            if errors:
+                raise RuntimeError(f"Failed to insert row into {table_name}: {errors}")
+            return
 
     def _decode_json_fields(self, row: dict[str, Any], fields: tuple[str, ...]) -> dict[str, Any]:
         for field_name in fields:
