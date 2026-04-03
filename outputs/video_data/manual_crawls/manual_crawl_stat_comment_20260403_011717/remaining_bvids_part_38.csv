@@ -1,0 +1,2 @@
+﻿bvid,board_rid,board_name,board_rank,source_type,source_ref,discovered_at,last_seen_at,owner_mid,tid,pubdate,duration_seconds,seed_score,source_refs,source_csv_path,source_group,_source_priority
+BV1uLXGBjEnU,1014.0,时尚美妆,47.0,rankboard,rankboard:rid=1014:rank=47,2026-04-01T04:22:03.568759+00:00,,3546927362738452,21,2026-03-28T07:02:50+00:00,20,68818.0,"rankboard:rid=1014:rank=47,https://www.bilibili.com/v/popular/rank/fashion",full_site_floorings/rankboard-20260401_122137.csv,full_site_floorings,1004

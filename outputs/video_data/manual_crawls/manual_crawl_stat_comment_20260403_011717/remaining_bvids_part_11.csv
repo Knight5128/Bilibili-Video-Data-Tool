@@ -1,0 +1,2 @@
+﻿bvid,board_rid,board_name,board_rank,source_type,source_ref,discovered_at,last_seen_at,owner_mid,tid,pubdate,duration_seconds,seed_score,source_refs,source_csv_path,source_group,_source_priority
+BV1wv93BqEJK,1005.0,动画,30.0,rankboard,rankboard:rid=1005:rank=30,2026-04-02T15:38:05.113200+00:00,,1398337493,257,2026-03-31T21:17:49+00:00,76,734377.0,"rankboard:rid=1005:rank=30,https://www.bilibili.com/v/popular/rank/douga",full_site_floorings/rankboard-20260402_233802.csv,full_site_floorings,1000

@@ -1,0 +1,28 @@
+[TIMESTAMP][BEGIN] 2026-04-03T00:28:03.235283
+Bilibili Video Data Crawler Batch Crawl Summary
+session_dir: D:\Schoolworks\Thesis\Bilibili-Datahub\outputs\video_data\manual_crawls\manual_crawl_stat_comment_20260403_002759
+session_started_at: 2026-04-03T00:28:03.235283
+session_completed_at: 2026-04-03T00:37:04.955215
+original_csv_name: batch_input_1.csv
+task_mode: realtime_only
+original_bvid_count: 100
+part_count: 1
+interruption_count: 0
+completed_all: True
+
+part_1:
+  started_at: 2026-04-03T00:28:03.235283
+  finished_at: 2026-04-03T00:37:04.955215
+  source_csv_name: batch_input_1.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 100
+  failed_count: 0
+  remaining_count: 0
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前 batch_crawl 已完成，所有视频均已成功抓取。
+  log_file: logs/batch_crawl_part_1_20260403_003704.log
+  remaining_file:
+[TIMESTAMP][END] 2026-04-03T00:37:04
