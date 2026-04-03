@@ -1,0 +1,10 @@
+[TIMESTAMP][BEGIN] 2026-04-03T15:25:27
+[INFO]: 识别到已有 uid_expansion 会话：outputs/video_pool/uid_expansions/uid_expansion_20260325_20260403_124149，本次将保存为 part_2。
+[INFO]: 历史任务增量检查完成：21 个作者命中过往 original_uids，0 个作者按全局 start_date 抓取；命中历史的作者将从其最近一次任务开始日（含当天）继续抓取。
+[INFO]: 开始处理第 1/2 批作者，共 20 个。
+[INFO]: 第 1/2 批完成，新增 4 条视频，累计 4 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 2/2 批作者，共 1 个。
+[INFO]: 第 2/2 批完成，新增 0 条视频，累计 4 条。
+[INFO]: 全局 videolist 去重检查完成：历史任务中已有 3933 个唯一 bvid，本次过滤掉 0 条重复视频。
+[TIMESTAMP][END] 2026-04-03T15:27:01

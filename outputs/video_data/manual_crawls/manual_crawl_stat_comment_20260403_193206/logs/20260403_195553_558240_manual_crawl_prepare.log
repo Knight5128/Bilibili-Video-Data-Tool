@@ -1,0 +1,9 @@
+[TIMESTAMP][BEGIN] 2026-04-03T19:55:53
+[2026-04-03 19:32:06] [INFO] 本轮将使用用户显式选择的视频列表来源：full_site_floorings=8 个，uid_expansion 任务目录=3 个。
+[2026-04-03 19:32:06] [INFO] 已发现 14 个可用于手动批量抓取的视频列表 CSV。
+[2026-04-03 19:32:10] [INFO] 去重后共得到 6490 个唯一 bvid 候选。
+[2026-04-03 19:32:10] [INFO] 发布时间窗口筛选完成：保留 4791 条，缺少 pubdate 跳过 0 条，超出窗口跳过 1699 条。
+[2026-04-03 19:32:10] [INFO] 已保存筛选后的视频列表：D:/Schoolworks/Thesis/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260403_193206/filtered_video_list.csv
+[2026-04-03 19:32:10] [INFO] 开始执行手动批量抓取（仅实时互动量 / 评论数据）。
+[2026-04-03 19:55:53] [ERROR] 手动批量抓取失败：Timeout of 600.0s exceeded, last exception: HTTPSConnectionPool(host='bigquery.googleapis.com', port=443): Max retries exceeded with url: /bigquery/v2/projects/bilibili-m2s2vp-research/datasets/bili_video_stream_data_test_2/tables/crawl_run_items/insertAll?prettyPrint=false (Caused by SSLError(SSLEOFError(8, 'EOF occurred in violation of protocol (_ssl.c:1017)')))
+[TIMESTAMP][END] 2026-04-03T19:55:53

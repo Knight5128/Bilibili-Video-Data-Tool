@@ -1,0 +1,66 @@
+D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.20) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+urllib3.exceptions.SSLError: EOF occurred in violation of protocol (_ssl.c:1017)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\requests\adapters.py", line 644, in send
+    resp = conn.urlopen(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\urllib3\connectionpool.py", line 841, in urlopen
+    retries = retries.increment(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\urllib3\util\retry.py", line 535, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='bigquery.googleapis.com', port=443): Max retries exceeded with url: /bigquery/v2/projects/bilibili-m2s2vp-research/datasets/bili_video_stream_data_test_2/tables/crawl_run_items/insertAll?prettyPrint=false (Caused by SSLError(SSLEOFError(8, 'EOF occurred in violation of protocol (_ssl.c:1017)')))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_unary.py", line 147, in retry_target
+    result = target()
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\_http\__init__.py", line 482, in api_request
+    response = self._make_request(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\_http\__init__.py", line 341, in _make_request
+    return self._do_request(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\_http\__init__.py", line 379, in _do_request
+    return self.http.request(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\auth\transport\requests.py", line 543, in request
+    response = super(AuthorizedSession, self).request(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\requests\sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\requests\sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\requests\adapters.py", line 675, in send
+    raise SSLError(e, request=request)
+requests.exceptions.SSLError: HTTPSConnectionPool(host='bigquery.googleapis.com', port=443): Max retries exceeded with url: /bigquery/v2/projects/bilibili-m2s2vp-research/datasets/bili_video_stream_data_test_2/tables/crawl_run_items/insertAll?prettyPrint=false (Caused by SSLError(SSLEOFError(8, 'EOF occurred in violation of protocol (_ssl.c:1017)')))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\scripts\datahub_background_worker.py", line 197, in <module>
+    raise SystemExit(main())
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\scripts\datahub_background_worker.py", line 158, in main
+    result = _run_task(task_dir, config)
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\scripts\datahub_background_worker.py", line 73, in _run_task
+    result = run_manual_realtime_batch_crawl(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\src\bili_pipeline\datahub\manual_batch_runner.py", line 421, in run_manual_realtime_batch_crawl
+    batched_outcome = run_batched_crawl_from_csv(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\src\bili_pipeline\datahub\background_tasks.py", line 606, in run_batched_crawl_from_csv
+    report = crawl_fn(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\src\bili_pipeline\crawl_api.py", line 616, in crawl_bvid_list_from_csv
+    store.save_run_item(run_id, summary)
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\src\bili_pipeline\storage\gcp_store.py", line 546, in save_run_item
+    self._insert_row(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\src\bili_pipeline\storage\gcp_store.py", line 375, in _insert_row
+    errors = self.client.insert_rows_json(self._table_id(table_name), [row])
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\bigquery\client.py", line 4015, in insert_rows_json
+    response = self._call_api(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\bigquery\client.py", line 861, in _call_api
+    return call()
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_base.py", line 231, in _retry_error_helper
+    raise final_exc from source_exc
+google.api_core.exceptions.RetryError: Timeout of 600.0s exceeded, last exception: HTTPSConnectionPool(host='bigquery.googleapis.com', port=443): Max retries exceeded with url: /bigquery/v2/projects/bilibili-m2s2vp-research/datasets/bili_video_stream_data_test_2/tables/crawl_run_items/insertAll?prettyPrint=false (Caused by SSLError(SSLEOFError(8, 'EOF occurred in violation of protocol (_ssl.c:1017)')))

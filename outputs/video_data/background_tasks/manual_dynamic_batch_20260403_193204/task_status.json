@@ -1,0 +1,14 @@
+{
+  "status": "failed",
+  "task_kind": "manual_dynamic_batch",
+  "scope": "manual_dynamic_batch",
+  "task_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\background_tasks\\manual_dynamic_batch_20260403_193204",
+  "pid": 15164,
+  "started_at": "2026-04-03T19:32:06.009998",
+  "last_progress_at": "2026-04-03T19:55:53.566229",
+  "finished_at": "2026-04-03T19:55:53.566229",
+  "error": {
+    "type": "RetryError",
+    "message": "Timeout of 600.0s exceeded, last exception: HTTPSConnectionPool(host='bigquery.googleapis.com', port=443): Max retries exceeded with url: /bigquery/v2/projects/bilibili-m2s2vp-research/datasets/bili_video_stream_data_test_2/tables/crawl_run_items/insertAll?prettyPrint=false (Caused by SSLError(SSLEOFError(8, 'EOF occurred in violation of protocol (_ssl.c:1017)')))"
+  }
+}

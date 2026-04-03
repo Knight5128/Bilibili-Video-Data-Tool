@@ -1,0 +1,15 @@
+{
+  "status": "failed",
+  "task_kind": "manual_dynamic_batch",
+  "scope": "manual_dynamic_batch",
+  "task_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\background_tasks\\manual_dynamic_batch_20260403_193037",
+  "pid": 27676,
+  "started_at": "2026-04-03T19:30:45.300322",
+  "last_progress_at": "2026-04-03T19:32:04.367010",
+  "finished_at": "2026-04-03T19:32:04.367010",
+  "stale": true,
+  "error": {
+    "type": "TaskProcessMissing",
+    "message": "Background task process is no longer running; marking stale task as failed."
+  }
+}
