@@ -19,6 +19,7 @@ DEFAULT_BACKGROUND_TASKS_ROOT = DEFAULT_VIDEO_DATA_OUTPUT_DIR / "background_task
 DEFAULT_COOKIE_PATH = Path(".local") / "bilibili-datahub.cookie.txt"
 STATUS_FILENAME = "task_status.json"
 CONFIG_FILENAME = "task_config.json"
+RESULT_FILENAME = "task_result.json"
 
 
 @dataclass(slots=True)
@@ -70,11 +71,84 @@ def update_background_task_status(task_dir: Path | str, payload: dict[str, Any])
     return target
 
 
+def write_background_task_result(task_dir: Path | str, payload: Any) -> Path:
+    target = Path(task_dir) / RESULT_FILENAME
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return target
+
+
+def load_background_task_result(task_dir: Path | str) -> Any:
+    target = Path(task_dir) / RESULT_FILENAME
+    if not target.exists():
+        return {}
+    return json.loads(target.read_text(encoding="utf-8"))
+
+
+def _is_json_scalar(value: Any) -> bool:
+    return value is None or isinstance(value, (str, int, float, bool))
+
+
+def _summarize_background_task_result(value: Any, *, depth: int = 0) -> Any:
+    if _is_json_scalar(value):
+        return value
+    if isinstance(value, list):
+        if not value:
+            return []
+        if all(_is_json_scalar(item) for item in value) and len(value) <= 20:
+            return list(value)
+        return {"type": "omitted_list", "count": len(value)}
+    if isinstance(value, dict):
+        summary: dict[str, Any] = {}
+        omitted_fields: dict[str, Any] = {}
+        for key, item in value.items():
+            if _is_json_scalar(item):
+                summary[key] = item
+            elif isinstance(item, list):
+                if not item:
+                    summary[key] = []
+                elif all(_is_json_scalar(entry) for entry in item) and len(item) <= 20:
+                    summary[key] = list(item)
+                else:
+                    omitted_fields[key] = {"type": "list", "count": len(item)}
+            elif isinstance(item, dict):
+                if depth >= 2:
+                    omitted_fields[key] = {"type": "dict", "count": len(item)}
+                else:
+                    summary[key] = _summarize_background_task_result(item, depth=depth + 1)
+            else:
+                summary[key] = str(item)
+        if omitted_fields:
+            summary["omitted_fields"] = omitted_fields
+        return summary
+    return str(value)
+
+
+def _externalize_background_task_result(task_dir: Path | str, payload: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+    working = dict(payload)
+    if "result" not in working:
+        return working, False
+    result = working.get("result")
+    if result is None:
+        return working, False
+    existing_result_path = str(working.get("result_path") or "").strip()
+    if existing_result_path:
+        return working, False
+    result_path = write_background_task_result(task_dir, result)
+    working["result_path"] = str(result_path)
+    working["result"] = _summarize_background_task_result(result)
+    return working, True
+
+
 def load_background_task_status(task_dir: Path | str) -> dict[str, Any]:
     target = Path(task_dir) / STATUS_FILENAME
     if not target.exists():
         return {}
-    return json.loads(target.read_text(encoding="utf-8"))
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    compacted_payload, changed = _externalize_background_task_result(task_dir, payload)
+    if changed:
+        update_background_task_status(task_dir, compacted_payload)
+    return compacted_payload
 
 
 def write_background_task_config(task_dir: Path | str, payload: dict[str, Any]) -> Path:
@@ -362,6 +436,7 @@ def finalize_background_task_status(
         payload["stale"] = True
     elif "stale" in payload:
         payload.pop("stale", None)
+    payload, _ = _externalize_background_task_result(task_dir, payload)
     return update_background_task_status(task_dir, payload)
 
 

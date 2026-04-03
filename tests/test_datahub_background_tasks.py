@@ -65,6 +65,7 @@ from bili_pipeline.datahub.background_tasks import (
     create_background_task_dir,
     finalize_background_task_status,
     is_background_task_process_running,
+    load_background_task_result,
     load_registered_background_task_status,
     load_background_task_status,
     load_cookie_text,
@@ -371,6 +372,67 @@ class DataHubBackgroundTasksTest(unittest.TestCase):
             self.assertEqual(12345, payload["pid"])
             self.assertIn("finished_at", payload)
             self.assertIn("last_progress_at", payload)
+
+    def test_finalize_background_task_status_persists_full_result_in_separate_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            task_dir = create_background_task_dir(
+                "manual_dynamic_batch",
+                root_dir=Path(tmp_dir),
+                started_at=datetime(2026, 4, 1, 12, 0, 0),
+            )
+            full_result = {
+                "status": "completed",
+                "task_count": 2,
+                "crawl_reports": [{"run_id": f"run-{idx}", "success_count": 1} for idx in range(500)],
+            }
+
+            finalize_background_task_status(
+                task_dir,
+                scope="manual_dynamic_batch",
+                task_kind="manual_dynamic_batch",
+                pid=12345,
+                status="completed",
+                result=full_result,
+            )
+
+            payload = load_background_task_status(task_dir)
+            self.assertEqual("completed", payload["status"])
+            self.assertIn("result", payload)
+            self.assertIn("result_path", payload)
+            self.assertNotEqual(full_result, payload["result"])
+            self.assertNotIn("crawl_reports", payload["result"])
+            self.assertEqual(500, payload["result"]["omitted_fields"]["crawl_reports"]["count"])
+            persisted_result = load_background_task_result(task_dir)
+            self.assertEqual(full_result, persisted_result)
+
+    def test_load_background_task_status_compacts_legacy_inline_result(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            task_dir = create_background_task_dir(
+                "manual_dynamic_batch",
+                root_dir=Path(tmp_dir),
+                started_at=datetime(2026, 4, 1, 12, 0, 0),
+            )
+            full_result = {
+                "status": "completed",
+                "task_count": 2,
+                "crawl_reports": [{"run_id": f"run-{idx}", "success_count": 1} for idx in range(500)],
+            }
+            update_background_task_status(
+                task_dir,
+                {
+                    "status": "completed",
+                    "scope": "manual_dynamic_batch",
+                    "task_kind": "manual_dynamic_batch",
+                    "task_dir": str(task_dir),
+                    "result": full_result,
+                },
+            )
+
+            payload = load_background_task_status(task_dir)
+
+            self.assertIn("result_path", payload)
+            self.assertNotEqual(full_result, payload["result"])
+            self.assertEqual(full_result, load_background_task_result(task_dir))
 
     @patch("bili_pipeline.datahub.background_tasks.is_background_task_process_running", return_value=False)
     def test_load_registered_background_task_status_recovers_completed_media_mode_a_task(self, _mock_running) -> None:

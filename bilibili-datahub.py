@@ -449,6 +449,29 @@ def _load_registered_background_task(scope: str) -> tuple[dict[str, object] | No
     return load_registered_background_task_status(scope, registry_root=BACKGROUND_TASKS_ROOT)
 
 
+def _build_background_task_status_display_payload(status_payload: dict[str, object]) -> dict[str, object]:
+    display_payload: dict[str, object] = {}
+    for key in (
+        "status",
+        "task_kind",
+        "scope",
+        "pid",
+        "started_at",
+        "last_progress_at",
+        "finished_at",
+        "stale",
+        "error",
+        "recovery",
+        "result",
+    ):
+        if key in status_payload:
+            display_payload[key] = status_payload[key]
+    result_path = str(status_payload.get("result_path") or "").strip()
+    if result_path:
+        display_payload["result_path"] = display_path(Path(result_path), APP_DIR)
+    return display_payload
+
+
 def _render_background_task_status(scope: str, title: str) -> None:
     registry_payload, status_payload = _load_registered_background_task(scope)
     st.markdown(f"**{title}**")
@@ -458,7 +481,7 @@ def _render_background_task_status(scope: str, title: str) -> None:
     task_dir = Path(str(registry_payload.get("task_dir") or ""))
     st.caption(f"最近任务目录：`{display_path(task_dir, APP_DIR)}`")
     if status_payload:
-        st.json(status_payload)
+        st.json(_build_background_task_status_display_payload(status_payload))
     else:
         st.caption("任务状态文件尚未生成。")
 
