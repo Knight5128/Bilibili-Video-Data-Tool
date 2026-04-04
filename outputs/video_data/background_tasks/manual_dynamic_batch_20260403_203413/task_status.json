@@ -5,11 +5,11 @@
   "task_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\background_tasks\\manual_dynamic_batch_20260403_203413",
   "pid": 39184,
   "started_at": "2026-04-03T20:34:15.709626",
-  "last_progress_at": "2026-04-03T20:42:59.957004",
-  "finished_at": "2026-04-03T20:42:59.957004",
+  "last_progress_at": "2026-04-03T21:09:13.453884",
+  "finished_at": "2026-04-03T21:09:13.453884",
+  "stale": true,
   "error": {
     "type": "TaskProcessMissing",
     "message": "Background task process is no longer running; marking stale task as failed."
-  },
-  "stale": true
+  }
 }
