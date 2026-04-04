@@ -16,8 +16,10 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from bili_pipeline.datahub.background_tasks import (  # noqa: E402
+    background_task_stop_requested,
     finalize_background_task_status,
     load_background_task_config,
+    load_background_task_stop_request,
     load_background_task_status,
     load_credential_from_cookie_file,
     register_active_background_task,
@@ -25,7 +27,12 @@ from bili_pipeline.datahub.background_tasks import (  # noqa: E402
 )
 from bili_pipeline.datahub.config import build_gcp_config  # noqa: E402
 from bili_pipeline.datahub.manual_batch_runner import run_manual_realtime_batch_crawl  # noqa: E402
-from bili_pipeline.datahub.manual_media_runner import run_manual_media_mode_a, run_manual_media_mode_b  # noqa: E402
+from bili_pipeline.datahub.manual_media_runner import (  # noqa: E402
+    run_manual_media_mode_a,
+    run_manual_media_mode_b,
+    run_manual_meta_mode_a,
+    run_manual_meta_mode_b,
+)
 from bili_pipeline.models import GCPStorageConfig, MediaDownloadStrategy  # noqa: E402
 from bili_pipeline.storage import BigQueryCrawlerStore  # noqa: E402
 
@@ -40,6 +47,7 @@ def _build_media_strategy(gcp_config: GCPStorageConfig, payload: dict) -> MediaD
         chunk_size_mb=int(payload.get("chunk_size_mb", 4)),
         storage_backend="gcs",
         gcp_config=gcp_config,
+        truncate_seconds=max(0, int(payload.get("truncate_seconds", 0) or 0)),
     )
 
 
@@ -93,6 +101,8 @@ def _run_task(task_dir: Path, config: dict) -> dict:
     credential_provider = _build_cookie_provider(cookie_path) if cookie_path else None
     batch_size = int(config.get("cookie_refresh_batch_size") or 100)
     task_kind = str(config.get("task_kind") or "").strip()
+    stop_checker = lambda: background_task_stop_requested(task_dir)
+    media_strategy.stop_checker = stop_checker
 
     if task_kind == "manual_dynamic_batch":
         result = run_manual_realtime_batch_crawl(
@@ -129,6 +139,26 @@ def _run_task(task_dir: Path, config: dict) -> dict:
             chunk_size_mb=int(payload["chunk_size_mb"]),
             credential_provider=credential_provider,
             cookie_refresh_batch_size=batch_size,
+            should_stop=stop_checker,
+        )
+        return result.to_dict()
+
+    if task_kind == "manual_meta_mode_a":
+        result = run_manual_meta_mode_a(
+            store=store,
+            gcp_config=gcp_config,
+            manual_crawls_root_dir=payload["manual_crawls_root_dir"],
+            enable_sleep_resume=bool(payload.get("enable_sleep_resume", False)),
+            sleep_minutes=int(payload.get("sleep_minutes", 5)),
+            parallelism=int(payload["parallelism"]),
+            comment_limit=int(payload["comment_limit"]),
+            consecutive_failure_limit=int(payload["consecutive_failure_limit"]),
+            media_strategy=media_strategy,
+            max_height=int(payload["max_height"]),
+            chunk_size_mb=int(payload["chunk_size_mb"]),
+            credential_provider=credential_provider,
+            cookie_refresh_batch_size=batch_size,
+            should_stop=stop_checker,
         )
         return result.to_dict()
 
@@ -151,6 +181,30 @@ def _run_task(task_dir: Path, config: dict) -> dict:
             chunk_size_mb=int(payload["chunk_size_mb"]),
             credential_provider=credential_provider,
             cookie_refresh_batch_size=batch_size,
+            should_stop=stop_checker,
+        )
+        return result.to_dict()
+
+    if task_kind == "manual_meta_mode_b":
+        uploaded_file_paths = list(payload.get("uploaded_file_paths") or [])
+        uploaded_names = list(payload.get("uploaded_names") or [])
+        result = run_manual_meta_mode_b(
+            uploaded_frames=_read_uploaded_frames(uploaded_file_paths),
+            uploaded_names=uploaded_names,
+            store=store,
+            gcp_config=gcp_config,
+            manual_crawls_root_dir=payload["manual_crawls_root_dir"],
+            enable_sleep_resume=bool(payload.get("enable_sleep_resume", False)),
+            sleep_minutes=int(payload.get("sleep_minutes", 5)),
+            parallelism=int(payload["parallelism"]),
+            comment_limit=int(payload["comment_limit"]),
+            consecutive_failure_limit=int(payload["consecutive_failure_limit"]),
+            media_strategy=media_strategy,
+            max_height=int(payload["max_height"]),
+            chunk_size_mb=int(payload["chunk_size_mb"]),
+            credential_provider=credential_provider,
+            cookie_refresh_batch_size=batch_size,
+            should_stop=stop_checker,
         )
         return result.to_dict()
 
@@ -207,6 +261,11 @@ def main() -> int:
         )
         raise
     else:
+        final_status = "completed"
+        if isinstance(result, dict) and str(result.get("status") or "").strip().lower() == "stopped":
+            stop_request = load_background_task_stop_request(task_dir)
+            result["stop_request"] = stop_request
+            final_status = "stopped"
         heartbeat_stop_event.set()
         heartbeat_thread.join(timeout=1)
         finalize_background_task_status(
@@ -214,7 +273,7 @@ def main() -> int:
             scope=scope,
             task_kind=str(config.get("task_kind") or "").strip() or None,
             pid=os.getpid(),
-            status="completed",
+            status=final_status,
             result=result,
         )
         return 0

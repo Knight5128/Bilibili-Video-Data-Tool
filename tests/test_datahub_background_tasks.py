@@ -63,15 +63,18 @@ _install_google_stubs()
 
 from bili_pipeline.datahub.background_tasks import (
     BACKGROUND_TASK_MISSING_PROCESS_GRACE_SECONDS,
+    background_task_stop_requested,
     background_task_is_running,
     create_background_task_dir,
     finalize_background_task_status,
     is_background_task_process_running,
     launch_background_worker,
     load_background_task_result,
+    load_background_task_stop_request,
     load_registered_background_task_status,
     load_background_task_status,
     load_cookie_text,
+    request_background_task_stop,
     register_active_background_task,
     run_batched_crawl_from_csv,
     save_cookie_text,
@@ -104,6 +107,18 @@ class DataHubBackgroundTasksTest(unittest.TestCase):
             )
             self.assertTrue(status_path.exists())
             self.assertEqual("running", load_background_task_status(task_dir)["status"])
+
+    def test_background_task_stop_request_round_trip(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            task_dir = Path(tmp_dir) / "task"
+            task_dir.mkdir()
+
+            request_background_task_stop(task_dir, reason="stop now")
+
+            self.assertTrue(background_task_stop_requested(task_dir))
+            payload = load_background_task_stop_request(task_dir)
+            self.assertEqual("stop now", payload["reason"])
+            self.assertTrue(payload["stop_requested"])
 
     def test_register_active_background_task_writes_registry(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -749,6 +764,45 @@ class DataHubBackgroundTasksTest(unittest.TestCase):
             self.assertEqual(3, outcome.credential_refresh_count)
             self.assertEqual(3, len(provider_calls))
             self.assertEqual(str(remaining_csv), crawl_inputs[1])
+
+    def test_run_batched_crawl_from_csv_stops_before_next_batch_when_requested(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            csv_path = Path(tmp_dir) / "input.csv"
+            with csv_path.open("w", encoding="utf-8-sig", newline="") as handle:
+                writer = csv.DictWriter(handle, fieldnames=["bvid"])
+                writer.writeheader()
+                writer.writerow({"bvid": "BV1"})
+                writer.writerow({"bvid": "BV2"})
+
+            calls: list[str] = []
+
+            def crawl_fn(current_csv_path, **_kwargs):
+                rows = list(csv.DictReader(Path(current_csv_path).open("r", encoding="utf-8-sig", newline="")))
+                calls.extend(row["bvid"] for row in rows)
+                return BatchCrawlReport(
+                    run_id="run-stop",
+                    total_bvids=len(rows),
+                    processed_count=len(rows),
+                    success_count=len(rows),
+                    failed_count=0,
+                    remaining_count=0,
+                    started_at=datetime(2026, 4, 1, 12, 0, 0),
+                    finished_at=datetime(2026, 4, 1, 12, 0, 1),
+                    task_mode=CrawlTaskMode.MEDIA_ONLY.value,
+                    completed_all=True,
+                )
+
+            stop_checks = iter([False, False, True])
+            outcome = run_batched_crawl_from_csv(
+                csv_path,
+                batch_size=1,
+                crawl_fn=crawl_fn,
+                should_stop=lambda: next(stop_checks, True),
+            )
+
+            self.assertEqual(["BV1"], calls)
+            self.assertEqual(1, len(outcome.reports))
+            self.assertTrue(outcome.stopped_by_request)
 
 
 if __name__ == "__main__":

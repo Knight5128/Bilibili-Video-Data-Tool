@@ -20,6 +20,7 @@ DEFAULT_COOKIE_PATH = Path(".local") / "bilibili-datahub.cookie.txt"
 STATUS_FILENAME = "task_status.json"
 CONFIG_FILENAME = "task_config.json"
 RESULT_FILENAME = "task_result.json"
+STOP_REQUEST_FILENAME = "task_stop_request.json"
 BACKGROUND_TASK_MISSING_PROCESS_GRACE_SECONDS = 90
 
 
@@ -27,6 +28,7 @@ BACKGROUND_TASK_MISSING_PROCESS_GRACE_SECONDS = 90
 class BatchedCrawlOutcome:
     reports: list[Any]
     credential_refresh_count: int
+    stopped_by_request: bool = False
 
 
 def load_cookie_text(path: Path | str | None = None) -> str:
@@ -84,6 +86,30 @@ def load_background_task_result(task_dir: Path | str) -> Any:
     if not target.exists():
         return {}
     return json.loads(target.read_text(encoding="utf-8"))
+
+
+def request_background_task_stop(task_dir: Path | str, *, reason: str = "用户请求停止任务。") -> Path:
+    target = Path(task_dir) / STOP_REQUEST_FILENAME
+    target.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "stop_requested": True,
+        "reason": str(reason).strip() or "用户请求停止任务。",
+        "requested_at": datetime.now().isoformat(),
+    }
+    target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return target
+
+
+def load_background_task_stop_request(task_dir: Path | str) -> dict[str, Any]:
+    target = Path(task_dir) / STOP_REQUEST_FILENAME
+    if not target.exists():
+        return {}
+    return json.loads(target.read_text(encoding="utf-8"))
+
+
+def background_task_stop_requested(task_dir: Path | str) -> bool:
+    payload = load_background_task_stop_request(task_dir)
+    return bool(payload.get("stop_requested"))
 
 
 def _is_json_scalar(value: Any) -> bool:
@@ -321,7 +347,7 @@ def _recover_stale_background_task_result(task_dir: Path, task_kind: str) -> tup
             return None
         state = _load_json_if_exists(session_dir / "manual_crawl_media_state.json")
         status = str(state.get("status") or "").strip().lower()
-        if status in {"completed", "partial", "skipped", "failed"}:
+        if status in {"completed", "partial", "skipped", "failed", "stopped"}:
             return (
                 status,
                 {
@@ -343,7 +369,7 @@ def _recover_stale_background_task_result(task_dir: Path, task_kind: str) -> tup
             return None
         state = _load_json_if_exists(session_dir / "manual_crawl_media_state.json")
         status = str(state.get("status") or "").strip().lower()
-        if status in {"completed", "partial", "skipped", "failed"}:
+        if status in {"completed", "partial", "skipped", "failed", "stopped"}:
             return (
                 status,
                 {
@@ -356,6 +382,52 @@ def _recover_stale_background_task_result(task_dir: Path, task_kind: str) -> tup
                 {
                     "type": "RecoveredFromManualMediaState",
                     "message": "Recovered media Mode B status from manual media state after worker exited without final status.",
+                },
+            )
+        return None
+    if task_kind == "manual_meta_mode_a":
+        session_dir = _find_manual_media_session_dir(task_dir, prefix="manual_crawl_meta_mode_A", mode="A")
+        if session_dir is None:
+            return None
+        state = _load_json_if_exists(session_dir / "manual_crawl_media_state.json")
+        status = str(state.get("status") or "").strip().lower()
+        if status in {"completed", "partial", "skipped", "failed", "stopped"}:
+            return (
+                status,
+                {
+                    "status": status,
+                    "mode": "A",
+                    "crawl_target": "meta",
+                    "session_dir": str(session_dir),
+                    "finished_at": state.get("finished_at"),
+                    "recovered_from_stale": True,
+                },
+                {
+                    "type": "RecoveredFromManualMediaState",
+                    "message": "Recovered meta Mode A status from manual media state after worker exited without final status.",
+                },
+            )
+        return None
+    if task_kind == "manual_meta_mode_b":
+        session_dir = _find_manual_media_session_dir(task_dir, prefix="manual_crawl_meta_mode_B", mode="B")
+        if session_dir is None:
+            return None
+        state = _load_json_if_exists(session_dir / "manual_crawl_media_state.json")
+        status = str(state.get("status") or "").strip().lower()
+        if status in {"completed", "partial", "skipped", "failed", "stopped"}:
+            return (
+                status,
+                {
+                    "status": status,
+                    "mode": "B",
+                    "crawl_target": "meta",
+                    "session_dir": str(session_dir),
+                    "finished_at": state.get("finished_at"),
+                    "recovered_from_stale": True,
+                },
+                {
+                    "type": "RecoveredFromManualMediaState",
+                    "message": "Recovered meta Mode B status from manual media state after worker exited without final status.",
                 },
             )
         return None
@@ -599,6 +671,7 @@ def run_batched_crawl_from_csv(
     credential: Any | None = None,
     should_retry_remaining_fn=None,
     max_remaining_retries_per_batch: int = 1,
+    should_stop=None,
     **crawl_kwargs,
 ) -> BatchedCrawlOutcome:
     fieldnames, rows = _read_csv_rows(csv_path)
@@ -612,13 +685,20 @@ def run_batched_crawl_from_csv(
 
     reports: list[Any] = []
     credential_refresh_count = 0
+    stopped_by_request = False
 
     for batch_index in range(0, len(rows), effective_batch_size):
+        if should_stop is not None and should_stop():
+            stopped_by_request = True
+            break
         batch_rows = rows[batch_index : batch_index + effective_batch_size]
         batch_no = batch_index // effective_batch_size + 1
         current_csv_path = _write_csv_rows(fieldnames, batch_rows, batches_dir / f"batch_input_{batch_no}.csv")
         remaining_retry_count = 0
         while True:
+            if should_stop is not None and should_stop():
+                stopped_by_request = True
+                break
             current_credential = credential_provider() if credential_provider is not None else credential
             if credential_provider is not None:
                 credential_refresh_count += 1
@@ -639,8 +719,11 @@ def run_batched_crawl_from_csv(
                 break
             remaining_retry_count += 1
             current_csv_path = Path(remaining_csv_path)
+        if stopped_by_request:
+            break
 
     return BatchedCrawlOutcome(
         reports=reports,
         credential_refresh_count=credential_refresh_count,
+        stopped_by_request=stopped_by_request,
     )

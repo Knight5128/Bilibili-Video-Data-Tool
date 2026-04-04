@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from typing import Callable
 from typing import Any
 
 
@@ -15,15 +16,17 @@ class CrawlTaskMode(str, Enum):
     FULL_BUNDLE = "full_bundle"
     REALTIME_ONLY = "realtime_only"
     ONCE_ONLY = "once_only"
+    META_ONLY = "meta_only"
+    MEDIA_ONLY = "media_only"
 
     def includes_meta(self) -> bool:
-        return self in {self.FULL_BUNDLE, self.ONCE_ONLY}
+        return self in {self.FULL_BUNDLE, self.ONCE_ONLY, self.META_ONLY}
 
     def includes_realtime(self) -> bool:
         return self in {self.FULL_BUNDLE, self.REALTIME_ONLY}
 
     def includes_media(self) -> bool:
-        return self in {self.FULL_BUNDLE, self.ONCE_ONLY}
+        return self in {self.FULL_BUNDLE, self.ONCE_ONLY, self.MEDIA_ONLY}
 
 
 @dataclass(slots=True)
@@ -250,6 +253,8 @@ class MediaDownloadStrategy:
     request_timeout_seconds: int = 120
     storage_backend: str = "gcs"
     gcp_config: GCPStorageConfig | None = None
+    truncate_seconds: int = 0
+    stop_checker: Callable[[], bool] | None = field(default=None, repr=False, compare=False)
 
     def chunk_size_bytes(self) -> int:
         return max(1, self.chunk_size_mb) * 1024 * 1024
@@ -269,7 +274,8 @@ class MediaDownloadStrategy:
 
     def build_object_key(self, bvid: str, cid: int | None, asset_type: str) -> str:
         prefix = self.gcp_config.normalized_prefix() if self.gcp_config else ""
-        parts = [part for part in [prefix, bvid, str(cid or "na"), f"{asset_type}.m4s"] if part]
+        extension = "mp4" if int(self.truncate_seconds or 0) > 0 else "m4s"
+        parts = [part for part in [prefix, bvid, str(cid or "na"), f"{asset_type}.{extension}"] if part]
         return "/".join(parts)
 
     def with_sqlite_path(self, sqlite_path: str | Path) -> MediaDownloadStrategy:
@@ -280,6 +286,8 @@ class MediaDownloadStrategy:
             request_timeout_seconds=self.request_timeout_seconds,
             storage_backend=self.storage_backend,
             gcp_config=self.gcp_config,
+            truncate_seconds=self.truncate_seconds,
+            stop_checker=self.stop_checker,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -290,6 +298,7 @@ class MediaDownloadStrategy:
             "request_timeout_seconds": self.request_timeout_seconds,
             "storage_backend": self.storage_backend,
             "gcp_config": self.gcp_config.to_safe_dict() if self.gcp_config else None,
+            "truncate_seconds": int(self.truncate_seconds or 0),
         }
 
 

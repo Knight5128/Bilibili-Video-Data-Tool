@@ -15,6 +15,7 @@ dependencies = [
     "google-cloud-bigquery",
     "google-cloud-storage",
     "gunicorn>=25.3.0",
+    "imageio-ffmpeg>=0.6.0",
     "openpyxl>=3.1.5",
     "pandas",
     "plotly",

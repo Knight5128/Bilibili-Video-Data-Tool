@@ -87,9 +87,9 @@ def _resolve_stage_flags(
     enable_media: bool,
 ) -> tuple[CrawlTaskMode, bool, bool, bool]:
     resolved_mode = _coerce_task_mode(task_mode)
-    include_meta = resolved_mode in {CrawlTaskMode.FULL_BUNDLE, CrawlTaskMode.ONCE_ONLY}
+    include_meta = resolved_mode in {CrawlTaskMode.FULL_BUNDLE, CrawlTaskMode.ONCE_ONLY, CrawlTaskMode.META_ONLY}
     include_realtime = resolved_mode in {CrawlTaskMode.FULL_BUNDLE, CrawlTaskMode.REALTIME_ONLY}
-    include_media = resolved_mode in {CrawlTaskMode.FULL_BUNDLE, CrawlTaskMode.ONCE_ONLY} and bool(enable_media)
+    include_media = resolved_mode in {CrawlTaskMode.FULL_BUNDLE, CrawlTaskMode.ONCE_ONLY, CrawlTaskMode.MEDIA_ONLY} and bool(enable_media)
     return resolved_mode, include_meta, include_realtime, include_media
 
 
@@ -528,6 +528,7 @@ def crawl_bvid_list_from_csv(
     output_root_dir: Path | str | None = None,
     source_csv_name: str | None = None,
     session_dir: Path | str | None = None,
+    should_stop=None,
 ) -> BatchCrawlReport:
     resolved_config = _resolve_gcp_config(gcp_config, media_strategy)
     resolved_mode, include_meta, include_realtime, include_media = _resolve_stage_flags(
@@ -593,6 +594,17 @@ def crawl_bvid_list_from_csv(
         )
 
     def _worker(item_bvid: str) -> FullCrawlSummary:
+        if should_stop is not None and should_stop():
+            return FullCrawlSummary(
+                bvid=item_bvid,
+                meta_ok=not resolved_mode.includes_meta(),
+                stat_ok=not resolved_mode.includes_realtime(),
+                comment_ok=not resolved_mode.includes_realtime(),
+                media_ok=not resolved_mode.includes_media(),
+                snapshot_time=None,
+                task_mode=resolved_mode.value,
+                errors=["stopped: 用户请求停止任务。"],
+            )
         return crawl_full_video_bundle(
             item_bvid,
             enable_media=enable_media,
@@ -611,6 +623,10 @@ def crawl_bvid_list_from_csv(
 
     if effective_parallelism <= 1:
         for bvid in bvids:
+            if should_stop is not None and should_stop():
+                stop_reason = "用户请求停止任务。"
+                _append_task_log(task_logs, f"[STOP] {stop_reason}")
+                break
             summary = _worker(bvid)
             summaries.append(summary)
             store.save_run_item(run_id, summary)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import subprocess
 import uuid
 from typing import Any
 
@@ -50,6 +51,65 @@ def _mime_type(asset_type: str) -> str:
     return "video/mp4" if asset_type == "video" else "audio/mp4"
 
 
+class StopRequestedError(RuntimeError):
+    """Raised when a cooperative stop request interrupts media transfer."""
+
+
+def _stop_requested(strategy: MediaDownloadStrategy) -> bool:
+    return bool(strategy.stop_checker is not None and strategy.stop_checker())
+
+
+def _iter_ffmpeg_truncated_chunks(
+    *,
+    url: str,
+    strategy: MediaDownloadStrategy,
+) -> tuple[bytes, bytes]:
+    from imageio_ffmpeg import get_ffmpeg_exe
+
+    ffmpeg_path = get_ffmpeg_exe()
+    command = [
+        ffmpeg_path,
+        "-v",
+        "error",
+        "-headers",
+        "Referer: https://www.bilibili.com/\r\nUser-Agent: Mozilla/5.0\r\n",
+        "-i",
+        url,
+        "-t",
+        str(int(strategy.truncate_seconds)),
+        "-c",
+        "copy",
+        "-movflags",
+        "frag_keyframe+empty_moov",
+        "-f",
+        "mp4",
+        "pipe:1",
+    ]
+    process = subprocess.Popen(  # noqa: S603
+        command,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    try:
+        while True:
+            if _stop_requested(strategy):
+                process.kill()
+                raise StopRequestedError("用户请求停止媒体下载任务。")
+            chunk = process.stdout.read(strategy.chunk_size_bytes()) if process.stdout is not None else b""
+            if not chunk:
+                break
+            yield chunk, b""
+        stderr_output = process.stderr.read() if process.stderr is not None else b""
+        return_code = process.wait()
+        if return_code != 0:
+            raise RuntimeError(stderr_output.decode("utf-8", errors="ignore").strip() or f"ffmpeg exited with code {return_code}")
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait()
+
+
 async def _stream_one_asset(
     *,
     store: BigQueryCrawlerStore,
@@ -94,16 +154,27 @@ async def _stream_one_asset(
     )
 
     try:
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.get(url, headers={"Referer": "https://www.bilibili.com/"}) as response:
-                response.raise_for_status()
-                async for chunk in response.content.iter_chunked(strategy.chunk_size_bytes()):
-                    if not chunk:
-                        continue
-                    sha.update(chunk)
-                    file_size += len(chunk)
-                    multipart_session.upload_part(chunk)
-                    chunk_count += 1
+        if int(strategy.truncate_seconds or 0) > 0:
+            for chunk, _ in _iter_ffmpeg_truncated_chunks(url=url, strategy=strategy):
+                if not chunk:
+                    continue
+                sha.update(chunk)
+                file_size += len(chunk)
+                multipart_session.upload_part(chunk)
+                chunk_count += 1
+        else:
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.get(url, headers={"Referer": "https://www.bilibili.com/"}) as response:
+                    response.raise_for_status()
+                    async for chunk in response.content.iter_chunked(strategy.chunk_size_bytes()):
+                        if _stop_requested(strategy):
+                            raise StopRequestedError("用户请求停止媒体下载任务。")
+                        if not chunk:
+                            continue
+                        sha.update(chunk)
+                        file_size += len(chunk)
+                        multipart_session.upload_part(chunk)
+                        chunk_count += 1
     except Exception:
         try:
             multipart_session.abort()

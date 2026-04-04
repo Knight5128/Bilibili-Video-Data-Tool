@@ -58,6 +58,7 @@ from bili_pipeline.datahub.background_tasks import (
     create_background_task_dir,
     launch_background_worker,
     load_cookie_text,
+    request_background_task_stop,
     load_registered_background_task_status,
     register_active_background_task,
     save_cookie_text,
@@ -100,9 +101,11 @@ from bili_pipeline.datahub.manual_batch_runner import (
 )
 from bili_pipeline.datahub.manual_media_runner import (
     MANUAL_MEDIA_CRAWLS_OUTPUT_DIR,
+    build_manual_meta_waitlist_path,
     build_manual_media_waitlist_path,
     run_manual_media_mode_a,
     run_manual_media_mode_b,
+    sync_manual_meta_waitlist,
     sync_manual_media_waitlist,
 )
 from bili_pipeline.datahub.shared import (
@@ -482,6 +485,18 @@ def _render_background_task_status(scope: str, title: str) -> None:
     st.caption(f"最近任务目录：`{display_path(task_dir, APP_DIR)}`")
     if status_payload:
         st.json(_build_background_task_status_display_payload(status_payload))
+        running_status = str(status_payload.get("status") or "").strip().lower()
+        if running_status in {"queued", "running"}:
+            button_key = f"stop_background_task_{scope}"
+            if st.button("停止当前后台任务", key=button_key, width="stretch"):
+                stop_reason = "用户在 DataHub 页面中请求停止任务。"
+                request_background_task_stop(task_dir, reason=stop_reason)
+                next_status = dict(status_payload)
+                next_status["stop_requested"] = True
+                next_status["stop_requested_at"] = datetime.now().isoformat()
+                next_status["stop_requested_reason"] = stop_reason
+                update_background_task_status(task_dir, next_status)
+                st.success("已发送停止请求，后台任务会在当前安全检查点尽快停止。")
     else:
         st.caption("任务状态文件尚未生成。")
 
@@ -500,6 +515,68 @@ def _launch_datahub_background_task(*, scope: str, task_kind: str, gcp_payload: 
             "cookie_path": str(COOKIE_FILE_PATH),
             "cookie_refresh_batch_size": 100,
             "payload": payload,
+        },
+    )
+    update_background_task_status(
+        task_dir,
+        {
+            "status": "queued",
+            "scope": scope,
+            "task_kind": task_kind,
+            "task_dir": str(task_dir),
+            "created_at": datetime.now().isoformat(),
+        },
+    )
+    pid = launch_background_worker(task_dir)
+    register_active_background_task(scope, task_dir=task_dir, registry_root=BACKGROUND_TASKS_ROOT, pid=pid)
+    update_background_task_status(
+        task_dir,
+        {
+            "status": "queued",
+            "scope": scope,
+            "task_kind": task_kind,
+            "task_dir": str(task_dir),
+            "created_at": datetime.now().isoformat(),
+            "pid": pid,
+        },
+    )
+    return task_dir
+
+
+def _launch_uploaded_background_task(
+    *,
+    scope: str,
+    task_kind: str,
+    gcp_payload: dict[str, object],
+    uploaded_files,
+    payload: dict[str, object],
+) -> Path:
+    if background_task_is_running(scope, registry_root=BACKGROUND_TASKS_ROOT):
+        raise ValueError("当前已有同类后台任务仍在运行，请先等待其完成。")
+    task_dir = create_background_task_dir(task_kind, root_dir=BACKGROUND_TASKS_ROOT)
+    upload_dir = task_dir / "uploads"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    uploaded_file_paths: list[str] = []
+    uploaded_names: list[str] = []
+    for index, upload in enumerate(uploaded_files, start=1):
+        target_path = upload_dir / f"{index:02d}_{upload.name}"
+        target_path.write_bytes(upload.getbuffer())
+        uploaded_file_paths.append(str(target_path))
+        uploaded_names.append(upload.name)
+    write_background_task_config(
+        task_dir,
+        {
+            "scope": scope,
+            "task_kind": task_kind,
+            "task_dir": str(task_dir),
+            "gcp_payload": gcp_payload,
+            "cookie_path": str(COOKIE_FILE_PATH),
+            "cookie_refresh_batch_size": 100,
+            "payload": {
+                **payload,
+                "uploaded_file_paths": uploaded_file_paths,
+                "uploaded_names": uploaded_names,
+            },
         },
     )
     update_background_task_status(
@@ -1565,25 +1642,47 @@ with tab_manual_media:
         st.warning("本页依赖 GCP 配置；请先完成侧边栏中的 BigQuery / GCS 设置。")
     st.caption(
         "本页用于集中补抓视频元数据与媒体文件（视频轨 + 音频轨）。"
-        "模式 A 基于数据集中的缺失条目维护待补清单，模式 B 基于用户手动上传的 `bvid` 清单去重后执行。"
+        "模式 A 基于数据集缺失条目维护两份独立待补清单；模式 B 则分别基于手动上传的 `bvid` 清单执行媒体抓取或元数据抓取。"
     )
     _render_background_task_status("manual_media", "当前后台任务状态")
     manual_media_waitlist_path = build_manual_media_waitlist_path(
         active_gcp_config.bigquery_dataset,
         manual_crawls_root_dir=MANUAL_MEDIA_CRAWLS_OUTPUT_DIR,
     )
+    manual_meta_waitlist_path = build_manual_meta_waitlist_path(
+        active_gcp_config.bigquery_dataset,
+        manual_crawls_root_dir=MANUAL_MEDIA_CRAWLS_OUTPUT_DIR,
+    )
     mode_a_tab, mode_b_tab = st.tabs(["模式A:基于数据集缺失条目", "模式B:基于手动上传清单"])
 
     with mode_a_tab:
-        st.caption(
-            f"当前维护中的待补媒体/元数据清单：`{manual_media_waitlist_path.as_posix()}`；"
-            f"任务目录根路径：`{MANUAL_MEDIA_CRAWLS_OUTPUT_DIR.as_posix()}`"
-        )
-        sync_col, run_col = st.columns(2)
-        with sync_col:
+        st.caption(f"任务目录根路径：`{MANUAL_MEDIA_CRAWLS_OUTPUT_DIR.as_posix()}`")
+        mode_a_media_col, mode_a_meta_col = st.columns(2)
+
+        with mode_a_media_col:
+            st.markdown("### 模式A-媒体数据")
+            st.caption(f"待补媒体清单：`{manual_media_waitlist_path.as_posix()}`")
             with st.form("manual_media_mode_a_sync_form"):
-                trigger_manual_media_sync = st.form_submit_button("同步待补媒体/元数据视频清单", width="stretch")
-        with run_col:
+                trigger_manual_media_sync = st.form_submit_button("同步待补媒体数据视频清单", width="stretch")
+            if trigger_manual_media_sync:
+                try:
+                    store = _resolve_store()
+                    sync_result = sync_manual_media_waitlist(
+                        store=store,
+                        gcp_config=active_gcp_config,
+                        manual_crawls_root_dir=MANUAL_MEDIA_CRAWLS_OUTPUT_DIR,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    st.error(f"同步待补媒体数据清单失败：{exc}")
+                else:
+                    st.success(f"待补媒体数据清单同步完成，当前共 {sync_result.pending_count} 条。")
+                    _show_json("待补媒体数据清单同步结果", sync_result.to_dict())
+            current_media_waitlist_df = _load_saved_dataframe(str(manual_media_waitlist_path))
+            with st.expander("查看当前待补媒体数据清单", expanded=False):
+                if current_media_waitlist_df is None or current_media_waitlist_df.empty:
+                    st.info("当前尚未生成待补媒体数据清单，或清单内容为空。")
+                else:
+                    st.dataframe(current_media_waitlist_df.head(200), width="stretch", hide_index=True)
             with st.form("manual_media_mode_a_run_form"):
                 manual_media_mode_a_parallelism = st.number_input(
                     "并发度",
@@ -1593,63 +1692,102 @@ with tab_manual_media:
                     step=1,
                     key="manual_media_mode_a_parallelism",
                 )
-                manual_media_mode_a_enable_sleep = st.checkbox("启用睡眠机制", value=False, key="manual_media_mode_a_enable_sleep")
-                manual_media_mode_a_sleep_minutes = st.number_input(
-                    "睡眠时长（分钟）",
-                    min_value=1,
-                    max_value=240,
-                    value=5,
+                manual_media_mode_a_truncate_seconds = st.number_input(
+                    "音视频截断长度（秒）",
+                    min_value=0,
+                    max_value=3600,
+                    value=30,
                     step=1,
-                    key="manual_media_mode_a_sleep_minutes",
+                    key="manual_media_mode_a_truncate_seconds",
                 )
-                trigger_manual_media_mode_a = st.form_submit_button("启动后台任务：按清单抓取媒体/元数据", width="stretch")
-        if trigger_manual_media_sync:
-            try:
-                store = _resolve_store()
-                sync_result = sync_manual_media_waitlist(
-                    store=store,
-                    gcp_config=active_gcp_config,
-                    manual_crawls_root_dir=MANUAL_MEDIA_CRAWLS_OUTPUT_DIR,
+                st.caption("设为 0 表示不截断，完整抓取视频与音频。")
+                trigger_manual_media_mode_a = st.form_submit_button("启动后台任务：按清单抓取媒体数据", width="stretch")
+            if trigger_manual_media_mode_a:
+                try:
+                    if not active_gcp_config.is_enabled():
+                        raise ValueError("请先完成 GCP 配置。")
+                    save_cookie_text(cookie_text, path=COOKIE_FILE_PATH)
+                    task_dir = _launch_datahub_background_task(
+                        scope="manual_media",
+                        task_kind="manual_media_mode_a",
+                        gcp_payload=gcp_payload,
+                        payload={
+                            "manual_crawls_root_dir": str(MANUAL_MEDIA_CRAWLS_OUTPUT_DIR),
+                            "parallelism": int(manual_media_mode_a_parallelism),
+                            "comment_limit": int(comment_limit_default),
+                            "consecutive_failure_limit": int(consecutive_failure_limit),
+                            "max_height": int(max_height),
+                            "chunk_size_mb": int(chunk_size_mb),
+                            "truncate_seconds": int(manual_media_mode_a_truncate_seconds),
+                        },
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    st.error(f"模式 A 媒体数据抓取失败：{exc}")
+                else:
+                    st.success(f"模式 A 媒体数据后台任务已启动：`{display_path(task_dir, APP_DIR)}`")
+
+        with mode_a_meta_col:
+            st.markdown("### 模式A-元数据")
+            st.caption(f"待补元数据清单：`{manual_meta_waitlist_path.as_posix()}`")
+            with st.form("manual_meta_mode_a_sync_form"):
+                trigger_manual_meta_sync = st.form_submit_button("同步待补元数据视频清单", width="stretch")
+            if trigger_manual_meta_sync:
+                try:
+                    store = _resolve_store()
+                    sync_result = sync_manual_meta_waitlist(
+                        store=store,
+                        gcp_config=active_gcp_config,
+                        manual_crawls_root_dir=MANUAL_MEDIA_CRAWLS_OUTPUT_DIR,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    st.error(f"同步待补元数据清单失败：{exc}")
+                else:
+                    st.success(f"待补元数据清单同步完成，当前共 {sync_result.pending_count} 条。")
+                    _show_json("待补元数据清单同步结果", sync_result.to_dict())
+            current_meta_waitlist_df = _load_saved_dataframe(str(manual_meta_waitlist_path))
+            with st.expander("查看当前待补元数据清单", expanded=False):
+                if current_meta_waitlist_df is None or current_meta_waitlist_df.empty:
+                    st.info("当前尚未生成待补元数据清单，或清单内容为空。")
+                else:
+                    st.dataframe(current_meta_waitlist_df.head(200), width="stretch", hide_index=True)
+            with st.form("manual_meta_mode_a_run_form"):
+                manual_meta_mode_a_parallelism = st.number_input(
+                    "并发度",
+                    min_value=1,
+                    max_value=16,
+                    value=1,
+                    step=1,
+                    key="manual_meta_mode_a_parallelism",
                 )
-            except Exception as exc:  # noqa: BLE001
-                st.error(f"同步待补媒体/元数据清单失败：{exc}")
-            else:
-                st.success(f"待补清单同步完成，当前共 {sync_result.pending_count} 条。")
-                _show_json("待补媒体/元数据清单同步结果", sync_result.to_dict())
-        current_waitlist_df = _load_saved_dataframe(str(manual_media_waitlist_path))
-        with st.expander("查看当前待补媒体/元数据清单", expanded=False):
-            if current_waitlist_df is None or current_waitlist_df.empty:
-                st.info("当前尚未生成待补清单，或清单内容为空。")
-            else:
-                st.dataframe(current_waitlist_df.head(200), width="stretch", hide_index=True)
-        if trigger_manual_media_mode_a:
-            try:
-                if not active_gcp_config.is_enabled():
-                    raise ValueError("请先完成 GCP 配置。")
-                save_cookie_text(cookie_text, path=COOKIE_FILE_PATH)
-                task_dir = _launch_datahub_background_task(
-                    scope="manual_media",
-                    task_kind="manual_media_mode_a",
-                    gcp_payload=gcp_payload,
-                    payload={
-                        "manual_crawls_root_dir": str(MANUAL_MEDIA_CRAWLS_OUTPUT_DIR),
-                        "enable_sleep_resume": bool(manual_media_mode_a_enable_sleep),
-                        "sleep_minutes": int(manual_media_mode_a_sleep_minutes),
-                        "parallelism": int(manual_media_mode_a_parallelism),
-                        "comment_limit": int(comment_limit_default),
-                        "consecutive_failure_limit": int(consecutive_failure_limit),
-                        "max_height": int(max_height),
-                        "chunk_size_mb": int(chunk_size_mb),
-                    },
-                )
-            except Exception as exc:  # noqa: BLE001
-                st.error(f"模式 A 抓取失败：{exc}")
-            else:
-                st.success(f"模式 A 后台任务已启动：`{display_path(task_dir, APP_DIR)}`")
+                trigger_manual_meta_mode_a = st.form_submit_button("启动后台任务：按清单抓取元数据", width="stretch")
+            if trigger_manual_meta_mode_a:
+                try:
+                    if not active_gcp_config.is_enabled():
+                        raise ValueError("请先完成 GCP 配置。")
+                    save_cookie_text(cookie_text, path=COOKIE_FILE_PATH)
+                    task_dir = _launch_datahub_background_task(
+                        scope="manual_media",
+                        task_kind="manual_meta_mode_a",
+                        gcp_payload=gcp_payload,
+                        payload={
+                            "manual_crawls_root_dir": str(MANUAL_MEDIA_CRAWLS_OUTPUT_DIR),
+                            "parallelism": int(manual_meta_mode_a_parallelism),
+                            "comment_limit": int(comment_limit_default),
+                            "consecutive_failure_limit": int(consecutive_failure_limit),
+                            "max_height": int(max_height),
+                            "chunk_size_mb": int(chunk_size_mb),
+                            "truncate_seconds": 0,
+                        },
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    st.error(f"模式 A 元数据抓取失败：{exc}")
+                else:
+                    st.success(f"模式 A 元数据后台任务已启动：`{display_path(task_dir, APP_DIR)}`")
 
     with mode_b_tab:
+        st.markdown("### 模式B-媒体数据")
         manual_media_mode_b_uploads = st.file_uploader(
-            "上传一份或多份包含 `bvid` 列的 CSV/XLSX 清单",
+            "上传一份或多份包含 `bvid` 列的 CSV/XLSX 清单（媒体数据）",
             type=["csv", "xlsx", "xls"],
             accept_multiple_files=True,
             key="manual_media_mode_b_uploads",
@@ -1665,85 +1803,89 @@ with tab_manual_media:
                 step=1,
                 key="manual_media_mode_b_parallelism",
             )
-            manual_media_mode_b_enable_sleep = st.checkbox("启用睡眠机制", value=False, key="manual_media_mode_b_enable_sleep")
-            manual_media_mode_b_sleep_minutes = st.number_input(
-                "睡眠时长（分钟）",
-                min_value=1,
-                max_value=240,
-                value=5,
+            manual_media_mode_b_truncate_seconds = st.number_input(
+                "音视频截断长度（秒）",
+                min_value=0,
+                max_value=3600,
+                value=30,
                 step=1,
-                key="manual_media_mode_b_sleep_minutes",
+                key="manual_media_mode_b_truncate_seconds",
             )
-            trigger_manual_media_mode_b = st.form_submit_button("启动后台任务：去重并抓取", width="stretch")
+            st.caption("设为 0 表示不截断，完整抓取视频与音频。")
+            trigger_manual_media_mode_b = st.form_submit_button("启动后台任务：去重并抓取媒体数据", width="stretch")
         if trigger_manual_media_mode_b:
             try:
                 if not manual_media_mode_b_uploads:
                     raise ValueError("请先上传至少一份包含 `bvid` 列的清单。")
                 if not active_gcp_config.is_enabled():
                     raise ValueError("请先完成 GCP 配置。")
-                if background_task_is_running("manual_media", registry_root=BACKGROUND_TASKS_ROOT):
-                    raise ValueError("当前已有媒体/元数据后台任务仍在运行，请先等待其完成。")
                 save_cookie_text(cookie_text, path=COOKIE_FILE_PATH)
-                task_dir = create_background_task_dir("manual_media_mode_b", root_dir=BACKGROUND_TASKS_ROOT)
-                upload_dir = task_dir / "uploads"
-                upload_dir.mkdir(parents=True, exist_ok=True)
-                uploaded_file_paths: list[str] = []
-                uploaded_names: list[str] = []
-                for index, upload in enumerate(manual_media_mode_b_uploads, start=1):
-                    target_path = upload_dir / f"{index:02d}_{upload.name}"
-                    target_path.write_bytes(upload.getbuffer())
-                    uploaded_file_paths.append(str(target_path))
-                    uploaded_names.append(upload.name)
-                write_background_task_config(
-                    task_dir,
-                    {
-                        "scope": "manual_media",
-                        "task_kind": "manual_media_mode_b",
-                        "task_dir": str(task_dir),
-                        "gcp_payload": gcp_payload,
-                        "cookie_path": str(COOKIE_FILE_PATH),
-                        "cookie_refresh_batch_size": 100,
-                        "payload": {
-                            "manual_crawls_root_dir": str(MANUAL_MEDIA_CRAWLS_OUTPUT_DIR),
-                            "enable_sleep_resume": bool(manual_media_mode_b_enable_sleep),
-                            "sleep_minutes": int(manual_media_mode_b_sleep_minutes),
-                            "parallelism": int(manual_media_mode_b_parallelism),
-                            "comment_limit": int(comment_limit_default),
-                            "consecutive_failure_limit": int(consecutive_failure_limit),
-                            "max_height": int(max_height),
-                            "chunk_size_mb": int(chunk_size_mb),
-                            "uploaded_file_paths": uploaded_file_paths,
-                            "uploaded_names": uploaded_names,
-                        },
-                    },
-                )
-                update_background_task_status(
-                    task_dir,
-                    {
-                        "status": "queued",
-                        "scope": "manual_media",
-                        "task_kind": "manual_media_mode_b",
-                        "task_dir": str(task_dir),
-                        "created_at": datetime.now().isoformat(),
-                    },
-                )
-                pid = launch_background_worker(task_dir)
-                register_active_background_task("manual_media", task_dir=task_dir, registry_root=BACKGROUND_TASKS_ROOT, pid=pid)
-                update_background_task_status(
-                    task_dir,
-                    {
-                        "status": "queued",
-                        "scope": "manual_media",
-                        "task_kind": "manual_media_mode_b",
-                        "task_dir": str(task_dir),
-                        "created_at": datetime.now().isoformat(),
-                        "pid": pid,
+                task_dir = _launch_uploaded_background_task(
+                    scope="manual_media",
+                    task_kind="manual_media_mode_b",
+                    gcp_payload=gcp_payload,
+                    uploaded_files=manual_media_mode_b_uploads,
+                    payload={
+                        "manual_crawls_root_dir": str(MANUAL_MEDIA_CRAWLS_OUTPUT_DIR),
+                        "parallelism": int(manual_media_mode_b_parallelism),
+                        "comment_limit": int(comment_limit_default),
+                        "consecutive_failure_limit": int(consecutive_failure_limit),
+                        "max_height": int(max_height),
+                        "chunk_size_mb": int(chunk_size_mb),
+                        "truncate_seconds": int(manual_media_mode_b_truncate_seconds),
                     },
                 )
             except Exception as exc:  # noqa: BLE001
-                st.error(f"模式 B 抓取失败：{exc}")
+                st.error(f"模式 B 媒体数据抓取失败：{exc}")
             else:
-                st.success(f"模式 B 后台任务已启动：`{display_path(task_dir, APP_DIR)}`")
+                st.success(f"模式 B 媒体数据后台任务已启动：`{display_path(task_dir, APP_DIR)}`")
+
+        st.divider()
+        st.markdown("### 模式B-元数据")
+        manual_meta_mode_b_uploads = st.file_uploader(
+            "上传一份或多份包含 `bvid` 列的 CSV/XLSX 清单（元数据）",
+            type=["csv", "xlsx", "xls"],
+            accept_multiple_files=True,
+            key="manual_meta_mode_b_uploads",
+        )
+        if manual_meta_mode_b_uploads:
+            st.caption("当前已上传：" + "，".join(upload.name for upload in manual_meta_mode_b_uploads))
+        with st.form("manual_meta_mode_b_form"):
+            manual_meta_mode_b_parallelism = st.number_input(
+                "并发度",
+                min_value=1,
+                max_value=16,
+                value=1,
+                step=1,
+                key="manual_meta_mode_b_parallelism",
+            )
+            trigger_manual_meta_mode_b = st.form_submit_button("启动后台任务：去重并抓取元数据", width="stretch")
+        if trigger_manual_meta_mode_b:
+            try:
+                if not manual_meta_mode_b_uploads:
+                    raise ValueError("请先上传至少一份包含 `bvid` 列的清单。")
+                if not active_gcp_config.is_enabled():
+                    raise ValueError("请先完成 GCP 配置。")
+                save_cookie_text(cookie_text, path=COOKIE_FILE_PATH)
+                task_dir = _launch_uploaded_background_task(
+                    scope="manual_media",
+                    task_kind="manual_meta_mode_b",
+                    gcp_payload=gcp_payload,
+                    uploaded_files=manual_meta_mode_b_uploads,
+                    payload={
+                        "manual_crawls_root_dir": str(MANUAL_MEDIA_CRAWLS_OUTPUT_DIR),
+                        "parallelism": int(manual_meta_mode_b_parallelism),
+                        "comment_limit": int(comment_limit_default),
+                        "consecutive_failure_limit": int(consecutive_failure_limit),
+                        "max_height": int(max_height),
+                        "chunk_size_mb": int(chunk_size_mb),
+                        "truncate_seconds": 0,
+                    },
+                )
+            except Exception as exc:  # noqa: BLE001
+                st.error(f"模式 B 元数据抓取失败：{exc}")
+            else:
+                st.success(f"模式 B 元数据后台任务已启动：`{display_path(task_dir, APP_DIR)}`")
 
 with tab_db:
     st.subheader("BigQuery / GCS 数据查看")

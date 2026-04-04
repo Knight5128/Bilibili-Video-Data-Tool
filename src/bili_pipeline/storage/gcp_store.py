@@ -681,6 +681,89 @@ class BigQueryCrawlerStore:
         )
         return [dict(row.items()) for row in rows]
 
+    def export_manual_meta_waitlist_rows(self) -> list[dict[str, Any]]:
+        rows = self._query(
+            f"""
+            WITH candidate_bvids AS (
+                SELECT bvid, TRUE AS has_stat_snapshot, FALSE AS has_comment_snapshot
+                FROM `{self._table_id('video_stat_snapshots')}`
+                UNION ALL
+                SELECT bvid, FALSE AS has_stat_snapshot, TRUE AS has_comment_snapshot
+                FROM `{self._table_id('topn_comment_snapshots')}`
+            ),
+            candidate_rollup AS (
+                SELECT
+                    bvid,
+                    LOGICAL_OR(has_stat_snapshot) AS has_stat_snapshot,
+                    LOGICAL_OR(has_comment_snapshot) AS has_comment_snapshot
+                FROM candidate_bvids
+                GROUP BY bvid
+            )
+            SELECT
+                candidate_rollup.bvid,
+                candidate_rollup.has_stat_snapshot,
+                candidate_rollup.has_comment_snapshot
+            FROM candidate_rollup
+            LEFT JOIN `{self._table_id('videos')}` AS videos
+            ON videos.bvid = candidate_rollup.bvid
+            WHERE videos.bvid IS NULL
+            ORDER BY candidate_rollup.bvid
+            """
+        )
+        return [dict(row.items()) for row in rows]
+
+    def fetch_completed_media_bvids(self, bvids: list[str]) -> set[str]:
+        normalized_bvids = [str(bvid).strip() for bvid in bvids if str(bvid).strip()]
+        if not normalized_bvids:
+            return set()
+        unique_bvids = list(dict.fromkeys(normalized_bvids))
+        rows = self._query(
+            f"""
+            WITH input_bvids AS (
+                SELECT bvid
+                FROM UNNEST(@bvids) AS bvid
+            ),
+            completed_bvids AS (
+                SELECT DISTINCT input_bvids.bvid
+                FROM input_bvids
+                INNER JOIN (
+                    SELECT bvid
+                    FROM `{self._table_id('assets')}`
+                    WHERE asset_type = 'video' OR asset_type = 'audio'
+                    GROUP BY bvid
+                    HAVING COUNT(DISTINCT asset_type) = 2
+                ) AS ready_assets
+                ON ready_assets.bvid = input_bvids.bvid
+            )
+            SELECT bvid
+            FROM completed_bvids
+            ORDER BY bvid
+            """,
+            parameters={"bvids": unique_bvids},
+        )
+        return {str(row["bvid"]) for row in rows}
+
+    def fetch_completed_metadata_bvids(self, bvids: list[str]) -> set[str]:
+        normalized_bvids = [str(bvid).strip() for bvid in bvids if str(bvid).strip()]
+        if not normalized_bvids:
+            return set()
+        unique_bvids = list(dict.fromkeys(normalized_bvids))
+        rows = self._query(
+            f"""
+            WITH input_bvids AS (
+                SELECT bvid
+                FROM UNNEST(@bvids) AS bvid
+            )
+            SELECT DISTINCT input_bvids.bvid AS bvid
+            FROM input_bvids
+            INNER JOIN `{self._table_id('videos')}` AS videos
+            ON videos.bvid = input_bvids.bvid
+            ORDER BY bvid
+            """,
+            parameters={"bvids": unique_bvids},
+        )
+        return {str(row["bvid"]) for row in rows}
+
     def fetch_completed_media_metadata_bvids(self, bvids: list[str]) -> set[str]:
         normalized_bvids = [str(bvid).strip() for bvid in bvids if str(bvid).strip()]
         if not normalized_bvids:
