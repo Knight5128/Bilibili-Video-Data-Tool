@@ -1,0 +1,107 @@
+[TIMESTAMP][BEGIN] 2026-04-05T12:30:49
+[INFO]: 已创建新的 uid_expansion 会话目录：outputs/video_pool/uid_expansions/uid_expansion_20260325_20260405_123049（start_date=2026-03-25，task_started_at=2026-04-05T12:30:49）。
+[INFO]: 历史任务增量检查完成：509 个作者命中过往 original_uids，0 个作者按全局 start_date 抓取；命中历史的作者将从其最近一次任务开始日（含当天）继续抓取。
+[INFO]: 开始处理第 1/26 批作者，共 20 个。
+[WARN]: 作者 546195 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[WARN]: 作者 3670216 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 1/26 批完成，新增 21 条视频，累计 21 条。
+[WARN]: 本批有 2 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 2/26 批作者，共 20 个。
+[WARN]: 作者 21837784 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[WARN]: 作者 99157282 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[WARN]: 作者 280793434 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 2/26 批完成，新增 20 条视频，累计 41 条。
+[WARN]: 本批有 3 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 3/26 批作者，共 20 个。
+[WARN]: 作者 3913194 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[WARN]: 作者 36081646 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[WARN]: 作者 321422126 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 3/26 批完成，新增 8 条视频，累计 49 条。
+[WARN]: 本批有 3 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 4/26 批作者，共 20 个。
+[INFO]: 第 4/26 批完成，新增 4 条视频，累计 53 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 5/26 批作者，共 20 个。
+[INFO]: 第 5/26 批完成，新增 3 条视频，累计 56 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 6/26 批作者，共 20 个。
+[INFO]: 第 6/26 批完成，新增 15 条视频，累计 71 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 7/26 批作者，共 20 个。
+[INFO]: 第 7/26 批完成，新增 8 条视频，累计 79 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 8/26 批作者，共 20 个。
+[INFO]: 第 8/26 批完成，新增 9 条视频，累计 88 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 9/26 批作者，共 20 个。
+[INFO]: 第 9/26 批完成，新增 25 条视频，累计 113 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 10/26 批作者，共 20 个。
+[WARN]: 作者 452606628 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 10/26 批完成，新增 55 条视频，累计 168 条。
+[WARN]: 本批有 1 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 11/26 批作者，共 20 个。
+[WARN]: 作者 1954997940 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 11/26 批完成，新增 23 条视频，累计 191 条。
+[WARN]: 本批有 1 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 12/26 批作者，共 20 个。
+[INFO]: 第 12/26 批完成，新增 11 条视频，累计 202 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 13/26 批作者，共 20 个。
+[INFO]: 第 13/26 批完成，新增 23 条视频，累计 225 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 14/26 批作者，共 20 个。
+[INFO]: 第 14/26 批完成，新增 21 条视频，累计 246 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 15/26 批作者，共 20 个。
+[INFO]: 第 15/26 批完成，新增 21 条视频，累计 267 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 16/26 批作者，共 20 个。
+[WARN]: 作者 3461567211375310 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 16/26 批完成，新增 22 条视频，累计 289 条。
+[WARN]: 本批有 1 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 17/26 批作者，共 20 个。
+[WARN]: 作者 32289484 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 17/26 批完成，新增 45 条视频，累计 334 条。
+[WARN]: 本批有 1 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 18/26 批作者，共 20 个。
+[WARN]: 作者 1658720232 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 18/26 批完成，新增 8 条视频，累计 342 条。
+[WARN]: 本批有 1 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 19/26 批作者，共 20 个。
+[WARN]: 作者 3690985898904189 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 19/26 批完成，新增 60 条视频，累计 402 条。
+[WARN]: 本批有 1 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 20/26 批作者，共 20 个。
+[INFO]: 第 20/26 批完成，新增 33 条视频，累计 435 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 21/26 批作者，共 20 个。
+[INFO]: 第 21/26 批完成，新增 27 条视频，累计 462 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 22/26 批作者，共 20 个。
+[WARN]: 作者 4677567 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 22/26 批完成，新增 3 条视频，累计 465 条。
+[WARN]: 本批有 1 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 23/26 批作者，共 20 个。
+[INFO]: 第 23/26 批完成，新增 23 条视频，累计 488 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 24/26 批作者，共 20 个。
+[INFO]: 第 24/26 批完成，新增 28 条视频，累计 516 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 25/26 批作者，共 20 个。
+[INFO]: 第 25/26 批完成，新增 23 条视频，累计 539 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 26/26 批作者，共 9 个。
+[INFO]: 第 26/26 批完成，新增 8 条视频，累计 547 条。
+[INFO]: 全局 videolist 去重检查完成：历史任务中已有 4446 个唯一 bvid，本次过滤掉 188 条重复视频。
+[TIMESTAMP][END] 2026-04-05T14:35:24

@@ -1,0 +1,2 @@
+﻿bvid,board_rid,board_name,board_rank,source_type,source_ref,discovered_at,last_seen_at,owner_mid,tid,pubdate,duration_seconds,seed_score,source_refs,source_csv_path,source_group,_source_priority
+BV1Gj9wBZE85,1003.0,音乐,68.0,rankboard,rankboard:rid=1003:rank=68,2026-04-05T08:03:39.447859+00:00,,9666167,130,2026-04-02T16:15:36+00:00,224,240190.0,"rankboard:rid=1003:rank=68,https://www.bilibili.com/v/popular/rank/music",full_site_floorings/rankboard-20260405_160330.csv,full_site_floorings,1000

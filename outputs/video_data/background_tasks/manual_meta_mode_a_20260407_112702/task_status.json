@@ -1,0 +1,9 @@
+{
+  "status": "running",
+  "task_kind": "manual_meta_mode_a",
+  "scope": "manual_media",
+  "task_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\background_tasks\\manual_meta_mode_a_20260407_112702",
+  "pid": 23496,
+  "started_at": "2026-04-07T11:27:10.201615",
+  "last_progress_at": "2026-04-07T22:23:44.578056"
+}

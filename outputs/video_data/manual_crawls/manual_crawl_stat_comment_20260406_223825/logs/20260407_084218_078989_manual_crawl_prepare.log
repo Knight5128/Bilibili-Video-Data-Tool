@@ -1,0 +1,9 @@
+[TIMESTAMP][BEGIN] 2026-04-07T08:42:18
+[2026-04-06 22:38:25] [INFO] 本轮将使用用户显式选择的视频列表来源：full_site_floorings=14 个，uid_expansion 任务目录=6 个。
+[2026-04-06 22:38:25] [INFO] 已发现 26 个可用于手动批量抓取的视频列表 CSV。
+[2026-04-06 22:38:38] [INFO] 去重后共得到 9098 个唯一 bvid 候选。
+[2026-04-06 22:38:38] [INFO] 发布时间窗口筛选完成：保留 5141 条，缺少 pubdate 跳过 0 条，超出窗口跳过 3957 条。
+[2026-04-06 22:38:39] [INFO] 已保存筛选后的视频列表：D:/Schoolworks/Thesis/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260406_223825/filtered_video_list.csv
+[2026-04-06 22:38:39] [INFO] 开始执行手动批量抓取（仅实时互动量 / 评论数据）。
+[2026-04-07 08:42:18] [INFO] 手动批量抓取结束：成功 41 条，失败 0 条，剩余 0 条。
+[TIMESTAMP][END] 2026-04-07T08:42:18

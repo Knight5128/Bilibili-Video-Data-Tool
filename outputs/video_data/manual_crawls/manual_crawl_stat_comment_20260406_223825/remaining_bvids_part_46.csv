@@ -1,0 +1,2 @@
+﻿bvid,board_rid,board_name,board_rank,source_type,source_ref,discovered_at,last_seen_at,owner_mid,tid,pubdate,duration_seconds,seed_score,source_refs,source_csv_path,source_group,_source_priority
+BV12SX6BdEWB,0.0,全站,65.0,rankboard,rankboard:rid=0:rank=65,2026-04-03T07:24:22.128577+00:00,,3546578478434839,201,2026-03-31T11:52:58+00:00,371,1845256.0,"rankboard:rid=0:rank=65,https://www.bilibili.com/v/popular/rank/all",full_site_floorings/rankboard-20260403_152422.csv,full_site_floorings,1006

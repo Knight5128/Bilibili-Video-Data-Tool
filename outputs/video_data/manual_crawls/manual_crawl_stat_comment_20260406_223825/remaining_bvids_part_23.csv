@@ -1,0 +1,3 @@
+﻿bvid,board_rid,board_name,board_rank,source_type,source_ref,discovered_at,last_seen_at,owner_mid,tid,pubdate,duration_seconds,seed_score,source_refs,source_csv_path,source_group,_source_priority
+BV1bQ9TBuEo9,1005.0,动画,93.0,rankboard,rankboard:rid=1005:rank=93,2026-04-05T08:03:32.175702+00:00,,411619724,253,2026-04-03T05:29:02+00:00,455,320969.0,"rankboard:rid=1005:rank=93,https://www.bilibili.com/v/popular/rank/douga",full_site_floorings/rankboard-20260405_160330.csv,full_site_floorings,1002
+BV1Dm9NBPETK,,,,author_expand,owner:1585080231,2026-04-03T06:41:34.608885+00:00,2026-04-03T06:41:34.608885+00:00,1585080231,183,2026-04-03T04:30:00+00:00,194,505.0,owner:1585080231,uid_expansions/uid_expansion_20260325_20260403_124149/videolist_part_1.csv,uid_expansions,0

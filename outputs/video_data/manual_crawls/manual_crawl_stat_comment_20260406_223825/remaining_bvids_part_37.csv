@@ -1,0 +1,3 @@
+﻿bvid,board_rid,board_name,board_rank,source_type,source_ref,discovered_at,last_seen_at,owner_mid,tid,pubdate,duration_seconds,seed_score,source_refs,source_csv_path,source_group,_source_priority
+BV1K59jB4EEu,,,,author_expand,owner:3691009749813915,2026-04-01T13:33:26.416919+00:00,2026-04-01T13:33:26.416919+00:00,3691009749813915,27,2026-04-01T10:57:21+00:00,41221,1384.0,owner:3691009749813915,uid_expansions/uid_expansion_20260325_20260401_195846/videolist_part_1.csv,uid_expansions,0
+BV1sL9jBRES3,,,,hot,hot:pn=12:ps=20,2026-04-05T08:00:17.057955+00:00,2026-04-05T08:00:17.057955+00:00,3546587896744307,254,2026-04-01T10:45:44+00:00,102,6112098.0,hot:pn=12:ps=20,full_site_floorings/daily_hot-20260405_160017.csv,full_site_floorings,1003
