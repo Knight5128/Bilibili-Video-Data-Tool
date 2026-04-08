@@ -1,0 +1,18 @@
+{
+  "status": "failed",
+  "task_kind": "manual_media_mode_a",
+  "scope": "manual_media",
+  "task_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\background_tasks\\manual_media_mode_a_20260408_214819",
+  "pid": 43440,
+  "started_at": "2026-04-08T21:48:23.323258",
+  "last_progress_at": "2026-04-08T22:02:52.283407",
+  "stop_requested": true,
+  "stop_requested_at": "2026-04-08T21:58:14.733798",
+  "stop_requested_reason": "用户在 DataHub 页面中请求停止任务。",
+  "finished_at": "2026-04-08T22:02:52.283407",
+  "error": {
+    "type": "TaskProcessMissing",
+    "message": "Background task process is no longer running; marking stale task as failed."
+  },
+  "stale": true
+}

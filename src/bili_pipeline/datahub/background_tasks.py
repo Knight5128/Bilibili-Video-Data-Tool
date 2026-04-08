@@ -107,6 +107,11 @@ def load_background_task_stop_request(task_dir: Path | str) -> dict[str, Any]:
     return json.loads(target.read_text(encoding="utf-8"))
 
 
+def background_task_status_is_active(status: Any | None) -> bool:
+    normalized = str(status or "").strip().lower()
+    return normalized in {"queued", "running", "stopping"}
+
+
 def background_task_stop_requested(task_dir: Path | str) -> bool:
     payload = load_background_task_stop_request(task_dir)
     return bool(payload.get("stop_requested"))
@@ -558,7 +563,7 @@ def load_registered_background_task_status(
         and str((status_payload.get("error") or {}).get("type") or "").strip() in {"TaskProcessMissing", "UncleanWorkerExit"}
     )
     if (
-        (status in {"queued", "running"} or stale_recoverable_failure)
+        (background_task_status_is_active(status) or stale_recoverable_failure)
         and not is_background_task_process_running(pid)
         and _background_task_maybe_stale(status_payload)
     ):
@@ -597,7 +602,7 @@ def background_task_is_running(scope: str, *, registry_root: Path | str | None =
     if not status_payload:
         return False
     status = status_payload.get("status")
-    return status in {"queued", "running"}
+    return background_task_status_is_active(status)
 
 
 def clear_active_background_task(scope: str, *, registry_root: Path | str | None = None, task_dir: Path | str | None = None) -> None:

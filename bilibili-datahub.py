@@ -55,6 +55,7 @@ from bili_pipeline.datahub.background_tasks import (
     DEFAULT_BACKGROUND_TASKS_ROOT,
     DEFAULT_COOKIE_PATH,
     background_task_is_running,
+    background_task_status_is_active,
     create_background_task_dir,
     launch_background_worker,
     load_cookie_text,
@@ -492,11 +493,16 @@ def _render_background_task_status(scope: str, title: str) -> None:
                 stop_reason = "用户在 DataHub 页面中请求停止任务。"
                 request_background_task_stop(task_dir, reason=stop_reason)
                 next_status = dict(status_payload)
+                next_status["status"] = "stopping"
                 next_status["stop_requested"] = True
                 next_status["stop_requested_at"] = datetime.now().isoformat()
                 next_status["stop_requested_reason"] = stop_reason
                 update_background_task_status(task_dir, next_status)
                 st.success("已发送停止请求，后台任务会在当前安全检查点尽快停止。")
+        elif running_status == "stopping" or (
+            background_task_status_is_active(running_status) and bool(status_payload.get("stop_requested"))
+        ):
+            st.info("停止请求已发出，后台任务正在收尾；状态会在安全退出后更新为 `stopped`。")
     else:
         st.caption("任务状态文件尚未生成。")
 

@@ -1,0 +1,14 @@
+{
+  "status": "failed",
+  "task_kind": "manual_media_mode_a",
+  "scope": "manual_media",
+  "task_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\background_tasks\\manual_media_mode_a_20260408_212443",
+  "pid": 20648,
+  "started_at": "2026-04-08T21:24:46.852001",
+  "last_progress_at": "2026-04-08T21:24:50.898521",
+  "finished_at": "2026-04-08T21:24:50.898521",
+  "error": {
+    "type": "KeyError",
+    "message": "'enable_sleep_resume'"
+  }
+}

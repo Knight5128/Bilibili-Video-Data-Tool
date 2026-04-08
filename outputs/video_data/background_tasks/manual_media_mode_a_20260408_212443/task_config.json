@@ -1,0 +1,25 @@
+{
+  "scope": "manual_media",
+  "task_kind": "manual_media_mode_a",
+  "task_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\background_tasks\\manual_media_mode_a_20260408_212443",
+  "gcp_payload": {
+    "gcp_project_id": "bilibili-m2s2vp-research",
+    "bigquery_dataset": "bili_video_stream_data_test_2",
+    "gcs_bucket_name": "bilibili-media-bucket-test",
+    "gcp_region": "asia-east1",
+    "credentials_path": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\.local\\bili-datahub-sa.json",
+    "gcs_object_prefix": "bilibili-media",
+    "gcs_public_base_url": "https://storage.googleapis.com/bilibili-media-bucket-test"
+  },
+  "cookie_path": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\.local\\bilibili-datahub.cookie.txt",
+  "cookie_refresh_batch_size": 100,
+  "payload": {
+    "manual_crawls_root_dir": "outputs\\video_data\\manual_crawls",
+    "parallelism": 1,
+    "comment_limit": 10,
+    "consecutive_failure_limit": 10,
+    "max_height": 1080,
+    "chunk_size_mb": 4,
+    "truncate_seconds": 30
+  }
+}

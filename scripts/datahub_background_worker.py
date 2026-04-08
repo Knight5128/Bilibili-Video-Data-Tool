@@ -17,6 +17,7 @@ if str(SRC_DIR) not in sys.path:
 
 from bili_pipeline.datahub.background_tasks import (  # noqa: E402
     background_task_stop_requested,
+    background_task_status_is_active,
     finalize_background_task_status,
     load_background_task_config,
     load_background_task_stop_request,
@@ -59,7 +60,7 @@ def _heartbeat_background_task(task_dir: Path, *, scope: str, task_kind: str | N
     while not stop_event.wait(15):
         status_payload = load_background_task_status(task_dir)
         status = str(status_payload.get("status") or "").strip().lower()
-        if status not in {"queued", "running"}:
+        if not background_task_status_is_active(status):
             return
         heartbeat_at = _now()
         next_payload = dict(status_payload)
@@ -129,8 +130,8 @@ def _run_task(task_dir: Path, config: dict) -> dict:
             store=store,
             gcp_config=gcp_config,
             manual_crawls_root_dir=payload["manual_crawls_root_dir"],
-            enable_sleep_resume=bool(payload["enable_sleep_resume"]),
-            sleep_minutes=int(payload["sleep_minutes"]),
+            enable_sleep_resume=bool(payload.get("enable_sleep_resume", False)),
+            sleep_minutes=int(payload.get("sleep_minutes", 5)),
             parallelism=int(payload["parallelism"]),
             comment_limit=int(payload["comment_limit"]),
             consecutive_failure_limit=int(payload["consecutive_failure_limit"]),
@@ -171,8 +172,8 @@ def _run_task(task_dir: Path, config: dict) -> dict:
             store=store,
             gcp_config=gcp_config,
             manual_crawls_root_dir=payload["manual_crawls_root_dir"],
-            enable_sleep_resume=bool(payload["enable_sleep_resume"]),
-            sleep_minutes=int(payload["sleep_minutes"]),
+            enable_sleep_resume=bool(payload.get("enable_sleep_resume", False)),
+            sleep_minutes=int(payload.get("sleep_minutes", 5)),
             parallelism=int(payload["parallelism"]),
             comment_limit=int(payload["comment_limit"]),
             consecutive_failure_limit=int(payload["consecutive_failure_limit"]),
@@ -281,7 +282,7 @@ def main() -> int:
         heartbeat_stop_event.set()
         heartbeat_thread.join(timeout=1)
         current_status = str(load_background_task_status(task_dir).get("status") or "").strip().lower()
-        if current_status in {"queued", "running"}:
+        if background_task_status_is_active(current_status):
             finalize_background_task_status(
                 task_dir,
                 scope=scope,

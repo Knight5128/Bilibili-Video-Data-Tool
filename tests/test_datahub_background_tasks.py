@@ -64,6 +64,7 @@ _install_google_stubs()
 from bili_pipeline.datahub.background_tasks import (
     BACKGROUND_TASK_MISSING_PROCESS_GRACE_SECONDS,
     background_task_stop_requested,
+    background_task_status_is_active,
     background_task_is_running,
     create_background_task_dir,
     finalize_background_task_status,
@@ -119,6 +120,12 @@ class DataHubBackgroundTasksTest(unittest.TestCase):
             payload = load_background_task_stop_request(task_dir)
             self.assertEqual("stop now", payload["reason"])
             self.assertTrue(payload["stop_requested"])
+
+    def test_background_task_status_is_active_treats_stopping_as_active(self) -> None:
+        self.assertTrue(background_task_status_is_active("queued"))
+        self.assertTrue(background_task_status_is_active("running"))
+        self.assertTrue(background_task_status_is_active("stopping"))
+        self.assertFalse(background_task_status_is_active("stopped"))
 
     def test_register_active_background_task_writes_registry(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -231,6 +238,45 @@ class DataHubBackgroundTasksTest(unittest.TestCase):
             self.assertEqual("running", status_payload["status"])
             self.assertEqual(recent_heartbeat, status_payload["last_progress_at"])
             self.assertNotIn("stale", status_payload)
+
+    @patch("bili_pipeline.datahub.background_tasks.is_background_task_process_running", return_value=False)
+    def test_load_registered_background_task_status_keeps_recent_stopping_heartbeat_active(self, _mock_running) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            task_dir = create_background_task_dir(
+                "manual_media_mode_a",
+                root_dir=root,
+                started_at=datetime(2026, 4, 1, 12, 0, 0),
+            )
+            register_active_background_task(
+                "manual_media",
+                task_dir=task_dir,
+                registry_root=root,
+                pid=22288,
+            )
+            recent_heartbeat = (datetime.now() - timedelta(seconds=15)).isoformat()
+            update_background_task_status(
+                task_dir,
+                {
+                    "status": "stopping",
+                    "scope": "manual_media",
+                    "task_kind": "manual_media_mode_a",
+                    "task_dir": str(task_dir),
+                    "pid": 22288,
+                    "started_at": "2026-04-01T12:00:00",
+                    "last_progress_at": recent_heartbeat,
+                    "stop_requested": True,
+                },
+            )
+
+            _, status_payload = load_registered_background_task_status(
+                "manual_media",
+                registry_root=root,
+            )
+
+            self.assertEqual("stopping", status_payload["status"])
+            self.assertEqual(recent_heartbeat, status_payload["last_progress_at"])
+            self.assertTrue(background_task_is_running("manual_media", registry_root=root))
 
     @patch("bili_pipeline.datahub.background_tasks.is_background_task_process_running", return_value=False)
     def test_load_registered_background_task_status_marks_missing_process_failed_after_grace_period(self, _mock_running) -> None:
