@@ -1,0 +1,26 @@
+[TIMESTAMP][BEGIN] 2026-04-11T12:42:47
+[2026-04-11 12:42:49] 开始执行 CSV 批量抓取子任务 part_56。
+[2026-04-11 12:42:49] 子任务开始时间：2026-04-11T12:42:47.752522
+[2026-04-11 12:42:49] 输入文件：batch_input_56.csv
+[2026-04-11 12:42:49] 输入唯一 bvid 数量：14
+[2026-04-11 12:42:49] 为严格按 CSV 顺序判断连续失败阈值，本次任务自动将并发度从 2 调整为 1。
+[2026-04-11 12:42:55] [SUCCESS] bvid=BV1zFDPBiEDd 已成功抓取全部所需数据。
+[2026-04-11 12:43:00] [SUCCESS] bvid=BV16FDPBiE7Q 已成功抓取全部所需数据。
+[2026-04-11 12:43:06] [SUCCESS] bvid=BV1zFDPBiEMV 已成功抓取全部所需数据。
+[2026-04-11 12:43:11] [SUCCESS] bvid=BV16FDPBiEHw 已成功抓取全部所需数据。
+[2026-04-11 12:43:17] [SUCCESS] bvid=BV1fv9uBZEaG 已成功抓取全部所需数据。
+[2026-04-11 12:43:22] [SUCCESS] bvid=BV16wDPBNEAx 已成功抓取全部所需数据。
+[2026-04-11 12:43:27] [SUCCESS] bvid=BV1JwDPBKEtC 已成功抓取全部所需数据。
+[2026-04-11 12:43:33] [SUCCESS] bvid=BV1BwDPBNEJg 已成功抓取全部所需数据。
+[2026-04-11 12:43:38] [SUCCESS] bvid=BV1BwDPBNEk8 已成功抓取全部所需数据。
+[2026-04-11 12:43:44] [SUCCESS] bvid=BV11DDABkEPF 已成功抓取全部所需数据。
+[2026-04-11 12:43:44] [ERROR] bvid=BV12yDAB2EVb 抓取失败：stat: 接口返回错误代码：62002，信息：稿件不可见。
+{'code': 62002, 'message': '稿件不可见', 'ttl': 1} | comment: 接口返回错误代码：62002，信息：稿件不可见。
+{'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[2026-04-11 12:43:50] [SUCCESS] bvid=BV1k89uBwEuQ 已成功抓取全部所需数据。
+[2026-04-11 12:43:56] [SUCCESS] bvid=BV1Cs9uBvEed 已成功抓取全部所需数据。
+[2026-04-11 12:44:01] [SUCCESS] bvid=BV1pu9gBvEvc 已成功抓取全部所需数据。
+[2026-04-11 12:44:01] [WARN] 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+[2026-04-11 12:44:01] [INFO] 已导出剔除成功条目后的剩余 CSV：D:\Schoolworks\Thesis\Bilibili-Datahub\outputs\video_data\manual_crawls\manual_crawl_stat_comment_20260411_022942\remaining_bvids_part_56.csv
+[2026-04-11 12:44:01] 子任务结束时间：2026-04-11T12:44:01.561883
+[TIMESTAMP][END] 2026-04-11T12:44:01

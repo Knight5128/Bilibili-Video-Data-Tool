@@ -1,0 +1,1342 @@
+{
+  "status": "partial",
+  "mode": "A",
+  "crawl_target": "meta",
+  "session_dir": "outputs/video_data/manual_crawls/manual_crawl_meta_mode_A_20260411_201600",
+  "state_path": "outputs/video_data/manual_crawls/manual_crawl_meta_mode_A_20260411_201600/manual_crawl_media_state.json",
+  "input_bvid_count": 400,
+  "submitted_bvid_count": 400,
+  "skipped_completed_count": 0,
+  "deduplicated_bvid_count": 0,
+  "filtered_csv_path": "outputs/video_data/manual_crawls/manual_crawl_meta_mode_A_20260411_201600/manual_crawl_media_mode_A_input.csv",
+  "deduplicated_csv_path": null,
+  "waitlist_path": "outputs/video_data/manual_crawls/manual_crawl_meta_waitlist_bili_video_stream_data_test_2.csv",
+  "task_count": 4,
+  "sleep_count": 0,
+  "cookie_refresh_count": 4,
+  "stop_category": "other",
+  "stop_reason": "检测到连续 10 条视频抓取失败，已按阈值 10 暂停当前 CSV 批量抓取流程。",
+  "wrapper_log_paths": [
+    "outputs/video_data/manual_crawls/manual_crawl_meta_mode_A_20260411_201600/logs/20260411_201714_514182_manual_meta_mode_A.log"
+  ],
+  "crawl_reports": [
+    {
+      "run_id": "c8da39a1d0934981afcd093372fa2f83",
+      "total_bvids": 100,
+      "processed_count": 17,
+      "success_count": 1,
+      "failed_count": 16,
+      "remaining_count": 99,
+      "started_at": "2026-04-11T20:16:00.133404",
+      "finished_at": "2026-04-11T20:16:27.669251",
+      "task_mode": "meta_only",
+      "part_number": 1,
+      "effective_parallelism": 1,
+      "consecutive_failure_limit": 10,
+      "stopped_due_to_consecutive_failures": true,
+      "completed_all": false,
+      "stop_reason": "检测到连续 10 条视频抓取失败，已按阈值 10 暂停当前 CSV 批量抓取流程。",
+      "session_dir": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600",
+      "logs_dir": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600\\logs",
+      "remaining_csv_path": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600\\remaining_bvids_part_1.csv",
+      "task_log_path": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600\\logs\\batch_crawl_part_1_20260411_201627.log",
+      "session_state_path": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600\\batch_crawl_state.json",
+      "session_summary_log_path": null,
+      "successful_bvids": [
+        "BV12SX6BdEWB"
+      ],
+      "failed_bvids": [
+        "BV11DXbBxENF",
+        "BV11PXPBDEgb",
+        "BV11VDjBLEto",
+        "BV11bXNBpEhM",
+        "BV11pSDBVEUA",
+        "BV1239NBZEN3",
+        "BV12WXjBxEm9",
+        "BV12e9LBXELR",
+        "BV12pDsB3E2x",
+        "BV12yDAB2EVb",
+        "BV135XjBYEUe",
+        "BV13DXGBHEy6",
+        "BV13RX5B4E1W",
+        "BV13mXGBWEX8",
+        "BV13tX1BjEtc",
+        "BV13zXMBVEor"
+      ],
+      "per_bvid_summaries": [
+        {
+          "bvid": "BV11DXbBxENF",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:08.385407",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV11PXPBDEgb",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:09.134134",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV11VDjBLEto",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:09.761497",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV11bXNBpEhM",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:10.379578",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV11pSDBVEUA",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:10.973315",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：-404，信息：啥都木有。\n{'code': -404, 'message': '啥都木有', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1239NBZEN3",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:11.525903",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV12SX6BdEWB",
+          "meta_ok": true,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:21.526903",
+          "task_mode": "meta_only",
+          "errors": [],
+          "meta_result": {
+            "bvid": "BV12SX6BdEWB",
+            "aid": 116323636084836,
+            "title": "直肠异物",
+            "desc": "-",
+            "pic": "http://i2.hdslb.com/bfs/archive/4f67f2d7aa5a86e2ed7289e7e44d0d8142cd7e2c.jpg",
+            "dynamic": "",
+            "tags": [
+              "发现《夏日美梦（纯音乐）》",
+              "健康",
+              "科普",
+              "生命"
+            ],
+            "tag_details": [
+              {
+                "tag_id": 0,
+                "tag_name": "发现《夏日美梦（纯音乐）》",
+                "music_id": "MA418064724232508340",
+                "tag_type": "bgm",
+                "jump_url": "https://music.bilibili.com/h5/music-detail?music_id=MA418064724232508340&cid=37417846634&aid=116323636084836&na_close_hide=1"
+              },
+              {
+                "tag_id": 37242,
+                "tag_name": "健康",
+                "music_id": "",
+                "tag_type": "old_channel",
+                "jump_url": ""
+              },
+              {
+                "tag_id": 5417,
+                "tag_name": "科普",
+                "music_id": "",
+                "tag_type": "old_channel",
+                "jump_url": ""
+              },
+              {
+                "tag_id": 3546,
+                "tag_name": "生命",
+                "music_id": "",
+                "tag_type": "old_channel",
+                "jump_url": ""
+              }
+            ],
+            "videos": 1,
+            "tid": 201,
+            "tid_v2": 2179,
+            "tname": "",
+            "tname_v2": "",
+            "copyright": 1,
+            "owner_mid": 3546578478434839,
+            "owner_name": "卢高峰医师",
+            "owner_face": "https://i1.hdslb.com/bfs/face/99cc8a30bf42bf7068b3197c7047ede0e9750bb2.jpg",
+            "owner_sign": "女人不是天生的，而是被塑造的…",
+            "owner_gender": "保密",
+            "owner_level": 6,
+            "owner_verified": true,
+            "owner_verified_title": "bilibili 知名科普UP主",
+            "owner_vip_type": 1,
+            "owner_follower_count": 660698,
+            "owner_following_count": 140,
+            "owner_video_count": 408,
+            "is_activity_participant": true,
+            "duration": 119,
+            "state": 0,
+            "pubdate": "2026-03-31T19:52:58",
+            "cid": 37417846634,
+            "resolution_width": 1080,
+            "resolution_height": 1906,
+            "resolution_rotate": 0,
+            "is_story": true,
+            "is_interactive_video": false,
+            "is_downloadable": true,
+            "is_reprint_allowed": false,
+            "is_collaboration": false,
+            "is_360": false,
+            "is_paid_video": false,
+            "pages_info": [
+              {
+                "cid": 37417846634,
+                "page": 1,
+                "from": "vupload",
+                "part": "lv_0_20260331194716",
+                "duration": 119,
+                "vid": "",
+                "weblink": "",
+                "dimension": {
+                  "width": 1080,
+                  "height": 1906,
+                  "rotate": 0
+                },
+                "first_frame": "http://i1.hdslb.com/bfs/storyff/_00002wtey7d1s3id32j08dnrbke7b3b_firsti.jpg",
+                "ctime": 1775900937
+              }
+            ],
+            "rights": {
+              "bp": 0,
+              "elec": 0,
+              "download": 1,
+              "movie": 0,
+              "pay": 0,
+              "hd5": 1,
+              "no_reprint": 1,
+              "autoplay": 1,
+              "ugc_pay": 0,
+              "is_cooperation": 0,
+              "ugc_pay_preview": 0,
+              "no_background": 0,
+              "clean_mode": 0,
+              "is_stein_gate": 0,
+              "is_360": 0,
+              "no_share": 0,
+              "arc_pay": 0,
+              "free_watch": 0
+            },
+            "subtitle": {
+              "allow_submit": false,
+              "list": [
+                {
+                  "id": 1994395598941599232,
+                  "lan": "ai-zh",
+                  "lan_doc": "中文",
+                  "is_lock": false,
+                  "subtitle_url": "",
+                  "type": 1,
+                  "id_str": "1994395598941599232",
+                  "ai_type": 0,
+                  "ai_status": 2,
+                  "subtitle_height": null,
+                  "author": {
+                    "mid": 0,
+                    "name": "",
+                    "sex": "",
+                    "face": "",
+                    "sign": "",
+                    "rank": 0,
+                    "birthday": 0,
+                    "is_fake_account": 0,
+                    "is_deleted": 0,
+                    "in_reg_audit": 0,
+                    "is_senior_member": 0,
+                    "name_render": null,
+                    "handle": ""
+                  }
+                }
+              ]
+            },
+            "uploader_profile": {
+              "mid": 3546578478434839,
+              "name": "卢高峰医师",
+              "sex": "保密",
+              "face": "https://i1.hdslb.com/bfs/face/99cc8a30bf42bf7068b3197c7047ede0e9750bb2.jpg",
+              "face_nft": 0,
+              "face_nft_type": 0,
+              "sign": "女人不是天生的，而是被塑造的…",
+              "rank": 10000,
+              "level": 6,
+              "jointime": 0,
+              "moral": 0,
+              "silence": 0,
+              "control": 0,
+              "coins": 0,
+              "fans_badge": true,
+              "fans_medal": {
+                "show": false,
+                "wear": false,
+                "medal": null,
+                "detail": null
+              },
+              "official": {
+                "role": 1,
+                "title": "bilibili 知名科普UP主",
+                "desc": "",
+                "type": 0
+              },
+              "vip": {
+                "type": 1,
+                "status": 1,
+                "due_date": 1776096000000,
+                "vip_pay_type": 1,
+                "theme_type": 0,
+                "label": {
+                  "path": "http://i0.hdslb.com/bfs/vip/label_vip.png",
+                  "text": "大会员",
+                  "label_theme": "vip",
+                  "text_color": "#FFFFFF",
+                  "bg_style": 1,
+                  "bg_color": "#FB7299",
+                  "border_color": "",
+                  "use_img_label": true,
+                  "img_label_uri_hans": "",
+                  "img_label_uri_hant": "",
+                  "img_label_uri_hans_static": "https://i0.hdslb.com/bfs/vip/3788b674c69072f1ee252b79a31ecc8c43af3039.png",
+                  "img_label_uri_hant_static": "https://i0.hdslb.com/bfs/activity-plat/static/20220614/e369244d0b14644f5e1a06431e22a4d5/jwXBWRVwa5.png",
+                  "label_id": -22,
+                  "label_goto": {
+                    "mobile": "https://big.bilibili.com/mobile/index?navhide=1&from_spmid=vipicon",
+                    "pc_web": "https://account.bilibili.com/big?from_spmid=vipicon"
+                  }
+                },
+                "avatar_subscript": 1,
+                "nickname_color": "#FB7299",
+                "role": 1,
+                "avatar_subscript_url": "",
+                "tv_vip_status": 0,
+                "tv_vip_pay_type": 0,
+                "tv_due_date": 1736006400,
+                "avatar_icon": {
+                  "icon_type": 1,
+                  "icon_resource": {}
+                },
+                "ott_info": {
+                  "vip_type": 1,
+                  "pay_type": 0,
+                  "pay_channel_id": "wechat",
+                  "status": 0,
+                  "overdue_time": 1736006400
+                },
+                "super_vip": {
+                  "is_super_vip": false
+                }
+              },
+              "pendant": {
+                "pid": 0,
+                "name": "",
+                "image": "",
+                "expire": 0,
+                "image_enhance": "",
+                "image_enhance_frame": "",
+                "n_pid": 0
+              },
+              "nameplate": {
+                "nid": 0,
+                "name": "",
+                "image": "",
+                "image_small": "",
+                "level": "",
+                "condition": ""
+              },
+              "user_honour_info": {
+                "mid": 0,
+                "colour": null,
+                "tags": [],
+                "is_latest_100honour": 0
+              },
+              "is_followed": false,
+              "top_photo": "bfs/space/cb1c3ef50e22b6096fde67febe863494caefebad.png",
+              "sys_notice": {},
+              "live_room": {
+                "roomStatus": 1,
+                "liveStatus": 0,
+                "url": "https://live.bilibili.com/31363209?broadcast_type=0&is_room_feed=1",
+                "title": "两性公开课来啦",
+                "cover": "https://i0.hdslb.com/bfs/live/user_cover/9d6f319c8b02e997181135a4bdf1f4d2f8d8fa38.jpg",
+                "roomid": 31363209,
+                "roundStatus": 0,
+                "broadcast_type": 0,
+                "watched_show": {
+                  "switch": true,
+                  "num": 2,
+                  "text_small": "2",
+                  "text_large": "2人看过",
+                  "icon": "https://i0.hdslb.com/bfs/live/a725a9e61242ef44d764ac911691a7ce07f36c1d.png",
+                  "icon_location": "",
+                  "icon_web": "https://i0.hdslb.com/bfs/live/8d9d0f33ef8bf6f308742752d13dd0df731df19c.png"
+                }
+              },
+              "birthday": "01-01",
+              "school": {
+                "name": ""
+              },
+              "profession": {
+                "name": "医生",
+                "department": "泌尿外科医生",
+                "title": "河北省邯郸市二甲医院",
+                "is_show": 1
+              },
+              "tags": null,
+              "series": {
+                "user_upgrade_status": 3,
+                "show_upgrade_window": false
+              },
+              "is_senior_member": 0,
+              "mcn_info": null,
+              "gaia_res_type": 0,
+              "gaia_data": null,
+              "is_risk": false,
+              "elec": {
+                "show_info": {
+                  "show": true,
+                  "state": 3,
+                  "title": "充电",
+                  "icon": "https://i0.hdslb.com/bfs/garb/item/33e2e72d9a0c855f036b4cb55448f44af67a0635.png",
+                  "jump_url": "https://www.bilibili.com/h5/upower/index?mid=3546578478434839&navhide=1&oid=3546578478434839",
+                  "total": 28177,
+                  "list": [
+                    {
+                      "pay_mid": 25917019,
+                      "rank": 1,
+                      "avatar": "https://i1.hdslb.com/bfs/face/fe11a8b525cc14c178161b87a88f4beeb4f99213.jpg",
+                      "uname": "半岛铁盒paradise"
+                    },
+                    {
+                      "pay_mid": 260301131,
+                      "rank": 2,
+                      "avatar": "https://i0.hdslb.com/bfs/face/member/noface.jpg",
+                      "uname": "棉花云626"
+                    },
+                    {
+                      "pay_mid": 49846773,
+                      "rank": 3,
+                      "avatar": "http://i0.hdslb.com/bfs/face/member/noface.jpg",
+                      "uname": "mrlin99"
+                    },
+                    {
+                      "pay_mid": 1336814634,
+                      "rank": 4,
+                      "avatar": "https://i0.hdslb.com/bfs/face/member/noface.jpg",
+                      "uname": "金融投机"
+                    },
+                    {
+                      "pay_mid": 8112095,
+                      "rank": 5,
+                      "avatar": "https://i2.hdslb.com/bfs/face/2f4f9c09e895661f3a6e388bbec042bbe76fcfdb.jpg",
+                      "uname": "Aaa_麦恩莉"
+                    },
+                    {
+                      "pay_mid": 1401587450,
+                      "rank": 6,
+                      "avatar": "https://i2.hdslb.com/bfs/face/b1c150f1700b54e4cf333dc914813543b709870e.jpg",
+                      "uname": "懒猫猪八戒屎壳郎"
+                    },
+                    {
+                      "pay_mid": 496399077,
+                      "rank": 7,
+                      "avatar": "https://i0.hdslb.com/bfs/face/9631df8ad3fb98bf25ed177d40c93fa653a36663.jpg",
+                      "uname": "老师仁灬"
+                    },
+                    {
+                      "pay_mid": 474310996,
+                      "rank": 8,
+                      "avatar": "https://i1.hdslb.com/bfs/face/6f66a9286f499491fbb5bcf8ed5305fbb77a23db.jpg",
+                      "uname": "靑川远岫"
+                    }
+                  ],
+                  "upower_count_show": true,
+                  "long_title": "",
+                  "jump_url_web": "https://member.bilibili.com/mall/upower-pay?mid=3546578478434839"
+                }
+              },
+              "contract": {
+                "is_display": false,
+                "is_follow_display": false
+              },
+              "certificate_show": false,
+              "name_render": null,
+              "top_photo_v2": {
+                "sid": 1,
+                "l_img": "https://i2.hdslb.com/bfs/space/cb1c3ef50e22b6096fde67febe863494caefebad.png",
+                "l_200h_img": "https://i0.hdslb.com/bfs/activity-plat/static/0977767b2e79d8ad0a36a731068a83d7/1sz3p8w2Sk.png"
+              },
+              "theme": null,
+              "attestation": {
+                "type": 2,
+                "common_info": {
+                  "title": "bilibili 知名科普UP主",
+                  "prefix": "bilibili UP主认证",
+                  "prefix_title": "bilibili UP主认证：bilibili 知名科普UP主"
+                },
+                "splice_info": {
+                  "title": "bilibili 知名科普UP主"
+                },
+                "icon": "https://i0.hdslb.com/bfs/activity-plat/static/20230828/e3b8ebec8e86f060b930a2c0536bb88b/72wejSxl9Z.png",
+                "desc": ""
+              }
+            },
+            "uploader_relation": {
+              "mid": 3546578478434839,
+              "following": 140,
+              "whisper": 0,
+              "black": 0,
+              "follower": 660698,
+              "fans_medal_toast": null,
+              "fans_effect": null
+            },
+            "uploader_overview": {
+              "video": 408,
+              "bangumi": 0,
+              "cinema": 0,
+              "channel": {
+                "master": 1,
+                "guest": 1
+              },
+              "favourite": {
+                "master": 0,
+                "guest": 0
+              },
+              "tag": 0,
+              "article": 10,
+              "playlist": 0,
+              "album": 202,
+              "audio": 0,
+              "pugv": 0,
+              "season_num": 0,
+              "opus": 210
+            }
+          },
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV12WXjBxEm9",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:22.128424",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV12e9LBXELR",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:22.790907",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：-404，信息：啥都木有。\n{'code': -404, 'message': '啥都木有', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV12pDsB3E2x",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:23.329923",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62012，信息：62012。\n{'code': 62012, 'message': '62012', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV12yDAB2EVb",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:23.877215",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV135XjBYEUe",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:24.432704",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV13DXGBHEy6",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:24.963413",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV13RX5B4E1W",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:25.538552",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV13mXGBWEX8",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:26.129357",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV13tX1BjEtc",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:26.686728",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV13zXMBVEor",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:27.205548",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        }
+      ]
+    },
+    {
+      "run_id": "f6181008d55f410d8217cdd3fdf77675",
+      "total_bvids": 100,
+      "processed_count": 10,
+      "success_count": 0,
+      "failed_count": 10,
+      "remaining_count": 100,
+      "started_at": "2026-04-11T20:16:28.275159",
+      "finished_at": "2026-04-11T20:16:42.267880",
+      "task_mode": "meta_only",
+      "part_number": 2,
+      "effective_parallelism": 1,
+      "consecutive_failure_limit": 10,
+      "stopped_due_to_consecutive_failures": true,
+      "completed_all": false,
+      "stop_reason": "检测到连续 10 条视频抓取失败，已按阈值 10 暂停当前 CSV 批量抓取流程。",
+      "session_dir": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600",
+      "logs_dir": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600\\logs",
+      "remaining_csv_path": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600\\remaining_bvids_part_2.csv",
+      "task_log_path": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600\\logs\\batch_crawl_part_2_20260411_201642.log",
+      "session_state_path": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600\\batch_crawl_state.json",
+      "session_summary_log_path": null,
+      "successful_bvids": [],
+      "failed_bvids": [
+        "BV1GXX5BZExF",
+        "BV1Gj9wBZE85",
+        "BV1GyXgBUEzU",
+        "BV1H4XgBFEeh",
+        "BV1H5XLBCEiL",
+        "BV1HBDLBgEfj",
+        "BV1HRXPB2Eev",
+        "BV1HZXSBGEe5",
+        "BV1HcXaB4EZB",
+        "BV1HnXMBxEcY"
+      ],
+      "per_bvid_summaries": [
+        {
+          "bvid": "BV1GXX5BZExF",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:36.481662",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1Gj9wBZE85",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:37.083040",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：-404，信息：啥都木有。\n{'code': -404, 'message': '啥都木有', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1GyXgBUEzU",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:37.640830",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1H4XgBFEeh",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:38.244864",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1H5XLBCEiL",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:38.800676",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1HBDLBgEfj",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:39.388121",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62012，信息：62012。\n{'code': 62012, 'message': '62012', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1HRXPB2Eev",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:39.963109",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：-404，信息：啥都木有。\n{'code': -404, 'message': '啥都木有', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1HZXSBGEe5",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:40.566585",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1HcXaB4EZB",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:41.205635",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1HnXMBxEcY",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:41.802688",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：-404，信息：啥都木有。\n{'code': -404, 'message': '啥都木有', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        }
+      ]
+    },
+    {
+      "run_id": "bdec8eb4ad7c4aab8699c6a233e4bef6",
+      "total_bvids": 100,
+      "processed_count": 10,
+      "success_count": 0,
+      "failed_count": 10,
+      "remaining_count": 100,
+      "started_at": "2026-04-11T20:16:42.728821",
+      "finished_at": "2026-04-11T20:16:57.131414",
+      "task_mode": "meta_only",
+      "part_number": 3,
+      "effective_parallelism": 1,
+      "consecutive_failure_limit": 10,
+      "stopped_due_to_consecutive_failures": true,
+      "completed_all": false,
+      "stop_reason": "检测到连续 10 条视频抓取失败，已按阈值 10 暂停当前 CSV 批量抓取流程。",
+      "session_dir": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600",
+      "logs_dir": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600\\logs",
+      "remaining_csv_path": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600\\remaining_bvids_part_3.csv",
+      "task_log_path": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600\\logs\\batch_crawl_part_3_20260411_201657.log",
+      "session_state_path": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600\\batch_crawl_state.json",
+      "session_summary_log_path": null,
+      "successful_bvids": [],
+      "failed_bvids": [
+        "BV1ajXjBcEKQ",
+        "BV1ajXjBcEbF",
+        "BV1avXbBiErn",
+        "BV1awXgBjEGf",
+        "BV1axX1BmEhS",
+        "BV1b1XKBhEJk",
+        "BV1bHXjBoEhd",
+        "BV1bjXUBnE14",
+        "BV1bjXUBnEYP",
+        "BV1bjXUBnEbX"
+      ],
+      "per_bvid_summaries": [
+        {
+          "bvid": "BV1ajXjBcEKQ",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:50.721751",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1ajXjBcEbF",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:51.320580",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1avXbBiErn",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:51.945337",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1awXgBjEGf",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:52.540144",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1axX1BmEhS",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:53.171140",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：-404，信息：啥都木有。\n{'code': -404, 'message': '啥都木有', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1b1XKBhEJk",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:54.320944",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：-404，信息：啥都木有。\n{'code': -404, 'message': '啥都木有', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1bHXjBoEhd",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:54.922721",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1bjXUBnE14",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:55.492220",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1bjXUBnEYP",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:56.085164",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1bjXUBnEbX",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:16:56.677857",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        }
+      ]
+    },
+    {
+      "run_id": "b9f496bd43f149e1bd27fb8d57b713af",
+      "total_bvids": 100,
+      "processed_count": 10,
+      "success_count": 0,
+      "failed_count": 10,
+      "remaining_count": 100,
+      "started_at": "2026-04-11T20:16:57.636047",
+      "finished_at": "2026-04-11T20:17:11.538635",
+      "task_mode": "meta_only",
+      "part_number": 4,
+      "effective_parallelism": 1,
+      "consecutive_failure_limit": 10,
+      "stopped_due_to_consecutive_failures": true,
+      "completed_all": false,
+      "stop_reason": "检测到连续 10 条视频抓取失败，已按阈值 10 暂停当前 CSV 批量抓取流程。",
+      "session_dir": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600",
+      "logs_dir": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600\\logs",
+      "remaining_csv_path": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600\\remaining_bvids_part_4.csv",
+      "task_log_path": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600\\logs\\batch_crawl_part_4_20260411_201711.log",
+      "session_state_path": "outputs\\video_data\\manual_crawls\\manual_crawl_meta_mode_A_20260411_201600\\batch_crawl_state.json",
+      "session_summary_log_path": null,
+      "successful_bvids": [],
+      "failed_bvids": [
+        "BV1pKXVB3E3N",
+        "BV1pVXLB5E2H",
+        "BV1pVXLB5Euw",
+        "BV1pYXUBzEPv",
+        "BV1pcDhBDExk",
+        "BV1piXDBLEkm",
+        "BV1pqXDByEjn",
+        "BV1pqXDByEsP",
+        "BV1pzDKBmEaq",
+        "BV1qFXUBwEvF"
+      ],
+      "per_bvid_summaries": [
+        {
+          "bvid": "BV1pKXVB3E3N",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:17:05.710808",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：-404，信息：啥都木有。\n{'code': -404, 'message': '啥都木有', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1pVXLB5E2H",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:17:06.324586",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1pVXLB5Euw",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:17:06.929762",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1pYXUBzEPv",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:17:07.499286",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1pcDhBDExk",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:17:08.085495",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1piXDBLEkm",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:17:08.665378",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：-404，信息：啥都木有。\n{'code': -404, 'message': '啥都木有', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1pqXDByEjn",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:17:09.247282",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：-404，信息：啥都木有。\n{'code': -404, 'message': '啥都木有', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1pqXDByEsP",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:17:09.862312",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：-404，信息：啥都木有。\n{'code': -404, 'message': '啥都木有', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1pzDKBmEaq",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:17:10.491736",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62002，信息：稿件不可见。\n{'code': 62002, 'message': '稿件不可见', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        },
+        {
+          "bvid": "BV1qFXUBwEvF",
+          "meta_ok": false,
+          "stat_ok": true,
+          "comment_ok": true,
+          "media_ok": true,
+          "snapshot_time": "2026-04-11T20:17:11.072176",
+          "task_mode": "meta_only",
+          "errors": [
+            "meta: 接口返回错误代码：62012，信息：62012。\n{'code': 62012, 'message': '62012', 'ttl': 1}"
+          ],
+          "meta_result": null,
+          "stat_snapshot": null,
+          "comment_snapshot": null,
+          "media_result": null
+        }
+      ]
+    }
+  ],
+  "started_at": "2026-04-11T20:16:00",
+  "finished_at": "2026-04-11T20:17:14",
+  "error": ""
+}

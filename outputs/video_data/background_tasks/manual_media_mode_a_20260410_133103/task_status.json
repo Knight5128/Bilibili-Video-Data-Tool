@@ -1,9 +1,15 @@
 {
-  "status": "running",
+  "status": "failed",
   "task_kind": "manual_media_mode_a",
   "scope": "manual_media",
   "task_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\background_tasks\\manual_media_mode_a_20260410_133103",
   "pid": 18644,
   "started_at": "2026-04-10T13:31:05.429142",
-  "last_progress_at": "2026-04-11T00:01:17.847699"
+  "last_progress_at": "2026-04-11T15:31:33.677011",
+  "finished_at": "2026-04-11T15:31:33.677011",
+  "stale": true,
+  "error": {
+    "type": "TaskProcessMissing",
+    "message": "Background task process is no longer running; marking stale task as failed."
+  }
 }

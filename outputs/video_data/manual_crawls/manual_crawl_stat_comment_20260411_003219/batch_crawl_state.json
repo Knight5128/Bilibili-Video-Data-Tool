@@ -1,0 +1,63 @@
+{
+  "session_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\manual_crawls\\manual_crawl_stat_comment_20260411_003219",
+  "parts": [
+    {
+      "part_number": 1,
+      "source_csv_name": "batch_input_1.csv",
+      "task_mode": "realtime_only",
+      "subtask_started_at": "2026-04-11T00:32:36.067912",
+      "subtask_finished_at": "2026-04-11T00:41:57.194983",
+      "input_bvid_count": 100,
+      "processed_count": 100,
+      "success_count": 99,
+      "failed_count": 1,
+      "remaining_count": 1,
+      "consecutive_failure_limit": 10,
+      "stopped_due_to_consecutive_failures": false,
+      "stop_reason": "当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。",
+      "log_file": "logs/batch_crawl_part_1_20260411_004157.log",
+      "remaining_file": "remaining_bvids_part_1.csv"
+    },
+    {
+      "part_number": 2,
+      "source_csv_name": "batch_input_2.csv",
+      "task_mode": "realtime_only",
+      "subtask_started_at": "2026-04-11T00:41:57.532760",
+      "subtask_finished_at": "2026-04-11T00:51:13.638217",
+      "input_bvid_count": 100,
+      "processed_count": 100,
+      "success_count": 100,
+      "failed_count": 0,
+      "remaining_count": 0,
+      "consecutive_failure_limit": 10,
+      "stopped_due_to_consecutive_failures": false,
+      "stop_reason": "当前 batch_crawl 已完成，所有视频均已成功抓取。",
+      "log_file": "logs/batch_crawl_part_2_20260411_005113.log",
+      "remaining_file": ""
+    },
+    {
+      "part_number": 3,
+      "source_csv_name": "batch_input_3.csv",
+      "task_mode": "realtime_only",
+      "subtask_started_at": "2026-04-11T00:51:13.840651",
+      "subtask_finished_at": "2026-04-11T01:01:14.152174",
+      "input_bvid_count": 100,
+      "processed_count": 100,
+      "success_count": 99,
+      "failed_count": 1,
+      "remaining_count": 1,
+      "consecutive_failure_limit": 10,
+      "stopped_due_to_consecutive_failures": false,
+      "stop_reason": "当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。",
+      "log_file": "logs/batch_crawl_part_3_20260411_010114.log",
+      "remaining_file": "remaining_bvids_part_3.csv"
+    }
+  ],
+  "session_started_at": "2026-04-11T00:32:36.067912",
+  "session_completed_at": "",
+  "original_csv_name": "batch_input_1.csv",
+  "task_mode": "realtime_only",
+  "original_bvid_count": 100,
+  "completed_all": false,
+  "session_summary_log": "batch_crawl_summary_20260411_005113.log"
+}

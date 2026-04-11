@@ -1,0 +1,42 @@
+{
+  "status": "completed",
+  "task_kind": "manual_meta_mode_a",
+  "scope": "manual_media",
+  "task_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\background_tasks\\manual_meta_mode_a_20260411_153224",
+  "pid": 25444,
+  "started_at": "2026-04-11T15:32:32.031516",
+  "last_progress_at": "2026-04-11T19:26:49.325741",
+  "finished_at": "2026-04-11T19:26:49.325741",
+  "result": {
+    "status": "partial",
+    "mode": "A",
+    "crawl_target": "meta",
+    "session_dir": "outputs/video_data/manual_crawls/manual_crawl_meta_mode_A_20260411_153234",
+    "state_path": "outputs/video_data/manual_crawls/manual_crawl_meta_mode_A_20260411_153234/manual_crawl_media_state.json",
+    "input_bvid_count": 3486,
+    "submitted_bvid_count": 3486,
+    "skipped_completed_count": 0,
+    "deduplicated_bvid_count": 0,
+    "filtered_csv_path": "outputs/video_data/manual_crawls/manual_crawl_meta_mode_A_20260411_153234/manual_crawl_media_mode_A_input.csv",
+    "deduplicated_csv_path": null,
+    "waitlist_path": "outputs/video_data/manual_crawls/manual_crawl_meta_waitlist_bili_video_stream_data_test_2.csv",
+    "task_count": 35,
+    "sleep_count": 0,
+    "cookie_refresh_count": 35,
+    "stop_category": "other",
+    "stop_reason": "当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。",
+    "wrapper_log_paths": [
+      "outputs/video_data/manual_crawls/manual_crawl_meta_mode_A_20260411_153234/logs/20260411_192649_325741_manual_meta_mode_A.log"
+    ],
+    "started_at": "2026-04-11T15:32:34",
+    "finished_at": "2026-04-11T19:26:49",
+    "error": "",
+    "omitted_fields": {
+      "crawl_reports": {
+        "type": "list",
+        "count": 35
+      }
+    }
+  },
+  "result_path": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\background_tasks\\manual_meta_mode_a_20260411_153224\\task_result.json"
+}

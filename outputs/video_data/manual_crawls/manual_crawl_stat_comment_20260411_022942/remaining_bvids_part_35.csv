@@ -1,0 +1,2 @@
+﻿bvid,board_rid,board_name,board_rank,source_type,source_ref,discovered_at,last_seen_at,owner_mid,tid,pubdate,duration_seconds,seed_score,source_refs,source_csv_path,source_group,_source_priority
+BV1xpDFBNE3v,1008.0,游戏,19.0,rankboard,rankboard:rid=1008:rank=19,2026-04-08T13:21:58.219434+00:00,,11332884,65,2026-04-06T10:33:47+00:00,130,1303948.0,"rankboard:rid=1008:rank=19,https://www.bilibili.com/v/popular/rank/game",full_site_floorings/rankboard-20260408_212152.csv,full_site_floorings,1004

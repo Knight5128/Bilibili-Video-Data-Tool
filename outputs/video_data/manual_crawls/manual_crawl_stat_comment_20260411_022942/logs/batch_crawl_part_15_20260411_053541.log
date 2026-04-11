@@ -1,0 +1,114 @@
+[TIMESTAMP][BEGIN] 2026-04-11T05:27:25
+[2026-04-11 05:27:27] 开始执行 CSV 批量抓取子任务 part_15。
+[2026-04-11 05:27:27] 子任务开始时间：2026-04-11T05:27:25.620533
+[2026-04-11 05:27:27] 输入文件：batch_input_15.csv
+[2026-04-11 05:27:27] 输入唯一 bvid 数量：100
+[2026-04-11 05:27:27] 为严格按 CSV 顺序判断连续失败阈值，本次任务自动将并发度从 2 调整为 1。
+[2026-04-11 05:27:32] [SUCCESS] bvid=BV1sADHBtE2F 已成功抓取全部所需数据。
+[2026-04-11 05:27:37] [SUCCESS] bvid=BV1LHDHBLEUh 已成功抓取全部所需数据。
+[2026-04-11 05:27:42] [SUCCESS] bvid=BV1LHDHBLEfT 已成功抓取全部所需数据。
+[2026-04-11 05:27:47] [SUCCESS] bvid=BV1tUDEBFE2c 已成功抓取全部所需数据。
+[2026-04-11 05:27:52] [SUCCESS] bvid=BV1utDJBYENm 已成功抓取全部所需数据。
+[2026-04-11 05:27:57] [SUCCESS] bvid=BV149DEBdEpG 已成功抓取全部所需数据。
+[2026-04-11 05:28:03] [SUCCESS] bvid=BV1bDDEBZEPA 已成功抓取全部所需数据。
+[2026-04-11 05:28:07] [SUCCESS] bvid=BV1Z9DJByEXr 已成功抓取全部所需数据。
+[2026-04-11 05:28:12] [SUCCESS] bvid=BV1ArDJB9EWb 已成功抓取全部所需数据。
+[2026-04-11 05:28:17] [SUCCESS] bvid=BV1wCDJBpEr1 已成功抓取全部所需数据。
+[2026-04-11 05:28:22] [SUCCESS] bvid=BV1FmDJBSE3a 已成功抓取全部所需数据。
+[2026-04-11 05:28:27] [SUCCESS] bvid=BV1cSDJBEEwh 已成功抓取全部所需数据。
+[2026-04-11 05:28:32] [SUCCESS] bvid=BV1w2DJBnEj4 已成功抓取全部所需数据。
+[2026-04-11 05:28:36] [SUCCESS] bvid=BV1H2DJBnEQu 已成功抓取全部所需数据。
+[2026-04-11 05:28:41] [SUCCESS] bvid=BV16PD7B3Em6 已成功抓取全部所需数据。
+[2026-04-11 05:28:46] [SUCCESS] bvid=BV1HwD7BkEnk 已成功抓取全部所需数据。
+[2026-04-11 05:28:51] [SUCCESS] bvid=BV1kcD7BVE7U 已成功抓取全部所需数据。
+[2026-04-11 05:28:56] [SUCCESS] bvid=BV1HcD7BVEaP 已成功抓取全部所需数据。
+[2026-04-11 05:29:01] [SUCCESS] bvid=BV1fMD7BBEMn 已成功抓取全部所需数据。
+[2026-04-11 05:29:06] [SUCCESS] bvid=BV19fD7BYExE 已成功抓取全部所需数据。
+[2026-04-11 05:29:11] [SUCCESS] bvid=BV1cpDrBjEqu 已成功抓取全部所需数据。
+[2026-04-11 05:29:15] [SUCCESS] bvid=BV1c4DuBWEXn 已成功抓取全部所需数据。
+[2026-04-11 05:29:21] [SUCCESS] bvid=BV1JND7B6E6F 已成功抓取全部所需数据。
+[2026-04-11 05:29:26] [SUCCESS] bvid=BV17gD7BTEhA 已成功抓取全部所需数据。
+[2026-04-11 05:29:31] [SUCCESS] bvid=BV16ND7B6Eu9 已成功抓取全部所需数据。
+[2026-04-11 05:29:36] [SUCCESS] bvid=BV1FND7BrE9z 已成功抓取全部所需数据。
+[2026-04-11 05:29:41] [SUCCESS] bvid=BV1JTD7BuEAV 已成功抓取全部所需数据。
+[2026-04-11 05:29:46] [SUCCESS] bvid=BV1BTD7BuEeV 已成功抓取全部所需数据。
+[2026-04-11 05:29:51] [SUCCESS] bvid=BV1xQDjBJEDR 已成功抓取全部所需数据。
+[2026-04-11 05:29:56] [SUCCESS] bvid=BV1sdDjB2EGC 已成功抓取全部所需数据。
+[2026-04-11 05:30:01] [SUCCESS] bvid=BV14UDjBHEJp 已成功抓取全部所需数据。
+[2026-04-11 05:30:06] [SUCCESS] bvid=BV1U2DjBXEqJ 已成功抓取全部所需数据。
+[2026-04-11 05:30:11] [SUCCESS] bvid=BV1WZDjBLEn1 已成功抓取全部所需数据。
+[2026-04-11 05:30:17] [SUCCESS] bvid=BV11XDjBUEF3 已成功抓取全部所需数据。
+[2026-04-11 05:30:21] [SUCCESS] bvid=BV12XDjBUEFk 已成功抓取全部所需数据。
+[2026-04-11 05:30:27] [SUCCESS] bvid=BV1sRDjB7E2E 已成功抓取全部所需数据。
+[2026-04-11 05:30:31] [SUCCESS] bvid=BV1yRDjB7E6M 已成功抓取全部所需数据。
+[2026-04-11 05:30:36] [SUCCESS] bvid=BV1TtD7BREab 已成功抓取全部所需数据。
+[2026-04-11 05:30:41] [SUCCESS] bvid=BV1t4D7BxERZ 已成功抓取全部所需数据。
+[2026-04-11 05:30:46] [SUCCESS] bvid=BV1utD7BRETe 已成功抓取全部所需数据。
+[2026-04-11 05:30:51] [SUCCESS] bvid=BV1QqDjBfELb 已成功抓取全部所需数据。
+[2026-04-11 05:30:56] [SUCCESS] bvid=BV14YD7BHEGN 已成功抓取全部所需数据。
+[2026-04-11 05:31:01] [SUCCESS] bvid=BV143DEBxEmt 已成功抓取全部所需数据。
+[2026-04-11 05:31:01] [ERROR] bvid=BV1gsD7BoE7X 抓取失败：stat: 接口返回错误代码：-404，信息：啥都木有。
+{'code': -404, 'message': '啥都木有', 'ttl': 1} | comment: 接口返回错误代码：-404，信息：啥都木有。
+{'code': -404, 'message': '啥都木有', 'ttl': 1}
+[2026-04-11 05:31:06] [SUCCESS] bvid=BV1gsD7BoE4p 已成功抓取全部所需数据。
+[2026-04-11 05:31:11] [SUCCESS] bvid=BV1gsD7BoExU 已成功抓取全部所需数据。
+[2026-04-11 05:31:16] [SUCCESS] bvid=BV1K8D7BWEfQ 已成功抓取全部所需数据。
+[2026-04-11 05:31:21] [SUCCESS] bvid=BV1NYD7BHEHE 已成功抓取全部所需数据。
+[2026-04-11 05:31:27] [SUCCESS] bvid=BV1xYD7BHEkn 已成功抓取全部所需数据。
+[2026-04-11 05:31:32] [SUCCESS] bvid=BV1KYD7BHEQK 已成功抓取全部所需数据。
+[2026-04-11 05:31:37] [SUCCESS] bvid=BV1NeD7BDEhe 已成功抓取全部所需数据。
+[2026-04-11 05:31:42] [SUCCESS] bvid=BV148D7BWEk6 已成功抓取全部所需数据。
+[2026-04-11 05:31:48] [SUCCESS] bvid=BV1m8D7BWEKZ 已成功抓取全部所需数据。
+[2026-04-11 05:31:53] [SUCCESS] bvid=BV155D7BeE7y 已成功抓取全部所需数据。
+[2026-04-11 05:31:58] [SUCCESS] bvid=BV1V5D7BeEeS 已成功抓取全部所需数据。
+[2026-04-11 05:32:03] [SUCCESS] bvid=BV1L5D7BeEEk 已成功抓取全部所需数据。
+[2026-04-11 05:32:09] [SUCCESS] bvid=BV1R5D7BeEM6 已成功抓取全部所需数据。
+[2026-04-11 05:32:14] [SUCCESS] bvid=BV1j3D7BiE79 已成功抓取全部所需数据。
+[2026-04-11 05:32:19] [SUCCESS] bvid=BV15VD7BNEjS 已成功抓取全部所需数据。
+[2026-04-11 05:32:24] [SUCCESS] bvid=BV1j3D7BiECj 已成功抓取全部所需数据。
+[2026-04-11 05:32:29] [SUCCESS] bvid=BV1GnD7B8EGh 已成功抓取全部所需数据。
+[2026-04-11 05:32:34] [SUCCESS] bvid=BV13HD7BfED4 已成功抓取全部所需数据。
+[2026-04-11 05:32:40] [SUCCESS] bvid=BV157D7BaEMC 已成功抓取全部所需数据。
+[2026-04-11 05:32:45] [SUCCESS] bvid=BV1Y7D7BaEQL 已成功抓取全部所需数据。
+[2026-04-11 05:32:50] [SUCCESS] bvid=BV1G7D7BaENZ 已成功抓取全部所需数据。
+[2026-04-11 05:32:55] [SUCCESS] bvid=BV1gHD7BfE9W 已成功抓取全部所需数据。
+[2026-04-11 05:32:55] [ERROR] bvid=BV1V7D7BaEHo 抓取失败：stat: 接口返回错误代码：62002，信息：稿件不可见。
+{'code': 62002, 'message': '稿件不可见', 'ttl': 1} | comment: 接口返回错误代码：62002，信息：稿件不可见。
+{'code': 62002, 'message': '稿件不可见', 'ttl': 1}
+[2026-04-11 05:33:01] [SUCCESS] bvid=BV1YJD7BcE1q 已成功抓取全部所需数据。
+[2026-04-11 05:33:06] [SUCCESS] bvid=BV13JD7BcEsE 已成功抓取全部所需数据。
+[2026-04-11 05:33:11] [SUCCESS] bvid=BV17QD7BuEPG 已成功抓取全部所需数据。
+[2026-04-11 05:33:16] [SUCCESS] bvid=BV17QD7BuEBj 已成功抓取全部所需数据。
+[2026-04-11 05:33:21] [SUCCESS] bvid=BV1K4DLBmE5a 已成功抓取全部所需数据。
+[2026-04-11 05:33:25] [SUCCESS] bvid=BV1ZeDuBmEUc 已成功抓取全部所需数据。
+[2026-04-11 05:33:30] [SUCCESS] bvid=BV1uWDLBSEcH 已成功抓取全部所需数据。
+[2026-04-11 05:33:36] [SUCCESS] bvid=BV1LXD7BBESG 已成功抓取全部所需数据。
+[2026-04-11 05:33:40] [SUCCESS] bvid=BV17QD7BuEzj 已成功抓取全部所需数据。
+[2026-04-11 05:33:46] [SUCCESS] bvid=BV1jXD7BBEQM 已成功抓取全部所需数据。
+[2026-04-11 05:33:51] [SUCCESS] bvid=BV1oSD7BzESf 已成功抓取全部所需数据。
+[2026-04-11 05:33:56] [SUCCESS] bvid=BV17UD7B3EVt 已成功抓取全部所需数据。
+[2026-04-11 05:34:01] [SUCCESS] bvid=BV1W6D7B2EF4 已成功抓取全部所需数据。
+[2026-04-11 05:34:06] [SUCCESS] bvid=BV1fUD7BgEZK 已成功抓取全部所需数据。
+[2026-04-11 05:34:10] [SUCCESS] bvid=BV1fSD7BzEAB 已成功抓取全部所需数据。
+[2026-04-11 05:34:15] [SUCCESS] bvid=BV1VZD7BNExs 已成功抓取全部所需数据。
+[2026-04-11 05:34:20] [SUCCESS] bvid=BV15ZD7BNEB2 已成功抓取全部所需数据。
+[2026-04-11 05:34:25] [SUCCESS] bvid=BV19ZD7BPECW 已成功抓取全部所需数据。
+[2026-04-11 05:34:31] [SUCCESS] bvid=BV15ZD7BNEfS 已成功抓取全部所需数据。
+[2026-04-11 05:34:36] [SUCCESS] bvid=BV19fD7BYEv8 已成功抓取全部所需数据。
+[2026-04-11 05:34:41] [SUCCESS] bvid=BV1dRD7BKEH6 已成功抓取全部所需数据。
+[2026-04-11 05:34:46] [SUCCESS] bvid=BV15RD7BTEWM 已成功抓取全部所需数据。
+[2026-04-11 05:34:51] [SUCCESS] bvid=BV19dD7BvEB1 已成功抓取全部所需数据。
+[2026-04-11 05:34:56] [SUCCESS] bvid=BV1dDDLBcEkN 已成功抓取全部所需数据。
+[2026-04-11 05:35:01] [SUCCESS] bvid=BV1AzD7B7ENW 已成功抓取全部所需数据。
+[2026-04-11 05:35:06] [SUCCESS] bvid=BV1w6D7B2Ep4 已成功抓取全部所需数据。
+[2026-04-11 05:35:11] [SUCCESS] bvid=BV1NiD7BJEGz 已成功抓取全部所需数据。
+[2026-04-11 05:35:16] [SUCCESS] bvid=BV1wzD7B7ESY 已成功抓取全部所需数据。
+[2026-04-11 05:35:21] [SUCCESS] bvid=BV1w6D7B2EH9 已成功抓取全部所需数据。
+[2026-04-11 05:35:26] [SUCCESS] bvid=BV1AqD7BUEUj 已成功抓取全部所需数据。
+[2026-04-11 05:35:31] [SUCCESS] bvid=BV1siD7BJEA4 已成功抓取全部所需数据。
+[2026-04-11 05:35:36] [SUCCESS] bvid=BV1PiD7BJE75 已成功抓取全部所需数据。
+[2026-04-11 05:35:41] [SUCCESS] bvid=BV11PXfBgEZe 已成功抓取全部所需数据。
+[2026-04-11 05:35:41] [WARN] 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+[2026-04-11 05:35:41] [INFO] 已导出剔除成功条目后的剩余 CSV：D:\Schoolworks\Thesis\Bilibili-Datahub\outputs\video_data\manual_crawls\manual_crawl_stat_comment_20260411_022942\remaining_bvids_part_15.csv
+[2026-04-11 05:35:41] 子任务结束时间：2026-04-11T05:35:41.780288
+[TIMESTAMP][END] 2026-04-11T05:35:41
