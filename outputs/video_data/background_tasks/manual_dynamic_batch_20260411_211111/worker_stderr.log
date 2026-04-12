@@ -1,0 +1,106 @@
+D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\_python_version_support.py:275: FutureWarning: You are using a Python version (3.10.20) which Google will stop supporting in new releases of google.api_core once it reaches its end of life (2026-10-04). Please upgrade to the latest Python version, or at least Python 3.11, to continue receiving updates for google.api_core past that date.
+  warnings.warn(message, FutureWarning)
+Traceback (most recent call last):
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\bigquery\client.py", line 711, in create_dataset
+    api_response = self._call_api(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\bigquery\client.py", line 861, in _call_api
+    return call()
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_base.py", line 216, in _retry_error_helper
+    raise final_exc from source_exc
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_unary.py", line 147, in retry_target
+    result = target()
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\_http\__init__.py", line 494, in api_request
+    raise exceptions.from_http_response(response)
+google.api_core.exceptions.Conflict: 409 POST https://bigquery.googleapis.com/bigquery/v2/projects/bilibili-m2s2vp-research/datasets?prettyPrint=false: Already Exists: Dataset bilibili-m2s2vp-research:bili_video_stream_data_test_2
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\urllib3\connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\urllib3\connectionpool.py", line 534, in _make_request
+    response = conn.getresponse()
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\urllib3\connection.py", line 571, in getresponse
+    httplib_response = super().getresponse()
+  File "C:\Users\liujz\AppData\Roaming\uv\python\cpython-3.10.20-windows-x86_64-none\lib\http\client.py", line 1395, in getresponse
+    response.begin()
+  File "C:\Users\liujz\AppData\Roaming\uv\python\cpython-3.10.20-windows-x86_64-none\lib\http\client.py", line 323, in begin
+    version, status, reason = self._read_status()
+  File "C:\Users\liujz\AppData\Roaming\uv\python\cpython-3.10.20-windows-x86_64-none\lib\http\client.py", line 292, in _read_status
+    raise RemoteDisconnected("Remote end closed connection without"
+http.client.RemoteDisconnected: Remote end closed connection without response
+
+The above exception was the direct cause of the following exception:
+
+urllib3.exceptions.ProxyError: ('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response'))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\requests\adapters.py", line 644, in send
+    resp = conn.urlopen(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\urllib3\connectionpool.py", line 841, in urlopen
+    retries = retries.increment(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\urllib3\util\retry.py", line 535, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='bigquery.googleapis.com', port=443): Max retries exceeded with url: /bigquery/v2/projects/bilibili-m2s2vp-research/datasets/bili_video_stream_data_test_2?prettyPrint=false (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_unary.py", line 147, in retry_target
+    result = target()
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\_http\__init__.py", line 482, in api_request
+    response = self._make_request(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\_http\__init__.py", line 341, in _make_request
+    return self._do_request(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\_http\__init__.py", line 379, in _do_request
+    return self.http.request(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\auth\transport\requests.py", line 543, in request
+    response = super(AuthorizedSession, self).request(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\requests\sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\requests\sessions.py", line 703, in send
+    r = adapter.send(request, **kwargs)
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\requests\adapters.py", line 671, in send
+    raise ProxyError(e, request=request)
+requests.exceptions.ProxyError: HTTPSConnectionPool(host='bigquery.googleapis.com', port=443): Max retries exceeded with url: /bigquery/v2/projects/bilibili-m2s2vp-research/datasets/bili_video_stream_data_test_2?prettyPrint=false (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\scripts\datahub_background_worker.py", line 301, in <module>
+    raise SystemExit(main())
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\scripts\datahub_background_worker.py", line 251, in main
+    result = _run_task(task_dir, config)
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\scripts\datahub_background_worker.py", line 109, in _run_task
+    result = run_manual_realtime_batch_crawl(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\src\bili_pipeline\datahub\manual_batch_runner.py", line 421, in run_manual_realtime_batch_crawl
+    batched_outcome = run_batched_crawl_from_csv(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\src\bili_pipeline\datahub\background_tasks.py", line 710, in run_batched_crawl_from_csv
+    report = crawl_fn(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\src\bili_pipeline\crawl_api.py", line 554, in crawl_bvid_list_from_csv
+    store = _store(resolved_config)
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\src\bili_pipeline\crawl_api.py", line 61, in _store
+    return BigQueryCrawlerStore(gcp_config)
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\src\bili_pipeline\storage\gcp_store.py", line 380, in __init__
+    self._ensure_dataset_and_tables()
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\src\bili_pipeline\storage\gcp_store.py", line 406, in _ensure_dataset_and_tables
+    self.client.create_dataset(dataset, exists_ok=True)
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\bigquery\client.py", line 724, in create_dataset
+    return self.get_dataset(dataset.reference, retry=retry)
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\bigquery\client.py", line 919, in get_dataset
+    api_response = self._call_api(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\cloud\bigquery\client.py", line 861, in _call_api
+    return call()
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+  File "D:\Schoolworks\Thesis\Bilibili-Datahub\.venv\lib\site-packages\google\api_core\retry\retry_base.py", line 231, in _retry_error_helper
+    raise final_exc from source_exc
+google.api_core.exceptions.RetryError: Timeout of 600.0s exceeded, last exception: HTTPSConnectionPool(host='bigquery.googleapis.com', port=443): Max retries exceeded with url: /bigquery/v2/projects/bilibili-m2s2vp-research/datasets/bili_video_stream_data_test_2?prettyPrint=false (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))

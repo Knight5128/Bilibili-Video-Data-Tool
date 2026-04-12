@@ -1,0 +1,53 @@
+[TIMESTAMP][BEGIN] 2026-04-12T02:59:13
+[2026-04-12 02:59:19] 开始执行 CSV 批量抓取子任务 part_27。
+[2026-04-12 02:59:19] 子任务开始时间：2026-04-12T02:59:13.910352
+[2026-04-12 02:59:19] 输入文件：batch_input_27.csv
+[2026-04-12 02:59:19] 输入唯一 bvid 数量：100
+[2026-04-12 02:59:19] 为严格按 CSV 顺序判断连续失败阈值，本次任务自动将并发度从 2 调整为 1。
+[2026-04-12 02:59:31] [SUCCESS] bvid=BV1y3DjB2Eqn 已成功抓取全部所需数据。
+[2026-04-12 02:59:44] [SUCCESS] bvid=BV1FHDzBuEng 已成功抓取全部所需数据。
+[2026-04-12 02:59:56] [SUCCESS] bvid=BV1W3DjBmEZB 已成功抓取全部所需数据。
+[2026-04-12 03:00:08] [SUCCESS] bvid=BV1W3DjBmEZD 已成功抓取全部所需数据。
+[2026-04-12 03:00:20] [SUCCESS] bvid=BV1N3DjBmEc8 已成功抓取全部所需数据。
+[2026-04-12 03:00:32] [SUCCESS] bvid=BV1y3DjB2EtW 已成功抓取全部所需数据。
+[2026-04-12 03:00:45] [SUCCESS] bvid=BV113DjB2Eak 已成功抓取全部所需数据。
+[2026-04-12 03:00:57] [SUCCESS] bvid=BV1y3DjB2EiJ 已成功抓取全部所需数据。
+[2026-04-12 03:01:09] [SUCCESS] bvid=BV16JDjB3EHS 已成功抓取全部所需数据。
+[2026-04-12 03:01:22] [SUCCESS] bvid=BV113DjB2EN6 已成功抓取全部所需数据。
+[2026-04-12 03:01:35] [SUCCESS] bvid=BV1x3DjBmEzr 已成功抓取全部所需数据。
+[2026-04-12 03:01:47] [SUCCESS] bvid=BV1C7DjBCEA2 已成功抓取全部所需数据。
+[2026-04-12 03:11:51] [ERROR] bvid=BV1nJDjBGEpi 抓取失败：comment: Timeout of 600.0s exceeded, last exception: HTTPSConnectionPool(host='bigquery.googleapis.com', port=443): Max retries exceeded with url: /bigquery/v2/projects/bilibili-m2s2vp-research/datasets/bili_video_stream_data_test_2?prettyPrint=false (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))
+[2026-04-12 03:12:08] [SUCCESS] bvid=BV1wJDjBGEmN 已成功抓取全部所需数据。
+[2026-04-12 03:12:22] [SUCCESS] bvid=BV1rJDjB3Ecb 已成功抓取全部所需数据。
+[2026-04-12 03:12:36] [SUCCESS] bvid=BV1BWDjBBE5r 已成功抓取全部所需数据。
+[2026-04-12 03:12:49] [SUCCESS] bvid=BV1cnDjBrExt 已成功抓取全部所需数据。
+[2026-04-12 03:13:02] [SUCCESS] bvid=BV1rnDjB6EiN 已成功抓取全部所需数据。
+[2026-04-12 03:13:16] [SUCCESS] bvid=BV16nDjB6EhQ 已成功抓取全部所需数据。
+[2026-04-12 03:13:29] [SUCCESS] bvid=BV1CjDjBVEbx 已成功抓取全部所需数据。
+[2026-04-12 03:13:41] [SUCCESS] bvid=BV1KdDrB9EJe 已成功抓取全部所需数据。
+[2026-04-12 03:13:54] [SUCCESS] bvid=BV1AjDjB5Evr 已成功抓取全部所需数据。
+[2026-04-12 03:14:00] [ERROR] bvid=BV1mTDjBJExh 抓取失败：comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:14:08] [ERROR] bvid=BV1AjDjB5EQZ 抓取失败：stat: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:14:22] [SUCCESS] bvid=BV1CjDjBVE2G 已成功抓取全部所需数据。
+[2026-04-12 03:14:34] [SUCCESS] bvid=BV1w7DjBCEqo 已成功抓取全部所需数据。
+[2026-04-12 03:14:47] [SUCCESS] bvid=BV1vMDiBnEe3 已成功抓取全部所需数据。
+[2026-04-12 03:15:00] [SUCCESS] bvid=BV12aSoBhEjh 已成功抓取全部所需数据。
+[2026-04-12 03:15:13] [SUCCESS] bvid=BV1kpDrBjEtm 已成功抓取全部所需数据。
+[2026-04-12 03:15:25] [SUCCESS] bvid=BV1CrD6B5EMh 已成功抓取全部所需数据。
+[2026-04-12 03:15:38] [SUCCESS] bvid=BV1jRD6BvEgv 已成功抓取全部所需数据。
+[2026-04-12 03:15:50] [SUCCESS] bvid=BV1b1DjBWEjh 已成功抓取全部所需数据。
+[2026-04-12 03:16:04] [SUCCESS] bvid=BV1cTDhB2EnQ 已成功抓取全部所需数据。
+[2026-04-12 03:16:05] [ERROR] bvid=BV18CDjBdEqU 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:06] [ERROR] bvid=BV1K5DrBQERD 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:06] [ERROR] bvid=BV1zpDjBuEDb 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:07] [ERROR] bvid=BV1ZYDrBBEGe 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:08] [ERROR] bvid=BV1EaDrBgE4c 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:08] [ERROR] bvid=BV1UMDrBdEeN 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:11] [ERROR] bvid=BV143DrB9Eqi 抓取失败：comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:12] [ERROR] bvid=BV17CDiBtEpM 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:12] [ERROR] bvid=BV1x7DaBZEWE 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:13] [ERROR] bvid=BV1GFDrBwEHC 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:13] [STOP] 检测到连续 10 条视频抓取失败，已按阈值 10 暂停当前 CSV 批量抓取流程。
+[2026-04-12 03:16:13] [INFO] 已导出剔除成功条目后的剩余 CSV：D:\Schoolworks\Thesis\Bilibili-Datahub\outputs\video_data\manual_crawls\manual_crawl_stat_comment_20260411_211113\remaining_bvids_part_27.csv
+[2026-04-12 03:16:13] 子任务结束时间：2026-04-12T03:16:13.461684
+[TIMESTAMP][END] 2026-04-12T03:16:13

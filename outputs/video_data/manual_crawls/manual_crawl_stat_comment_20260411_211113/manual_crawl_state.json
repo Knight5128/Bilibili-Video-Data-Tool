@@ -1,0 +1,20 @@
+{
+  "status": "failed",
+  "session_dir": "D:/Schoolworks/Thesis/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260411_211113",
+  "state_path": "D:/Schoolworks/Thesis/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260411_211113/manual_crawl_state.json",
+  "source_csv_count": 0,
+  "candidate_bvid_count": 0,
+  "filtered_bvid_count": 0,
+  "skipped_missing_pubdate_count": 0,
+  "skipped_outside_window_count": 0,
+  "stream_data_time_window_hours": 168,
+  "filtered_csv_path": null,
+  "wrapper_log_path": "D:/Schoolworks/Thesis/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260411_211113/logs/20260412_032626_482311_manual_crawl_prepare.log",
+  "crawl_report": null,
+  "crawl_reports": [],
+  "task_count": 0,
+  "cookie_refresh_count": 0,
+  "error": "Timeout of 600.0s exceeded, last exception: HTTPSConnectionPool(host='bigquery.googleapis.com', port=443): Max retries exceeded with url: /bigquery/v2/projects/bilibili-m2s2vp-research/datasets/bili_video_stream_data_test_2?prettyPrint=false (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))",
+  "started_at": "2026-04-11T21:11:13.748790",
+  "finished_at": "2026-04-12T03:26:26.483952"
+}

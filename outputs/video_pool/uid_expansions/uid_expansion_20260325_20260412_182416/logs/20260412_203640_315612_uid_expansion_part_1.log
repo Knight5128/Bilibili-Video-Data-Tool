@@ -1,0 +1,112 @@
+[TIMESTAMP][BEGIN] 2026-04-12T18:24:16
+[INFO]: 已创建新的 uid_expansion 会话目录：outputs/video_pool/uid_expansions/uid_expansion_20260325_20260412_182416（start_date=2026-03-25，task_started_at=2026-04-12T18:24:16）。
+[INFO]: 历史任务增量检查完成：509 个作者命中过往 original_uids，0 个作者按全局 start_date 抓取；命中历史的作者将从其最近一次任务开始日（含当天）继续抓取。
+[INFO]: 开始处理第 1/26 批作者，共 20 个。
+[WARN]: 作者 14229967 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 1/26 批完成，新增 29 条视频，累计 29 条。
+[WARN]: 本批有 1 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 2/26 批作者，共 20 个。
+[WARN]: 作者 1636034895 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 2/26 批完成，新增 18 条视频，累计 47 条。
+[WARN]: 本批有 1 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 3/26 批作者，共 20 个。
+[INFO]: 第 3/26 批完成，新增 19 条视频，累计 66 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 4/26 批作者，共 20 个。
+[WARN]: 作者 585267 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 4/26 批完成，新增 11 条视频，累计 77 条。
+[WARN]: 本批有 1 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 5/26 批作者，共 20 个。
+[INFO]: 第 5/26 批完成，新增 18 条视频，累计 95 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 6/26 批作者，共 20 个。
+[WARN]: 作者 474853499 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 6/26 批完成，新增 18 条视频，累计 113 条。
+[WARN]: 本批有 1 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 7/26 批作者，共 20 个。
+[INFO]: 第 7/26 批完成，新增 8 条视频，累计 121 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 8/26 批作者，共 20 个。
+[INFO]: 第 8/26 批完成，新增 19 条视频，累计 140 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 9/26 批作者，共 20 个。
+[INFO]: 第 9/26 批完成，新增 26 条视频，累计 166 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 10/26 批作者，共 20 个。
+[WARN]: 作者 689222371 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 10/26 批完成，新增 96 条视频，累计 262 条。
+[WARN]: 本批有 1 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 11/26 批作者，共 20 个。
+[INFO]: 第 11/26 批完成，新增 26 条视频，累计 288 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 12/26 批作者，共 20 个。
+[INFO]: 第 12/26 批完成，新增 14 条视频，累计 302 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 13/26 批作者，共 20 个。
+[WARN]: 作者 508215481 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 13/26 批完成，新增 31 条视频，累计 333 条。
+[WARN]: 本批有 1 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 14/26 批作者，共 20 个。
+[WARN]: 作者 105502937 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[WARN]: 作者 1742004653 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 14/26 批完成，新增 10 条视频，累计 343 条。
+[WARN]: 本批有 2 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 15/26 批作者，共 20 个。
+[WARN]: 作者 456064813 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 15/26 批完成，新增 27 条视频，累计 370 条。
+[WARN]: 本批有 1 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 16/26 批作者，共 20 个。
+[INFO]: 第 16/26 批完成，新增 28 条视频，累计 398 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 17/26 批作者，共 20 个。
+[WARN]: 作者 3546617862949729 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 17/26 批完成，新增 57 条视频，累计 455 条。
+[WARN]: 本批有 1 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 18/26 批作者，共 20 个。
+[INFO]: 第 18/26 批完成，新增 19 条视频，累计 474 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 19/26 批作者，共 20 个。
+[WARN]: 作者 1242771265 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[WARN]: 作者 1486481247 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 19/26 批完成，新增 82 条视频，累计 556 条。
+[WARN]: 本批有 2 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 20/26 批作者，共 20 个。
+[INFO]: 第 20/26 批完成，新增 17 条视频，累计 573 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 21/26 批作者，共 20 个。
+[INFO]: 第 21/26 批完成，新增 30 条视频，累计 603 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 22/26 批作者，共 20 个。
+[WARN]: 作者 187100549 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[WARN]: 作者 500725704 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 22/26 批完成，新增 9 条视频，累计 612 条。
+[WARN]: 本批有 2 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 23/26 批作者，共 20 个。
+[WARN]: 作者 229849688 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 23/26 批完成，新增 31 条视频，累计 643 条。
+[WARN]: 本批有 1 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 24/26 批作者，共 20 个。
+[INFO]: 第 24/26 批完成，新增 15 条视频，累计 658 条。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 25/26 批作者，共 20 个。
+[WARN]: 作者 590602528 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[WARN]: 作者 3546783443585705 抓取失败，已跳过。原因：网络错误，状态码：412 - <!DOCTYPE html> <html lang="zh-cn"> <head> <meta http-equiv="Access-Control-Allow-Origin" content="*" /> <meta http-equiv="Page-Enter" content...
+[INFO]: 第 25/26 批完成，新增 21 条视频，累计 679 条。
+[WARN]: 本批有 2 个作者抓取失败。
+[INFO]: 批次间暂停 8 秒，降低请求频率。
+[INFO]: 开始处理第 26/26 批作者，共 9 个。
+[INFO]: 第 26/26 批完成，新增 5 条视频，累计 684 条。
+[INFO]: 全局 videolist 去重检查完成：历史任务中已有 7801 个唯一 bvid，本次过滤掉 291 条重复视频。
+[TIMESTAMP][END] 2026-04-12T20:36:40

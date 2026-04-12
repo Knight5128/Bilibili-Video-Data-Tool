@@ -1,0 +1,20 @@
+[TIMESTAMP][BEGIN] 2026-04-12T03:16:13
+[2026-04-12 03:16:16] 开始执行 CSV 批量抓取子任务 part_28。
+[2026-04-12 03:16:16] 子任务开始时间：2026-04-12T03:16:13.871674
+[2026-04-12 03:16:16] 输入文件：batch_input_28.csv
+[2026-04-12 03:16:16] 输入唯一 bvid 数量：100
+[2026-04-12 03:16:16] 为严格按 CSV 顺序判断连续失败阈值，本次任务自动将并发度从 2 调整为 1。
+[2026-04-12 03:16:16] [ERROR] bvid=BV1i4DjBiE2Y 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:17] [ERROR] bvid=BV1ZiDuBjE8i 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:18] [ERROR] bvid=BV16xSdB2Eax 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:19] [ERROR] bvid=BV1rPDkB7E3H 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:20] [ERROR] bvid=BV1HYDiBPEU6 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:21] [ERROR] bvid=BV1cNDkBmEhZ 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:22] [ERROR] bvid=BV1t1DjBWEyC 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:23] [ERROR] bvid=BV1h6DjBoEGu 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:24] [ERROR] bvid=BV1Q6DjBoEit 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:26] [ERROR] bvid=BV1hkDjBxE8z 抓取失败：stat: [WinError 64] 指定的网络名不再可用。 | comment: [WinError 64] 指定的网络名不再可用。
+[2026-04-12 03:16:26] [STOP] 检测到连续 10 条视频抓取失败，已按阈值 10 暂停当前 CSV 批量抓取流程。
+[2026-04-12 03:16:26] [INFO] 已导出剔除成功条目后的剩余 CSV：D:\Schoolworks\Thesis\Bilibili-Datahub\outputs\video_data\manual_crawls\manual_crawl_stat_comment_20260411_211113\remaining_bvids_part_28.csv
+[2026-04-12 03:16:26] 子任务结束时间：2026-04-12T03:16:26.111079
+[TIMESTAMP][END] 2026-04-12T03:16:26

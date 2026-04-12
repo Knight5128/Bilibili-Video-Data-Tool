@@ -1,0 +1,14 @@
+{
+  "status": "failed",
+  "task_kind": "manual_dynamic_batch",
+  "scope": "manual_dynamic_batch",
+  "task_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\background_tasks\\manual_dynamic_batch_20260411_211111",
+  "pid": 32052,
+  "started_at": "2026-04-11T21:11:13.747758",
+  "last_progress_at": "2026-04-12T03:26:26.499727",
+  "finished_at": "2026-04-12T03:26:26.499727",
+  "error": {
+    "type": "RetryError",
+    "message": "Timeout of 600.0s exceeded, last exception: HTTPSConnectionPool(host='bigquery.googleapis.com', port=443): Max retries exceeded with url: /bigquery/v2/projects/bilibili-m2s2vp-research/datasets/bili_video_stream_data_test_2?prettyPrint=false (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))"
+  }
+}
