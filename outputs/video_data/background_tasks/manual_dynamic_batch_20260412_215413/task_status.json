@@ -1,0 +1,72 @@
+{
+  "status": "completed",
+  "task_kind": "manual_dynamic_batch",
+  "scope": "manual_dynamic_batch",
+  "task_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\background_tasks\\manual_dynamic_batch_20260412_215413",
+  "pid": 32772,
+  "started_at": "2026-04-12T21:54:15.414903",
+  "last_progress_at": "2026-04-13T09:50:52.844657",
+  "finished_at": "2026-04-13T09:50:52.844657",
+  "result": {
+    "status": "partial",
+    "session_dir": "D:/Schoolworks/Thesis/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260412_215415",
+    "state_path": "D:/Schoolworks/Thesis/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260412_215415/manual_crawl_state.json",
+    "source_csv_count": 51,
+    "candidate_bvid_count": 14928,
+    "filtered_bvid_count": 5566,
+    "skipped_missing_pubdate_count": 0,
+    "skipped_outside_window_count": 9362,
+    "stream_data_time_window_hours": 168,
+    "filtered_csv_path": "D:/Schoolworks/Thesis/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260412_215415/filtered_video_list.csv",
+    "wrapper_log_path": "D:/Schoolworks/Thesis/Bilibili-Datahub/outputs/video_data/manual_crawls/manual_crawl_stat_comment_20260412_215415/logs/20260413_095051_997656_manual_crawl_prepare.log",
+    "crawl_report": {
+      "run_id": "6e01c95ea3c4493b84690dbcb8189317",
+      "total_bvids": 66,
+      "processed_count": 66,
+      "success_count": 64,
+      "failed_count": 2,
+      "remaining_count": 2,
+      "started_at": "2026-04-13T09:43:04.679814",
+      "finished_at": "2026-04-13T09:50:51.739101",
+      "task_mode": "realtime_only",
+      "part_number": 56,
+      "effective_parallelism": 1,
+      "consecutive_failure_limit": 10,
+      "stopped_due_to_consecutive_failures": false,
+      "completed_all": false,
+      "stop_reason": "当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。",
+      "session_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\manual_crawls\\manual_crawl_stat_comment_20260412_215415",
+      "logs_dir": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\manual_crawls\\manual_crawl_stat_comment_20260412_215415\\logs",
+      "remaining_csv_path": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\manual_crawls\\manual_crawl_stat_comment_20260412_215415\\remaining_bvids_part_56.csv",
+      "task_log_path": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\manual_crawls\\manual_crawl_stat_comment_20260412_215415\\logs\\batch_crawl_part_56_20260413_095051.log",
+      "session_state_path": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\manual_crawls\\manual_crawl_stat_comment_20260412_215415\\batch_crawl_state.json",
+      "session_summary_log_path": null,
+      "failed_bvids": [
+        "BV1sMSQBkEJw",
+        "BV1T9SdBtETn"
+      ],
+      "omitted_fields": {
+        "successful_bvids": {
+          "type": "list",
+          "count": 64
+        },
+        "per_bvid_summaries": {
+          "type": "list",
+          "count": 66
+        }
+      }
+    },
+    "task_count": 56,
+    "cookie_refresh_count": 56,
+    "error": "",
+    "started_at": "2026-04-12T21:54:15.415890",
+    "finished_at": "2026-04-13T09:50:51.997656",
+    "omitted_fields": {
+      "crawl_reports": {
+        "type": "list",
+        "count": 56
+      }
+    }
+  },
+  "result_path": "D:\\Schoolworks\\Thesis\\Bilibili-Datahub\\outputs\\video_data\\background_tasks\\manual_dynamic_batch_20260412_215413\\task_result.json"
+}

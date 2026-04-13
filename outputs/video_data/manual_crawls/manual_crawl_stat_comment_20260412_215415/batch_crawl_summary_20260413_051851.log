@@ -1,0 +1,460 @@
+[TIMESTAMP][BEGIN] 2026-04-12T21:54:31.948898
+Bilibili Video Data Crawler Batch Crawl Summary
+session_dir: D:\Schoolworks\Thesis\Bilibili-Datahub\outputs\video_data\manual_crawls\manual_crawl_stat_comment_20260412_215415
+session_started_at: 2026-04-12T21:54:31.948898
+session_completed_at: 2026-04-13T05:18:51.366383
+original_csv_name: batch_input_1.csv
+task_mode: realtime_only
+original_bvid_count: 100
+part_count: 28
+interruption_count: 0
+completed_all: True
+
+part_1:
+  started_at: 2026-04-12T21:54:31.948898
+  finished_at: 2026-04-12T22:03:34.465556
+  source_csv_name: batch_input_1.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 99
+  failed_count: 1
+  remaining_count: 1
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+  log_file: logs/batch_crawl_part_1_20260412_220334.log
+  remaining_file: remaining_bvids_part_1.csv
+
+part_2:
+  started_at: 2026-04-12T22:03:34.898773
+  finished_at: 2026-04-12T22:35:34.263920
+  source_csv_name: batch_input_2.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 100
+  failed_count: 0
+  remaining_count: 0
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前 batch_crawl 已完成，所有视频均已成功抓取。
+  log_file: logs/batch_crawl_part_2_20260412_223534.log
+  remaining_file: 
+
+part_3:
+  started_at: 2026-04-12T22:35:34.487434
+  finished_at: 2026-04-12T22:58:34.968427
+  source_csv_name: batch_input_3.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 100
+  failed_count: 0
+  remaining_count: 0
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前 batch_crawl 已完成，所有视频均已成功抓取。
+  log_file: logs/batch_crawl_part_3_20260412_225834.log
+  remaining_file: 
+
+part_4:
+  started_at: 2026-04-12T22:58:35.214849
+  finished_at: 2026-04-12T23:18:04.044956
+  source_csv_name: batch_input_4.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 99
+  failed_count: 1
+  remaining_count: 1
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+  log_file: logs/batch_crawl_part_4_20260412_231804.log
+  remaining_file: remaining_bvids_part_4.csv
+
+part_5:
+  started_at: 2026-04-12T23:18:04.299530
+  finished_at: 2026-04-12T23:30:07.686459
+  source_csv_name: batch_input_5.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 100
+  failed_count: 0
+  remaining_count: 0
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前 batch_crawl 已完成，所有视频均已成功抓取。
+  log_file: logs/batch_crawl_part_5_20260412_233007.log
+  remaining_file: 
+
+part_6:
+  started_at: 2026-04-12T23:30:07.923157
+  finished_at: 2026-04-12T23:49:38.772586
+  source_csv_name: batch_input_6.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 100
+  failed_count: 0
+  remaining_count: 0
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前 batch_crawl 已完成，所有视频均已成功抓取。
+  log_file: logs/batch_crawl_part_6_20260412_234938.log
+  remaining_file: 
+
+part_7:
+  started_at: 2026-04-12T23:49:38.924824
+  finished_at: 2026-04-12T23:58:26.119783
+  source_csv_name: batch_input_7.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 99
+  failed_count: 1
+  remaining_count: 1
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+  log_file: logs/batch_crawl_part_7_20260412_235826.log
+  remaining_file: remaining_bvids_part_7.csv
+
+part_8:
+  started_at: 2026-04-12T23:58:26.316792
+  finished_at: 2026-04-13T00:07:06.939861
+  source_csv_name: batch_input_8.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 98
+  failed_count: 2
+  remaining_count: 2
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+  log_file: logs/batch_crawl_part_8_20260413_000706.log
+  remaining_file: remaining_bvids_part_8.csv
+
+part_9:
+  started_at: 2026-04-13T00:07:07.063234
+  finished_at: 2026-04-13T00:18:24.409373
+  source_csv_name: batch_input_9.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 99
+  failed_count: 1
+  remaining_count: 1
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+  log_file: logs/batch_crawl_part_9_20260413_001824.log
+  remaining_file: remaining_bvids_part_9.csv
+
+part_10:
+  started_at: 2026-04-13T00:18:24.576214
+  finished_at: 2026-04-13T00:27:15.017316
+  source_csv_name: batch_input_10.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 100
+  failed_count: 0
+  remaining_count: 0
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前 batch_crawl 已完成，所有视频均已成功抓取。
+  log_file: logs/batch_crawl_part_10_20260413_002715.log
+  remaining_file: 
+
+part_11:
+  started_at: 2026-04-13T00:27:15.125875
+  finished_at: 2026-04-13T00:36:21.181984
+  source_csv_name: batch_input_11.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 98
+  failed_count: 2
+  remaining_count: 2
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+  log_file: logs/batch_crawl_part_11_20260413_003621.log
+  remaining_file: remaining_bvids_part_11.csv
+
+part_12:
+  started_at: 2026-04-13T00:36:21.354569
+  finished_at: 2026-04-13T00:45:00.673267
+  source_csv_name: batch_input_12.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 97
+  failed_count: 3
+  remaining_count: 3
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+  log_file: logs/batch_crawl_part_12_20260413_004500.log
+  remaining_file: remaining_bvids_part_12.csv
+
+part_13:
+  started_at: 2026-04-13T00:45:00.856174
+  finished_at: 2026-04-13T00:54:28.465500
+  source_csv_name: batch_input_13.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 100
+  failed_count: 0
+  remaining_count: 0
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前 batch_crawl 已完成，所有视频均已成功抓取。
+  log_file: logs/batch_crawl_part_13_20260413_005428.log
+  remaining_file: 
+
+part_14:
+  started_at: 2026-04-13T00:54:28.618686
+  finished_at: 2026-04-13T01:03:36.128939
+  source_csv_name: batch_input_14.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 100
+  failed_count: 0
+  remaining_count: 0
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前 batch_crawl 已完成，所有视频均已成功抓取。
+  log_file: logs/batch_crawl_part_14_20260413_010336.log
+  remaining_file: 
+
+part_15:
+  started_at: 2026-04-13T01:03:36.340508
+  finished_at: 2026-04-13T01:12:28.906814
+  source_csv_name: batch_input_15.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 100
+  failed_count: 0
+  remaining_count: 0
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前 batch_crawl 已完成，所有视频均已成功抓取。
+  log_file: logs/batch_crawl_part_15_20260413_011228.log
+  remaining_file: 
+
+part_16:
+  started_at: 2026-04-13T01:12:29.029564
+  finished_at: 2026-04-13T01:43:30.110788
+  source_csv_name: batch_input_16.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 98
+  failed_count: 2
+  remaining_count: 2
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+  log_file: logs/batch_crawl_part_16_20260413_014330.log
+  remaining_file: remaining_bvids_part_16.csv
+
+part_17:
+  started_at: 2026-04-13T01:43:30.289616
+  finished_at: 2026-04-13T02:12:06.245497
+  source_csv_name: batch_input_17.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 99
+  failed_count: 1
+  remaining_count: 1
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+  log_file: logs/batch_crawl_part_17_20260413_021206.log
+  remaining_file: remaining_bvids_part_17.csv
+
+part_18:
+  started_at: 2026-04-13T02:12:06.426639
+  finished_at: 2026-04-13T02:20:14.500897
+  source_csv_name: batch_input_18.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 99
+  failed_count: 1
+  remaining_count: 1
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+  log_file: logs/batch_crawl_part_18_20260413_022014.log
+  remaining_file: remaining_bvids_part_18.csv
+
+part_19:
+  started_at: 2026-04-13T02:20:14.684414
+  finished_at: 2026-04-13T02:29:44.523860
+  source_csv_name: batch_input_19.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 100
+  failed_count: 0
+  remaining_count: 0
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前 batch_crawl 已完成，所有视频均已成功抓取。
+  log_file: logs/batch_crawl_part_19_20260413_022944.log
+  remaining_file: 
+
+part_20:
+  started_at: 2026-04-13T02:29:44.697115
+  finished_at: 2026-04-13T02:58:13.117258
+  source_csv_name: batch_input_20.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 96
+  failed_count: 4
+  remaining_count: 4
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+  log_file: logs/batch_crawl_part_20_20260413_025813.log
+  remaining_file: remaining_bvids_part_20.csv
+
+part_21:
+  started_at: 2026-04-13T02:58:13.292769
+  finished_at: 2026-04-13T03:16:26.347475
+  source_csv_name: batch_input_21.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 98
+  failed_count: 2
+  remaining_count: 2
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+  log_file: logs/batch_crawl_part_21_20260413_031626.log
+  remaining_file: remaining_bvids_part_21.csv
+
+part_22:
+  started_at: 2026-04-13T03:16:26.540362
+  finished_at: 2026-04-13T03:24:46.614814
+  source_csv_name: batch_input_22.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 99
+  failed_count: 1
+  remaining_count: 1
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+  log_file: logs/batch_crawl_part_22_20260413_032446.log
+  remaining_file: remaining_bvids_part_22.csv
+
+part_23:
+  started_at: 2026-04-13T03:24:46.785806
+  finished_at: 2026-04-13T03:33:26.634868
+  source_csv_name: batch_input_23.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 100
+  failed_count: 0
+  remaining_count: 0
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前 batch_crawl 已完成，所有视频均已成功抓取。
+  log_file: logs/batch_crawl_part_23_20260413_033326.log
+  remaining_file: 
+
+part_24:
+  started_at: 2026-04-13T03:33:26.826642
+  finished_at: 2026-04-13T03:41:34.743379
+  source_csv_name: batch_input_24.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 97
+  failed_count: 3
+  remaining_count: 3
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+  log_file: logs/batch_crawl_part_24_20260413_034134.log
+  remaining_file: remaining_bvids_part_24.csv
+
+part_25:
+  started_at: 2026-04-13T03:41:34.923217
+  finished_at: 2026-04-13T03:50:01.142347
+  source_csv_name: batch_input_25.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 100
+  failed_count: 0
+  remaining_count: 0
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前 batch_crawl 已完成，所有视频均已成功抓取。
+  log_file: logs/batch_crawl_part_25_20260413_035001.log
+  remaining_file: 
+
+part_26:
+  started_at: 2026-04-13T03:50:01.233810
+  finished_at: 2026-04-13T04:10:09.286215
+  source_csv_name: batch_input_26.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 97
+  failed_count: 3
+  remaining_count: 3
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+  log_file: logs/batch_crawl_part_26_20260413_041009.log
+  remaining_file: remaining_bvids_part_26.csv
+
+part_27:
+  started_at: 2026-04-13T04:10:09.600168
+  finished_at: 2026-04-13T04:48:27.244557
+  source_csv_name: batch_input_27.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 99
+  failed_count: 1
+  remaining_count: 1
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前子任务已结束，但仍有未成功抓取的视频，已导出 remaining CSV 供继续执行。
+  log_file: logs/batch_crawl_part_27_20260413_044827.log
+  remaining_file: remaining_bvids_part_27.csv
+
+part_28:
+  started_at: 2026-04-13T04:48:27.406529
+  finished_at: 2026-04-13T05:18:51.366383
+  source_csv_name: batch_input_28.csv
+  task_mode: realtime_only
+  input_bvid_count: 100
+  processed_count: 100
+  success_count: 100
+  failed_count: 0
+  remaining_count: 0
+  consecutive_failure_limit: 10
+  stopped_due_to_consecutive_failures: False
+  stop_reason: 当前 batch_crawl 已完成，所有视频均已成功抓取。
+  log_file: logs/batch_crawl_part_28_20260413_051851.log
+  remaining_file:
+[TIMESTAMP][END] 2026-04-13T05:18:51

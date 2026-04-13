@@ -1,0 +1,3 @@
+﻿bvid,board_rid,board_name,board_rank,source_type,source_ref,discovered_at,last_seen_at,owner_mid,tid,pubdate,duration_seconds,seed_score,source_refs,source_csv_path,source_group,_source_priority
+BV14XQwBjEHM,,,,author_expand,owner:4351252,2026-04-10T13:47:34.120137+00:00,2026-04-10T13:47:34.120137+00:00,4351252,205,2026-04-10T09:54:50+00:00,19,61.0,owner:4351252,uid_expansions/uid_expansion_20260325_20260410_202130/videolist_part_1.csv,uid_expansions,0
+BV1YBQwBdEQj,1020.0,美食,21.0,rankboard,rankboard:rid=1020:rank=21,2026-04-12T13:08:05.941608+00:00,,199167786,212,2026-04-10T09:22:41+00:00,48,979514.0,"rankboard:rid=1020:rank=21,https://www.bilibili.com/v/popular/rank/food",full_site_floorings/rankboard-20260412_210745.csv,full_site_floorings,1000
